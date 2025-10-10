@@ -1,0 +1,102 @@
+SWAPSYNC BACKEND - BUILD INSTRUCTIONS FOR ELECTRON PACKAGING
+=============================================================
+
+This backend needs to be included in the Electron app package.
+
+IMPORTANT NOTES:
+----------------
+
+1. PYTHON REQUIREMENT:
+   - Target machine MUST have Python 3.10+ installed
+   - Alternative: Bundle Python executable with app (adds ~50-100MB)
+
+2. DEPENDENCIES:
+   - All packages in requirements.txt must be installable
+   - Consider using pip-compile for locked versions
+
+3. DATABASE:
+   - swapsync.db will be created automatically in app data directory
+   - First run initializes all tables
+
+4. ENVIRONMENT VARIABLES:
+   - .env file should be in app data directory
+   - App will work without .env (SMS disabled)
+
+PACKAGING CHECKLIST:
+-------------------
+
+✓ Include: app/ folder (all Python modules)
+✓ Include: main.py
+✓ Include: requirements.txt
+✓ Include: .env.example (for reference)
+✓ Exclude: venv/ folder (too large, will be created on target)
+✓ Exclude: __pycache__/ folders
+✓ Exclude: test_*.py files
+✓ Exclude: *.pyc files
+✓ Exclude: .env file (user-specific)
+
+DEPLOYMENT OPTIONS:
+------------------
+
+Option 1: System Python (Recommended)
+- Requires Python installed on target machine
+- Smaller app size
+- Users run: pip install -r requirements.txt
+
+Option 2: Bundled Python
+- Include Python executable in app package
+- Larger app size (+50-100MB)
+- No Python installation required
+- More complex but better UX
+
+Option 3: PyInstaller
+- Convert Python code to executable
+- No Python needed on target
+- Largest size but simplest deployment
+- Command: pyinstaller --onefile main.py
+
+TESTING:
+-------
+
+Before packaging:
+1. Delete swapsync.db
+2. Run: python main.py
+3. Verify database creates automatically
+4. Test all endpoints with curl/Postman
+5. Verify SMS works (if configured)
+
+STARTUP SEQUENCE IN ELECTRON:
+-----------------------------
+
+1. Electron main process starts
+2. Spawns Python subprocess: python main.py
+3. Waits for backend (checks http://127.0.0.1:8000/ping)
+4. Once backend ready, loads frontend
+5. Frontend connects to localhost backend
+
+SHUTDOWN SEQUENCE:
+-----------------
+
+1. User closes Electron window
+2. Electron kills Python subprocess
+3. Database connections closed gracefully
+4. App exits
+
+CURRENT STATUS:
+--------------
+
+✅ Backend code ready for packaging
+✅ Database auto-initialization configured
+✅ All API endpoints functional
+✅ SMS integration ready (Twilio)
+✅ Analytics and reporting working
+
+NEXT STEPS:
+----------
+
+1. Test Electron integration in development mode
+2. Build for target platform
+3. Test built app on clean machine
+4. Create installer
+5. Deploy to shop computers
+

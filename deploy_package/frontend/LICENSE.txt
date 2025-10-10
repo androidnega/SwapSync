@@ -1,0 +1,24 @@
+SwapSync Software License Agreement
+
+Copyright (c) 2025 Manuel Code
+
+All rights reserved.
+
+This software is proprietary and confidential. Unauthorized copying, 
+distribution, modification, or use of this software is strictly prohibited.
+
+For licensing inquiries, please contact:
+Email: info@manuelcode.info
+Website: https://www.manuelcode.info
+
+TERMS OF USE:
+
+1. This software is licensed for use by authorized users only.
+2. The software may not be redistributed without written permission.
+3. All modifications must be approved by Manuel Code.
+4. Support is provided through official channels only.
+
+By installing this software, you agree to these terms and conditions.
+
+Manuel Code
+https://www.manuelcode.info

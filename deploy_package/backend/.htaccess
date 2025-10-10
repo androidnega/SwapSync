@@ -1,0 +1,12 @@
+PassengerEnabled On
+PassengerAppType wsgi
+PassengerStartupFile passenger_wsgi.py
+PassengerPython /home3/manuelc8/virtualenv/backend/3.9/bin/python
+
+# Allow direct access to API endpoints
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . passenger_wsgi.py [L]
+
