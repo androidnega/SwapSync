@@ -1,0 +1,433 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import authService from '../services/authService';
+import swapsyncImage from '../assets/img/swapsync.webp';
+
+const Login: React.FC = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
+  const [resetData, setResetData] = useState({
+    username: '',
+    phone_number: '',
+    email: '',
+    reset_token: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [resetMessage, setResetMessage] = useState('');
+  const [resetError, setResetError] = useState('');
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await authService.login(username, password);
+      console.log('Login successful:', response.user);
+      
+      // Redirect to dashboard
+      navigate('/');
+      window.location.reload(); // Reload to update auth state
+    } catch (err: any) {
+      console.error('Login failed:', err);
+      setError(err.response?.data?.detail || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError('');
+    setResetMessage('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/password-reset/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: resetData.username,
+          phone_number: resetData.phone_number,
+          email: resetData.email
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to request password reset');
+      }
+
+      setResetMessage('✅ Reset code sent via SMS! Check your phone.');
+      setResetStep('verify');
+    } catch (err: any) {
+      setResetError(err.message || 'Failed to request password reset');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetComplete = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError('');
+    setResetMessage('');
+
+    if (resetData.new_password !== resetData.confirm_password) {
+      setResetError('Passwords do not match');
+      return;
+    }
+
+    if (resetData.new_password.length < 6) {
+      setResetError('Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/password-reset/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reset_token: resetData.reset_token,
+          new_password: resetData.new_password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to reset password');
+      }
+
+      setResetMessage('✅ Password reset successfully! You can now login.');
+      setTimeout(() => {
+        setShowResetModal(false);
+        setResetStep('request');
+        setResetData({
+          username: '',
+          phone_number: '',
+          email: '',
+          reset_token: '',
+          new_password: '',
+          confirm_password: ''
+        });
+      }, 2000);
+    } catch (err: any) {
+      setResetError(err.message || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden max-w-4xl w-full">
+        <div className="grid md:grid-cols-2">
+          {/* Left Side - Image and Description */}
+          <div className="bg-blue-600 p-8 flex flex-col justify-center text-white">
+            <div className="mb-6">
+              <div className="w-full h-64 rounded-lg mb-6 shadow-lg overflow-hidden">
+                <img 
+                  src={swapsyncImage} 
+                  alt="SwapSync - Phone Management" 
+                  className="w-full h-full object-cover"
+                  style={{ 
+                    objectPosition: 'center 20%',
+                    transform: 'scale(1.05)',
+                    transformOrigin: 'center center'
+                  }}
+                  onError={(e) => {
+                    // Fallback if image doesn't load
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+              <h1 className="text-3xl font-bold mb-2">SwapSync</h1>
+              <p className="text-blue-100 text-sm">
+                Phone Swapping & Repair Shop Management System
+              </p>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start">
+                <span className="mr-2">✓</span>
+                <span>Manage phone swaps and sales</span>
+              </div>
+              <div className="flex items-start">
+                <span className="mr-2">✓</span>
+                <span>Track repairs with SMS notifications</span>
+              </div>
+              <div className="flex items-start">
+                <span className="mr-2">✓</span>
+                <span>Automatic profit/loss calculation</span>
+              </div>
+              <div className="flex items-start">
+                <span className="mr-2">✓</span>
+                <span>Complete analytics and reporting</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side - Login Form */}
+          <div className="p-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
+              <p className="text-gray-600 text-sm">Login to access your dashboard</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  placeholder="Enter username"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="Enter password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loading}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50"
+              >
+                {loading ? 'Logging in...' : 'Login'}
+              </button>
+
+              {/* Forgot Password Link */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(true)}
+                  className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            </form>
+
+            {/* Default Credentials */}
+            <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-xs text-gray-600 mb-1">Default Credentials:</p>
+              <p className="text-xs text-gray-800">
+                <strong>admin</strong> / admin123
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Developer Credit - Below Card */}
+      <div className="mt-6 text-center text-sm text-gray-600">
+        <p>
+          System developed and managed by{' '}
+          <a 
+            href="https://www.manuelcode.info" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition"
+          >
+            Manuel
+          </a>
+        </p>
+        <p className="mt-2 text-xs text-gray-500">© 2025 SwapSync v1.0.0</p>
+      </div>
+
+      {/* Password Reset Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowResetModal(false);
+                setResetStep('request');
+                setResetMessage('');
+                setResetError('');
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+            >
+              ×
+            </button>
+
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Reset Password</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              {resetStep === 'request' 
+                ? 'Enter your account details to receive a reset code via SMS' 
+                : 'Enter the code sent to your phone and your new password'}
+            </p>
+
+            {/* Messages */}
+            {resetMessage && (
+              <div className="mb-4 p-3 bg-green-50 text-green-800 rounded-lg text-sm">
+                {resetMessage}
+              </div>
+            )}
+            {resetError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-800 rounded-lg text-sm">
+                {resetError}
+              </div>
+            )}
+
+            {/* Step 1: Request Reset */}
+            {resetStep === 'request' && (
+              <form onSubmit={handleResetRequest} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Username *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={resetData.username}
+                    onChange={(e) => setResetData({ ...resetData, username: e.target.value })}
+                    placeholder="Your username"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={resetData.email}
+                    onChange={(e) => setResetData({ ...resetData, email: e.target.value })}
+                    placeholder="Email used during registration"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={resetData.phone_number}
+                    onChange={(e) => setResetData({ ...resetData, phone_number: e.target.value })}
+                    placeholder="Phone number used during registration"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Format: +233XXXXXXXXX or 0XXXXXXXXX</p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50"
+                >
+                  {loading ? 'Sending...' : '📱 Send Reset Code via SMS'}
+                </button>
+              </form>
+            )}
+
+            {/* Step 2: Verify and Reset */}
+            {resetStep === 'verify' && (
+              <form onSubmit={handleResetComplete} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Reset Code *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={resetData.reset_token}
+                    onChange={(e) => setResetData({ ...resetData, reset_token: e.target.value })}
+                    placeholder="6-digit code from SMS"
+                    maxLength={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-widest"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={resetData.new_password}
+                    onChange={(e) => setResetData({ ...resetData, new_password: e.target.value })}
+                    placeholder="At least 6 characters"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={resetData.confirm_password}
+                    onChange={(e) => setResetData({ ...resetData, confirm_password: e.target.value })}
+                    placeholder="Re-enter new password"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50"
+                >
+                  {loading ? 'Resetting...' : '✓ Reset Password'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setResetStep('request')}
+                  className="w-full text-sm text-gray-600 hover:text-gray-800"
+                >
+                  ← Back to request
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Login;
+

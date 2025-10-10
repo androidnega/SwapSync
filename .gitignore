@@ -1,0 +1,44 @@
+# Sensitive Data - DO NOT COMMIT
+*.db
+*.sqlite
+*.sqlite3
+*CREDENTIALS*
+*PASSWORD*
+*SECRET*
+*API_KEY*
+.env
+.env.*
+sms_config.json
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+env/
+
+# Node
+node_modules/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Backups
+backups/
+*.backup
+
+# Railway
+railway.json
+.railway/
+
