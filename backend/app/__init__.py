@@ -1,2 +1,0 @@
-# SwapSync Backend Application Package
-
