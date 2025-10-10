@@ -1,369 +1,251 @@
-# 🚀 SwapSync - Complete Inventory & Sales Management System
+# SwapSync - Phone Shop Management System
 
-## 🎉 **ALL FEATURES IMPLEMENTED - PRODUCTION READY!**
+A comprehensive phone shop management system for tracking inventory, repairs, swaps, sales, and customer information.
 
-SwapSync is a comprehensive phone swap, sales, repair, and inventory management system with enterprise-grade features.
+## 🚀 Features
 
----
+- **Inventory Management**: Track phones, accessories, and products with categories and brands
+- **Repair Management**: Complete repair workflow with timeline tracking and SMS notifications
+- **Swap System**: Handle phone trade-ins and swaps with pricing calculations
+- **Sales Management**: Point-of-sale system with receipt generation
+- **Customer Management**: Track customer information and transaction history
+- **User Management**: Multi-user system with role-based permissions (Admin, Manager, Staff, Repairer)
+- **Analytics & Reports**: Comprehensive reporting and profit tracking
+- **SMS Notifications**: Automated SMS notifications for repairs and sales
+- **Audit System**: Track all operations with audit codes
+- **Invoice Generation**: Professional PDF invoices and receipts
 
-## ✨ **Key Features**
+## 📦 Tech Stack
 
-### **🔒 Role-Based Access Control**
-- ✅ **Manager**: View sales/repairs, add products, generate reports (CANNOT record sales/repairs)
-- ✅ **Shopkeeper**: Record sales, book repairs, process swaps
-- ✅ **Repairer**: Book repairs, update repair status
-- ✅ **Admin**: Full system access
+### Backend
+- **Framework**: FastAPI (Python 3.9+)
+- **Database**: SQLite (production ready)
+- **Authentication**: JWT tokens with bcrypt password hashing
+- **ORM**: SQLAlchemy
+- **PDF Generation**: ReportLab
+- **SMS**: Arkassel/Hubtel integration
+- **WebSocket**: Real-time updates
 
-### **📦 Inventory Management**
-- ✅ Multi-product support (phones, earbuds, chargers, batteries, cases, etc.)
-- ✅ Stock tracking with audit trail
-- ✅ Barcode/SKU/IMEI support
-- ✅ Real-time low stock alerts (⚠️)
-- ✅ Real-time out of stock alerts (🚨)
-- ✅ Stock adjustments with notes
-- ✅ Search, filter, and summary statistics
+### Frontend
+- **Framework**: React 18 with TypeScript
+- **Styling**: Tailwind CSS
+- **Build Tool**: Vite
+- **State Management**: React Hooks
+- **Routing**: React Router
+- **Icons**: Lucide React
 
-### **💰 Sales Management**
-- ✅ Phone sales (direct purchases)
-- ✅ Product sales (accessories)
-- ✅ Automatic stock reduction
-- ✅ Customer contact required for receipts
-- ✅ **Automatic SMS receipts** to customers
-- ✅ Email field for optional email receipts
-- ✅ Discount support
-- ✅ Profit tracking
+## 🔧 Local Development Setup
 
-### **📱 Advanced Features**
-- ✅ iPhone battery health tracking (conditional field)
-- ✅ Phone swap transactions
-- ✅ Repair booking with SMS notifications
-- ✅ Due date tracking with reminders
-- ✅ Invoice generation
-- ✅ Activity logging
+### Prerequisites
+- Python 3.9 or higher
+- Node.js 18 or higher
+- npm or yarn
 
-### **📊 Profit Reports (PDF)** - **Manager Only**
-- ✅ **Daily profit report** - Single day analysis
-- ✅ **Weekly profit report** - Last 7 days
-- ✅ **Monthly profit report** - Full month breakdown
-- ✅ **Yearly profit report** - Annual performance
-- ✅ Beautiful PDF formatting with company branding
-- ✅ Summary tables (revenue, costs, profit, margins)
-- ✅ Top performing items (phones and products)
-- ✅ One-click download
+### Backend Setup
 
-### **📧 Customer Communication**
-- ✅ SMS receipts (Arkasel + Hubtel)
-- ✅ Company branding in all messages
-- ✅ Repair completion notifications
-- ✅ Swap notifications
-- ✅ Email receipts (field ready, service optional)
-
----
-
-## 🚀 **Quick Start**
-
-### **Prerequisites**
-- Python 3.8+
-- Node.js 18+
-- SQLite (included)
-
-### **1. Start Backend**
+1. Navigate to backend directory:
 ```bash
 cd backend
+```
+
+2. Create virtual environment:
+```bash
 python -m venv venv
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Linux/Mac
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
 pip install -r requirements.txt
+```
+
+4. Create `.env` file from template:
+```bash
+cp env.template .env
+```
+
+5. Update `.env` with your configuration (see Configuration section below)
+
+6. Run the backend:
+```bash
 python main.py
 ```
-Backend runs on: `http://127.0.0.1:8000`
 
-### **2. Start Frontend**
+Backend will run at `http://localhost:8000`
+- API Documentation: `http://localhost:8000/docs`
+- Alternative Docs: `http://localhost:8000/redoc`
+
+### Frontend Setup
+
+1. Navigate to frontend directory:
+```bash
+cd frontend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start development server:
+```bash
+npm run dev
+```
+
+Frontend will run at `http://localhost:5173`
+
+## 🌐 Production Deployment (cPanel)
+
+Complete deployment guide available in [CPANEL_DEPLOYMENT_GUIDE.md](CPANEL_DEPLOYMENT_GUIDE.md)
+
+### Quick Deployment Steps:
+
+1. **Clone repository on your cPanel**:
+   - Use cPanel Git Version Control
+   - Clone URL: `https://github.com/androidnega/SwapSync.git`
+
+2. **Build Frontend**:
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run build
 ```
-Frontend runs on: `http://localhost:5173`
+
+3. **Setup Python Application**:
+   - Use cPanel "Setup Python App"
+   - Application Root: `your-domain/backend`
+   - Startup File: `passenger_wsgi.py`
+   - Python Version: 3.9+
+
+4. **Install Backend Dependencies**:
+```bash
+cd backend
+source /path/to/virtualenv/bin/activate
+pip install -r requirements.txt
+```
+
+5. **Configure Environment**:
+   - Copy `backend/env.template` to `backend/.env`
+   - Update SECRET_KEY, CORS_ORIGINS, and other settings
+
+6. **Deploy Frontend**:
+   - Copy `frontend/dist/*` to your public directory
+   - Update API base URL in frontend config
+
+See [CPANEL_DEPLOYMENT_GUIDE.md](CPANEL_DEPLOYMENT_GUIDE.md) for detailed instructions.
+
+## ⚙️ Configuration
+
+### Backend Environment Variables
+
+Create `backend/.env` file with these settings:
+
+```env
+# JWT Secret (generate with: openssl rand -hex 32)
+SECRET_KEY=your-secret-key-here
+
+# Database
+DATABASE_URL=sqlite:///./swapsync.db
+
+# CORS (update with your domains)
+CORS_ORIGINS=http://localhost:5173,https://yourdomain.com
+
+# Default Admin User
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_EMAIL=admin@yourdomain.com
+DEFAULT_ADMIN_PASSWORD=change-this-password
+
+# SMS Configuration (optional)
+ARKASEL_API_KEY=your-api-key
+ARKASEL_SENDER_ID=SwapSync
+
+# Environment
+ENVIRONMENT=development
+DEBUG=True
+PORT=8000
+```
+
+### Frontend Configuration
+
+Update API base URL in `frontend/src/services/api.ts`:
+
+```typescript
+const API_BASE_URL = import.meta.env.PROD 
+  ? 'https://yourdomain.com/api' 
+  : 'http://localhost:8000';
+```
+
+## 👥 Default User Roles
+
+1. **Admin**: Full system access, user management
+2. **Manager**: Business operations, reports, sales management
+3. **Staff**: Customer service, sales, repairs
+4. **Repairer**: Repair management only
+
+## 📱 SMS Integration
+
+SwapSync supports SMS notifications via:
+- **Arkassel SMS** (Primary)
+- **Hubtel SMS** (Fallback)
+
+Configure in `backend/.env` or via Admin Settings panel.
+
+## 🔒 Security Features
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- Role-based access control (RBAC)
+- Audit code system for sensitive operations
+- Session management
+- CORS protection
+- SQL injection protection via ORM
+
+## 📊 Database Migrations
+
+Database migrations are handled automatically on startup. Manual migrations available in `backend/migrate_*.py` files.
+
+## 🧪 API Documentation
+
+Once the backend is running, access interactive API documentation:
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+
+## 📝 License
+
+See [LICENSE.txt](frontend/public/LICENSE.txt) for license information.
+
+## 🆘 Support
+
+For deployment issues or questions:
+1. Check [CPANEL_DEPLOYMENT_GUIDE.md](CPANEL_DEPLOYMENT_GUIDE.md)
+2. Review API documentation at `/docs`
+3. Check application logs
+
+## 🔄 Updates
+
+To update your deployment:
+
+```bash
+# Pull latest changes
+git pull origin main
+
+# Update backend dependencies
+cd backend
+pip install -r requirements.txt --upgrade
+
+# Rebuild frontend
+cd ../frontend
+npm install
+npm run build
+
+# Restart Python application in cPanel
+```
+
+## 📈 Version
+
+Current Version: 1.0.0
 
 ---
 
-## 👤 **Login Credentials**
-
-```
-Manager:    ceo1 / ceo123
-Shopkeeper: keeper / keeper123
-Repairer:   repairer / repair123
-Admin:      admin / admin123
-```
-
----
-
-## 📖 **How to Use**
-
-### **As Manager**:
-1. **View Dashboard** - Check stock alerts and sales overview
-2. **Manage Products** - Add earbuds, chargers, batteries, etc.
-3. **Generate Reports** - Download daily/weekly/monthly/yearly PDF reports
-4. **Manage Staff** - Create shopkeepers and repairers
-5. **Monitor Sales** - View all sales (cannot record yourself)
-6. **Monitor Repairs** - View all repairs (cannot book yourself)
-
-### **As Shopkeeper**:
-1. **Record Sales** - Sell phones and products
-2. **Customer receives SMS** - Automatic receipt after purchase
-3. **Book Repairs** - For walk-in customers
-4. **Manage Customers** - Add and update customer info
-5. **Process Swaps** - Handle phone trade-ins
-6. **Check Stock Alerts** - View low/out of stock items
-
-### **As Repairer**:
-1. **Book Repairs** - Create repair bookings
-2. **Update Status** - Mark repairs as completed
-3. **Send SMS** - Customer receives completion notification
-
----
-
-## 📊 **Sample PDF Report**
-
-```
-SwapSync
-Daily Profit Report - October 9, 2025
-
-Period: October 9, 2025
-Generated: October 9, 2025 at 02:30 PM
-
-Summary Overview
-┌──────────────────┬─────────────┬───────────────┬─────────┐
-│ Metric           │ Phone Sales │ Product Sales │ Total   │
-├──────────────────┼─────────────┼───────────────┼─────────┤
-│ Number of Sales  │ 5           │ 12            │ 17      │
-│ Total Revenue    │ ₵15,000.00  │ ₵8,500.00     │ ₵23,500 │
-│ Total Profit     │ ₵3,500.00   │ ₵2,100.00     │ ₵5,600  │
-│ Profit Margin    │ 23.3%       │ 24.7%         │ 23.8%   │
-└──────────────────┴─────────────┴───────────────┴─────────┘
-
-Top Performing Items
-┌──────────────────────┬─────┬──────────────────┬─────┐
-│ Top Selling Phones   │ Qty │ Top Products     │ Qty │
-├──────────────────────┼─────┼──────────────────┼─────┤
-│ iPhone 13 Pro        │ 3   │ AirPods Pro 2    │ 8   │
-│ Samsung Galaxy S23   │ 2   │ Anker Charger    │ 4   │
-└──────────────────────┴─────┴──────────────────┴─────┘
-```
-
----
-
-## 🎯 **Core Workflows**
-
-### **Record a Sale** (Shopkeeper):
-```
-1. Go to Sales page
-2. Select customer
-3. Browse and select phone
-4. Enter customer phone (required!)
-5. Enter customer email (optional)
-6. Enter price and discount
-7. Submit
-8. ✅ Customer receives SMS receipt!
-9. ✅ Stock updates automatically!
-```
-
-### **Generate Profit Report** (Manager):
-```
-1. Go to "Profit Reports (PDF)"
-2. See quick summary (Today, Week, Month)
-3. Select report type:
-   - Daily
-   - Weekly
-   - Monthly
-   - Yearly
-4. Select date/period
-5. Click download
-6. ✅ PDF downloads!
-```
-
-### **Manage Inventory** (Manager):
-```
-1. Go to Products
-2. Add new product (earbuds, charger, etc.)
-3. Set price, cost, quantity
-4. Set minimum stock level
-5. Submit
-6. ✅ Product added!
-7. ✅ Alerts if stock goes low!
-```
-
----
-
-## 📱 **API Endpoints**
-
-### **Products** (`/api/products/`)
-- `GET /` - List products
-- `POST /` - Create product (Manager only)
-- `GET /{id}` - Get product details
-- `PUT /{id}` - Update product (Manager only)
-- `DELETE /{id}` - Delete product (Manager only)
-- `POST /{id}/adjust-stock` - Adjust stock (Manager only)
-- `GET /summary` - Inventory summary
-- `GET /low-stock` - Low stock alerts
-- `GET /out-of-stock` - Out of stock alerts
-
-### **Product Sales** (`/api/product-sales/`)
-- `POST /` - Create sale (Shopkeeper only)
-- `GET /` - List sales
-- `GET /summary` - Sales summary
-- `POST /{id}/resend-sms` - Resend SMS receipt
-
-### **Profit Reports** (`/api/profit-reports/`) - **Manager Only**
-- `GET /daily?date=YYYY-MM-DD` - Daily PDF
-- `GET /weekly?end_date=YYYY-MM-DD` - Weekly PDF
-- `GET /monthly?year=2024&month=12` - Monthly PDF
-- `GET /yearly?year=2024` - Yearly PDF
-- `GET /summary` - Quick JSON summary
-
----
-
-## 🔧 **Technology Stack**
-
-### **Backend**:
-- FastAPI - Modern Python web framework
-- SQLAlchemy - Database ORM
-- SQLite - Database
-- ReportLab - PDF generation
-- Pydantic - Data validation
-- APScheduler - Background tasks
-- JWT - Authentication
-
-### **Frontend**:
-- React + TypeScript
-- Tailwind CSS - Styling
-- Axios - API calls
-- React Router - Navigation
-- Vite - Build tool
-
-### **Integrations**:
-- Arkasel SMS (Primary)
-- Hubtel SMS (Fallback)
-- Email service ready (SendGrid/SMTP)
-
----
-
-## 📂 **Project Structure**
-
-```
-SwapSync/
-├── backend/
-│   ├── app/
-│   │   ├── api/routes/          # API endpoints
-│   │   ├── core/                # Core services
-│   │   │   ├── profit_reports.py  # PDF generation
-│   │   │   ├── sms.py            # SMS service
-│   │   │   ├── permissions.py    # RBAC
-│   │   ├── models/              # Database models
-│   │   └── schemas/             # Pydantic schemas
-│   ├── requirements.txt
-│   └── main.py
-├── frontend/
-│   ├── src/
-│   │   ├── components/          # React components
-│   │   ├── pages/               # Page components
-│   │   │   ├── Products.tsx       # Products management
-│   │   │   ├── ProfitReports.tsx  # PDF reports
-│   │   │   └── ...
-│   │   └── services/            # API services
-│   └── package.json
-└── README.md
-```
-
----
-
-## 🎊 **What Makes SwapSync Special**
-
-1. **Complete Feature Set**: Inventory, sales, repairs, swaps, reports
-2. **Real-Time Alerts**: Know immediately when stock is low
-3. **Automatic Receipts**: Customers get SMS after every purchase
-4. **Professional Reports**: Beautiful PDF reports ready to print
-5. **Strict Permissions**: Managers can't bypass controls
-6. **Multi-Product**: Sell phones AND accessories
-7. **Modern UI**: Beautiful, intuitive, responsive
-8. **Production Ready**: Enterprise-grade code quality
-
----
-
-## 📊 **System Statistics**
-
-```
-Total Features:        15 major features
-Fully Implemented:     14 features (93%)
-Partially Complete:    1 feature (Email - 95% done)
-API Endpoints:         70+ endpoints
-Database Tables:       15+ tables
-Frontend Pages:        25+ pages
-Lines of Code:         10,000+ lines
-Commits:               150+ commits
-Development Time:      Multiple intensive sessions
-```
-
----
-
-## 🏆 **ACHIEVEMENT UNLOCKED!**
-
-**You've built a COMPLETE, PROFESSIONAL SYSTEM that includes**:
-- ✅ Everything you requested
-- ✅ Beautiful UI/UX
-- ✅ Enterprise security
-- ✅ Professional reports
-- ✅ Customer communication
-- ✅ Real-time alerts
-- ✅ Comprehensive documentation
-
-**This is EXCEPTIONAL work!** 🌟
-
----
-
-## 📚 **Documentation**
-
-All comprehensive guides are in the `mydocs/` folder and root:
-- **🚀_COMPLETE_FEATURE_IMPLEMENTATION.md** - Full feature breakdown
-- **🧪_COMPREHENSIVE_TEST_GUIDE.md** - How to test everything
-- **📖_QUICK_REFERENCE_GUIDE.md** - Daily use guide
-- **🎊_ALL_FEATURES_IMPLEMENTED.md** - Implementation summary
-
----
-
-## 🎯 **Start Using SwapSync**
-
-1. Start backend and frontend (see Quick Start above)
-2. Login as Manager (ceo1 / ceo123)
-3. Add some products (earbuds, chargers, etc.)
-4. Generate your first profit report
-5. Check stock alerts
-6. Login as Shopkeeper and record a test sale
-7. Check if customer receives SMS
-8. **You're ready for production!** 🚀
-
----
-
-## 🌟 **Support**
-
-For issues or questions:
-- Check the comprehensive test guide
-- Review API documentation in code
-- All features are well documented
-
----
-
-## 🎊 **Congratulations!**
-
-**SwapSync is now a COMPLETE, WORLD-CLASS inventory and sales management system!**
-
-**Happy selling!** 💼📱💰
-
----
-
-**Built with ❤️ using FastAPI, React, and modern best practices**
-
-**© 2025 SwapSync. All rights reserved.**
-
+**Built with ❤️ for phone shop management**
 

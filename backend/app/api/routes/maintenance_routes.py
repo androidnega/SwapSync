@@ -23,6 +23,10 @@ from app.models.swap import Swap
 from app.models.sale import Sale
 from app.models.repair import Repair
 from app.models.activity_log import ActivityLog
+from app.models.invoice import Invoice
+from app.models.product import Product
+from app.models.product_sale import ProductSale
+from app.core.auth import get_current_active_admin
 
 router = APIRouter(prefix="/maintenance", tags=["Maintenance"])
 
@@ -271,5 +275,220 @@ def system_health_check(db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"System health check failed: {str(e)}"
+        )
+
+
+# Data Clearing Endpoints
+@router.post("/clear-all-data")
+def clear_all_data(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Clear all business data from the system
+    WARNING: This will permanently delete all business data!
+    """
+    try:
+        # Clear all business data in order (respecting foreign key constraints)
+        db.query(ProductSale).delete()
+        db.query(Invoice).delete()
+        db.query(Repair).delete()
+        db.query(Sale).delete()
+        db.query(Swap).delete()
+        db.query(Product).delete()
+        db.query(Phone).delete()
+        db.query(Customer).delete()
+        
+        # Clear activity logs
+        db.query(ActivityLog).delete()
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "All business data cleared successfully",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear all data: {str(e)}"
+        )
+
+
+@router.post("/clear-customers")
+def clear_customers(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """Clear all customer data"""
+    try:
+        count = db.query(Customer).count()
+        db.query(Customer).delete()
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared {count} customers successfully",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear customers: {str(e)}"
+        )
+
+
+@router.post("/clear-phones")
+def clear_phones(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """Clear all phone records"""
+    try:
+        count = db.query(Phone).count()
+        db.query(Phone).delete()
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared {count} phone records successfully",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear phones: {str(e)}"
+        )
+
+
+@router.post("/clear-swaps")
+def clear_swaps(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """Clear all swap transactions"""
+    try:
+        count = db.query(Swap).count()
+        db.query(Swap).delete()
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared {count} swap transactions successfully",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear swaps: {str(e)}"
+        )
+
+
+@router.post("/clear-sales")
+def clear_sales(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """Clear all sales records"""
+    try:
+        count = db.query(Sale).count()
+        db.query(Sale).delete()
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared {count} sales records successfully",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear sales: {str(e)}"
+        )
+
+
+@router.post("/clear-repairs")
+def clear_repairs(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """Clear all repair records"""
+    try:
+        count = db.query(Repair).count()
+        db.query(Repair).delete()
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared {count} repair records successfully",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear repairs: {str(e)}"
+        )
+
+
+@router.post("/clear-invoices")
+def clear_invoices(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """Clear all invoices"""
+    try:
+        count = db.query(Invoice).count()
+        db.query(Invoice).delete()
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared {count} invoices successfully",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear invoices: {str(e)}"
+        )
+
+
+@router.post("/clear-activities")
+def clear_activities(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """Clear all activity logs"""
+    try:
+        count = db.query(ActivityLog).count()
+        db.query(ActivityLog).delete()
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared {count} activity logs successfully",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear activities: {str(e)}"
         )
 

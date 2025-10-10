@@ -3,6 +3,20 @@ Configuration management for SwapSync API
 """
 from pydantic_settings import BaseSettings
 from typing import Optional
+import os
+import sys
+
+
+def get_database_path():
+    """Get the correct database path for bundled or development mode"""
+    # Check if running in bundled Electron app
+    if getattr(sys, 'frozen', False):
+        # Running in bundled mode (PyInstaller/Electron)
+        base_path = os.path.dirname(sys.executable)
+        return f"sqlite:///{os.path.join(base_path, 'swapsync.db')}"
+    else:
+        # Running in development mode
+        return "sqlite:///./swapsync.db"
 
 
 class Settings(BaseSettings):
@@ -14,7 +28,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # Database
-    DATABASE_URL: str = "sqlite:///./swapsync.db"
+    DATABASE_URL: str = get_database_path()
     
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"

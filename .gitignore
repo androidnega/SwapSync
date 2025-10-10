@@ -42,3 +42,8 @@ backups/
 railway.json
 .railway/
 
+# Electron (not needed for web deployment)
+frontend/release/
+frontend/resources/
+frontend/electron/
+

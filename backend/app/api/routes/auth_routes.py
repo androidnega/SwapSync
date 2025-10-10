@@ -447,13 +447,44 @@ def request_password_reset(
     db.add(reset_request)
     db.commit()
     
-    # In production, send this token via SMS/email
-    # For now, return it (REMOVE IN PRODUCTION)
-    return {
-        "message": "Password reset token generated",
-        "reset_token": reset_token,  # REMOVE IN PRODUCTION
-        "expires_in": "24 hours"
-    }
+    # Send reset token via SMS
+    try:
+        from app.core.sms import SMSService
+        sms_service = SMSService()
+        
+        if sms_service.enabled:
+            message = f"Your SwapSync password reset code is: {reset_token}. Valid for 24 hours. Do not share this code."
+            sms_result = sms_service.send_sms(
+                phone_number=reset_data.phone_number,
+                message=message,
+                sender_id="SwapSync"
+            )
+            
+            if sms_result.get("success"):
+                return {
+                    "message": "Password reset code sent via SMS. Check your phone.",
+                    "expires_in": "24 hours"
+                }
+            else:
+                return {
+                    "message": "Password reset token generated but SMS failed. Contact administrator.",
+                    "reset_token": reset_token,  # Fallback for development
+                    "expires_in": "24 hours"
+                }
+        else:
+            # SMS service not configured
+            return {
+                "message": "Password reset token generated. SMS service not configured.",
+                "reset_token": reset_token,  # Fallback for development
+                "expires_in": "24 hours"
+            }
+    except Exception as e:
+        # Fallback if SMS fails
+        return {
+            "message": "Password reset token generated. SMS service unavailable.",
+            "reset_token": reset_token,  # Fallback for development
+            "expires_in": "24 hours"
+        }
 
 
 @router.post("/password-reset/complete")
@@ -561,6 +592,50 @@ def admin_generate_password(
     return {
         "message": "Password generated successfully",
         "new_password": new_password,  # Send this securely to the user
+        "username": target_user.username
+    }
+
+
+@router.post("/admin/change-user-password")
+def admin_change_user_password(
+    user_id: int,
+    new_password: str,
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Admin changes any user's password directly
+    """
+    if len(new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 6 characters"
+        )
+    
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Change the password
+    target_user.hashed_password = User.hash_password(new_password)
+    db.commit()
+    
+    # Log the activity
+    from app.core.activity_logger import log_activity
+    log_activity(
+        db=db,
+        user=current_user,
+        action=f"changed password for user {target_user.username}",
+        module="users",
+        target_id=target_user.id,
+        details=f"Admin {current_user.username} changed password for {target_user.username}"
+    )
+    
+    return {
+        "message": f"Password changed successfully for user {target_user.username}",
         "username": target_user.username
     }
 

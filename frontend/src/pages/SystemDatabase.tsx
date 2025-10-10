@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faDatabase, 
@@ -11,7 +10,9 @@ import {
   faLock,
   faUnlock,
   faSync,
-  faFileExport
+  faFileExport,
+  faTrash,
+  faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
 
 interface Backup {
@@ -36,7 +37,7 @@ const SystemDatabase: React.FC = () => {
   const [message, setMessage] = useState('');
   const [backups, setBackups] = useState<Backup[]>([]);
   const [ceos, setCeos] = useState<CEO[]>([]);
-  const [activeTab, setActiveTab] = useState<'backups' | 'ceos' | 'tables'>('backups');
+  const [activeTab, setActiveTab] = useState<'backups' | 'ceos' | 'tables' | 'clear'>('backups');
 
   useEffect(() => {
     fetchDatabaseStats();
@@ -57,7 +58,7 @@ const SystemDatabase: React.FC = () => {
 
   const fetchBackups = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/maintenance/backup/list');
+      const response = await api.get('/maintenance/backup/list');
       setBackups(response.data.backups || []);
     } catch (error) {
       console.error('Error fetching backups:', error);
@@ -76,7 +77,7 @@ const SystemDatabase: React.FC = () => {
   const handleCreateBackup = async () => {
     setMessage('');
     try {
-      const response = await axios.post('http://localhost:8000/api/maintenance/backup/create');
+      const response = await api.post('/maintenance/backup/create');
       setMessage(`✅ Backup created: ${response.data.backup_filename}`);
       fetchBackups();
       setTimeout(() => setMessage(''), 3000);
@@ -92,7 +93,7 @@ const SystemDatabase: React.FC = () => {
 
     setMessage('');
     try {
-      await axios.post(`http://localhost:8000/api/maintenance/backup/restore/${filename}`);
+      await api.post(`/maintenance/backup/restore/${filename}`);
       setMessage(`✅ Database restored from ${filename}. Please restart the application.`);
     } catch (error: any) {
       setMessage(`❌ Failed to restore backup: ${error.response?.data?.detail || error.message}`);
@@ -106,7 +107,7 @@ const SystemDatabase: React.FC = () => {
 
     setMessage('');
     try {
-      await axios.delete(`http://localhost:8000/api/maintenance/backup/delete/${filename}`);
+      await api.delete(`/maintenance/backup/delete/${filename}`);
       setMessage(`✅ Backup deleted: ${filename}`);
       fetchBackups();
       setTimeout(() => setMessage(''), 3000);
@@ -152,6 +153,65 @@ const SystemDatabase: React.FC = () => {
       setTimeout(() => setMessage(''), 3000);
     } catch (error: any) {
       setMessage(`❌ Failed to ${action} Manager: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleClearAllData = async () => {
+    const confirmText = 'CLEAR ALL DATA';
+    const userInput = prompt(
+      `⚠️ WARNING: This will permanently delete ALL data from the system!\n\n` +
+      `This includes:\n` +
+      `• All customers\n` +
+      `• All phones\n` +
+      `• All swaps\n` +
+      `• All sales\n` +
+      `• All repairs\n` +
+      `• All invoices\n` +
+      `• All activity logs\n\n` +
+      `Type "${confirmText}" to confirm this action:`
+    );
+
+    if (userInput !== confirmText) {
+      setMessage('❌ Data clearing cancelled. Confirmation text did not match.');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    setMessage('');
+    try {
+      await api.post('/maintenance/clear-all-data');
+      setMessage('✅ All data cleared successfully! The system has been reset.');
+      fetchDatabaseStats();
+      setTimeout(() => setMessage(''), 5000);
+    } catch (error: any) {
+      setMessage(`❌ Failed to clear data: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleClearSpecificData = async (dataType: string) => {
+    const dataTypes = {
+      customers: 'All customers and their data',
+      phones: 'All phone records',
+      swaps: 'All swap transactions',
+      sales: 'All sales records',
+      repairs: 'All repair records',
+      invoices: 'All invoices',
+      activities: 'All activity logs'
+    };
+
+    const description = dataTypes[dataType as keyof typeof dataTypes];
+    if (!confirm(`⚠️ WARNING: This will permanently delete ${description}!\n\nContinue?`)) {
+      return;
+    }
+
+    setMessage('');
+    try {
+      await api.post(`/maintenance/clear-${dataType}`);
+      setMessage(`✅ ${description} cleared successfully!`);
+      fetchDatabaseStats();
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error: any) {
+      setMessage(`❌ Failed to clear ${dataType}: ${error.response?.data?.detail || error.message}`);
     }
   };
 
@@ -273,6 +333,17 @@ const SystemDatabase: React.FC = () => {
               >
                 <FontAwesomeIcon icon={faTable} className="mr-2" />
                 Database Tables & Stats
+              </button>
+              <button
+                onClick={() => setActiveTab('clear')}
+                className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
+                  activeTab === 'clear'
+                    ? 'border-red-600 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                Data Clearing
               </button>
             </nav>
           </div>
@@ -491,6 +562,132 @@ const SystemDatabase: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab Content: Data Clearing */}
+            {activeTab === 'clear' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2 text-red-600" />
+                    Data Clearing Operations
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    ⚠️ WARNING: These operations will permanently delete data from the system. Use with extreme caution!
+                  </p>
+                </div>
+
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-600 mt-1 mr-3" />
+                    <div>
+                      <h3 className="text-red-800 font-semibold mb-2">Important Safety Notice</h3>
+                      <ul className="text-red-700 text-sm space-y-1">
+                        <li>• All data clearing operations are PERMANENT and cannot be undone</li>
+                        <li>• Always create a backup before clearing any data</li>
+                        <li>• Consider clearing specific data types instead of all data</li>
+                        <li>• User accounts and system settings will remain intact</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Clear All Data */}
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+                    <div className="flex items-center mb-4">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-600 text-2xl mr-3" />
+                      <div>
+                        <h3 className="text-lg font-bold text-red-800">Clear All Data</h3>
+                        <p className="text-sm text-red-600">Nuclear option - clears everything</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-red-700 mb-4">
+                      This will permanently delete ALL business data including customers, phones, swaps, sales, repairs, and invoices.
+                    </p>
+                    <button
+                      onClick={handleClearAllData}
+                      className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+                    >
+                      <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                      Clear All Data
+                    </button>
+                  </div>
+
+                  {/* Clear Specific Data Types */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-800">Clear Specific Data</h3>
+                    
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => handleClearSpecificData('customers')}
+                        className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition text-left"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        Clear All Customers
+                      </button>
+                      
+                      <button
+                        onClick={() => handleClearSpecificData('phones')}
+                        className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition text-left"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        Clear All Phone Records
+                      </button>
+                      
+                      <button
+                        onClick={() => handleClearSpecificData('swaps')}
+                        className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition text-left"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        Clear All Swap Transactions
+                      </button>
+                      
+                      <button
+                        onClick={() => handleClearSpecificData('sales')}
+                        className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition text-left"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        Clear All Sales Records
+                      </button>
+                      
+                      <button
+                        onClick={() => handleClearSpecificData('repairs')}
+                        className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition text-left"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        Clear All Repair Records
+                      </button>
+                      
+                      <button
+                        onClick={() => handleClearSpecificData('invoices')}
+                        className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition text-left"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        Clear All Invoices
+                      </button>
+                      
+                      <button
+                        onClick={() => handleClearSpecificData('activities')}
+                        className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition text-left"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        Clear All Activity Logs
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h4 className="text-yellow-800 font-semibold mb-2">Before Clearing Data:</h4>
+                  <ul className="text-yellow-700 text-sm space-y-1">
+                    <li>1. Create a backup using the "Database Backups" tab</li>
+                    <li>2. Export any important data you want to keep</li>
+                    <li>3. Inform all users about the maintenance</li>
+                    <li>4. Consider clearing during off-peak hours</li>
+                  </ul>
                 </div>
               </div>
             )}

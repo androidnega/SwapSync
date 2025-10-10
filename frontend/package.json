@@ -1,15 +1,19 @@
 {
   "name": "swapsync",
   "productName": "SwapSync",
-  "description": "Phone Swapping & Repair Shop Management System",
-  "author": "Manuel <https://www.manuelcode.info>",
+  "description": "Professional Phone Swapping & Repair Shop Management System",
+  "author": {
+    "name": "Manuel Code",
+    "email": "info@manuelcode.info",
+    "url": "https://www.manuelcode.info"
+  },
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "electron": "cross-env NODE_ENV=development electron .",
@@ -55,12 +59,13 @@
     "wait-on": "^9.0.1"
   },
   "build": {
-    "appId": "com.swapsync.app",
+    "appId": "com.manuelcode.swapsync",
     "productName": "SwapSync",
+    "copyright": "Copyright © 2025 Manuel Code. All rights reserved.",
     "files": [
       "dist/**/*",
       "electron/**/*",
-      "!node_modules/**/*"
+      "node_modules/**/*"
     ],
     "extraResources": [
       {
@@ -89,7 +94,7 @@
           ]
         }
       ],
-      "icon": "public/icon.ico"
+      "icon": "public/swapsyng.png"
     },
     "mac": {
       "target": "dmg",

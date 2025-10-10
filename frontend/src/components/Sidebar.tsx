@@ -57,6 +57,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
   // 👑 SYSTEM ADMINISTRATOR - Platform & System Management ONLY
   super_admin: [
     { name: 'Dashboard', icon: faChartLine, route: '/' },
+    { name: 'User Management', icon: faUsers, route: '/users' },
     { name: 'Manager Management', icon: faUserShield, route: '/staff-management' },
     { name: 'Audit Access', icon: faEye, route: '/audit-access' },
     { name: 'System Logs', icon: faServer, route: '/activity-logs' },
@@ -67,6 +68,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
   // 👑 ADMIN - Same as Super Admin (System Management ONLY)
   admin: [
     { name: 'Dashboard', icon: faChartLine, route: '/' },
+    { name: 'User Management', icon: faUsers, route: '/users' },
     { name: 'Manager Management', icon: faUserShield, route: '/staff-management' },
     { name: 'Audit Access', icon: faEye, route: '/audit-access' },
     { name: 'System Logs', icon: faServer, route: '/activity-logs' },

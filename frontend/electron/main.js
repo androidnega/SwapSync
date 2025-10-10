@@ -16,7 +16,7 @@ const BACKEND_URL = `http://127.0.0.1:${BACKEND_PORT}`;
 async function waitForBackend(maxAttempts = 30) {
   for (let i = 0; i < maxAttempts; i++) {
     try {
-      await axios.get(`${BACKEND_URL}/ping`);
+      await axios.get(`${BACKEND_URL}/`, { timeout: 2000 });
       console.log('✅ Backend is ready!');
       return true;
     } catch (error) {
@@ -45,12 +45,39 @@ async function startBackend() {
   console.log('🚀 Starting FastAPI backend...');
   console.log(`   Python: ${pythonExecutable}`);
   console.log(`   Script: ${mainScript}`);
+  console.log(`   Working Directory: ${backendPath}`);
   
-  backendProcess = spawn(pythonExecutable, [mainScript], {
+  // Check if Python exists
+  const fs = require('fs');
+  if (!fs.existsSync(pythonExecutable)) {
+    console.error(`❌ Python not found at: ${pythonExecutable}`);
+    
+    // Show helpful error dialog
+    const { dialog } = require('electron');
+    dialog.showErrorBox(
+      'SwapSync - Python Backend Missing',
+      'Python backend is not installed.\n\n' +
+      'This appears to be a portable installation.\n' +
+      'Please use the bundled version from:\n' +
+      'frontend\\release\\win-unpacked\\SwapSync.exe\n\n' +
+      'Or install using the full installer.\n\n' +
+      'The app will now close.'
+    );
+    return false;
+  }
+  
+  // Use uvicorn to run the FastAPI app
+  backendProcess = spawn(pythonExecutable, [
+    '-m', 'uvicorn',
+    'main:app',
+    '--host', '0.0.0.0',
+    '--port', '8000'
+  ], {
     cwd: backendPath,
     env: {
       ...process.env,
       PYTHONUNBUFFERED: '1',
+      PYTHONPATH: backendPath
     },
   });
 
@@ -94,9 +121,10 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
+      webSecurity: false, // Allow localhost API calls in production
     },
-    icon: path.join(__dirname, '../public/icon.png'),
+    icon: path.join(__dirname, '../public/swapsyng.png'),
   });
 
   // In development mode, load from Vite dev server
@@ -119,13 +147,29 @@ function createWindow() {
 app.on('ready', async () => {
   console.log('🚀 SwapSync starting...');
   
-  // Start backend first
+  // Try to start backend (if bundled) or check if it's running
   const backendStarted = await startBackend();
   
+  // In production, if backend is not bundled, just check if it's running
   if (!backendStarted && process.env.NODE_ENV !== 'development') {
-    console.error('❌ Cannot start without backend');
-    app.quit();
-    return;
+    console.warn('⚠️ Backend auto-start failed. Checking if backend is running...');
+    const backendRunning = await waitForBackend(5); // Quick check
+    if (!backendRunning) {
+      console.error('❌ Backend is not running. Please start the backend server first.');
+      // Show error dialog instead of quitting silently
+      const { dialog } = require('electron');
+      dialog.showErrorBox(
+        'Backend Server Not Running',
+        'SwapSync backend server is not running.\n\n' +
+        'Please start the backend by running START_ALL.bat\n' +
+        'or START_SWAPSYNC.bat before launching the app.\n\n' +
+        'The app will now close.'
+      );
+      app.quit();
+      return;
+    } else {
+      console.log('✅ Found running backend server!');
+    }
   }
   
   // Create window

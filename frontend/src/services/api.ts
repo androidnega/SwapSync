@@ -11,6 +11,11 @@ const getApiBaseUrl = () => {
     return import.meta.env.VITE_API_URL;
   }
   
+  // In Electron, always use localhost
+  if (window.location.protocol === 'file:') {
+    return 'http://localhost:8000/api';
+  }
+  
   // Use the current host for network access
   const hostname = window.location.hostname;
   return `http://${hostname}:8000/api`;

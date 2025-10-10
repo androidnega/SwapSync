@@ -26,6 +26,7 @@ import PhoneBrands from './pages/PhoneBrands';
 import SwappingHub from './pages/SwappingHub';
 import ProductsHub from './pages/ProductsHub';
 import Profile from './pages/Profile';
+import UserManagement from './pages/UserManagement';
 import { getToken, removeToken } from './services/authService';
 import axios from 'axios';
 import './App.css';
@@ -128,6 +129,11 @@ function AppContent() {
           <Route path="/audit-access" element={
             <ProtectedRoute allowedRoles={['admin', 'super_admin']} userRole={user.role}>
               <AdminAuditAccess />
+            </ProtectedRoute>
+          } />
+          <Route path="/users" element={
+            <ProtectedRoute allowedRoles={['admin', 'super_admin']} userRole={user.role}>
+              <UserManagement />
             </ProtectedRoute>
           } />
           
