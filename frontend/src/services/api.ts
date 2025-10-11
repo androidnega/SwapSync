@@ -4,7 +4,7 @@
  */
 import axios from 'axios';
 
-// Automatically detect the API URL based on the current host
+// API Base URL - Always use production backend
 const getApiBaseUrl = () => {
   // Check if there's an environment variable set
   if (import.meta.env.VITE_API_URL) {
@@ -16,13 +16,13 @@ const getApiBaseUrl = () => {
     return 'http://localhost:8000/api';
   }
   
-  // Production: Use custom backend domain
-  if (window.location.hostname.includes('digitstec.store') || window.location.hostname.includes('vercel.app')) {
-    return 'https://api.digitstec.store';
+  // For localhost development, use localhost backend
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:8000/api';
   }
   
-  // Development: Use localhost
-  return 'http://localhost:8000/api';
+  // For all deployed versions (Vercel, custom domains), use production API
+  return 'https://api.digitstec.store';
 };
 
 const API_BASE_URL = getApiBaseUrl();
