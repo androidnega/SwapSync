@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 
@@ -33,7 +34,7 @@ const ActivityLogs: React.FC = () => {
   const fetchActivities = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/staff/activities?limit=100', {
+      const response = await axios.get('${API_URL}/staff/activities?limit=100', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setActivities(response.data);

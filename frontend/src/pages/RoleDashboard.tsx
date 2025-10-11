@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 import DashboardCard from '../components/DashboardCard';
@@ -48,13 +49,13 @@ const RoleDashboard: React.FC = () => {
       const token = getToken();
       
       // Fetch low stock products
-      const lowStockResponse = await axios.get('http://localhost:8000/api/products/low-stock', {
+      const lowStockResponse = await axios.get(`${API_URL}/products/low-stock`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setLowStockProducts(lowStockResponse.data);
       
       // Fetch out of stock products
-      const outOfStockResponse = await axios.get('http://localhost:8000/api/products/out-of-stock', {
+      const outOfStockResponse = await axios.get(`${API_URL}/products/out-of-stock`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOutOfStockProducts(outOfStockResponse.data);
@@ -66,7 +67,7 @@ const RoleDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/dashboard/cards', {
+      const response = await axios.get(`${API_URL}/dashboard/cards`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDashboardData(response.data);

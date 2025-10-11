@@ -3,6 +3,7 @@
  * Record direct product sales (phones, accessories, etc.)
  */
 import { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import { productSaleAPI, customerAPI, productAPI } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
@@ -87,7 +88,7 @@ const ProductSales = () => {
   const fetchUserRole = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/auth/me', {
+      const response = await axios.get('${API_URL}/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserRole(response.data.role);
@@ -133,7 +134,7 @@ const ProductSales = () => {
   const handleCreateQuickCustomer = async () => {
     try {
       const token = getToken();
-      const response = await axios.post('http://localhost:8000/api/customers/', newCustomerData, {
+      const response = await axios.post('${API_URL}/customers/', newCustomerData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

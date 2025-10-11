@@ -3,6 +3,7 @@
  * Record direct sale transactions (no trade-in)
  */
 import { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import { saleAPI, customerAPI, phoneAPI } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
@@ -64,7 +65,7 @@ const SalesManager = () => {
   const fetchUserRole = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/auth/me', {
+      const response = await axios.get('${API_URL}/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserRole(response.data.role);

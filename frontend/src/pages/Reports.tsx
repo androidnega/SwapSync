@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -60,7 +61,7 @@ const Reports: React.FC = () => {
     try {
       const token = getToken();
       const response = await axios.get(
-        'http://localhost:8000/api/staff/list',
+        '${API_URL}/staff/list',
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setStaffList(response.data);
@@ -80,7 +81,7 @@ const Reports: React.FC = () => {
       if (filters.staff_id) params.append('staff_id', filters.staff_id);
       
       const response = await axios.get(
-        `http://localhost:8000/api/reports/sales-swaps?${params.toString()}`,
+        `${API_URL}/reports/sales-swaps?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -101,7 +102,7 @@ const Reports: React.FC = () => {
       if (filters.end_date) params.append('end_date', filters.end_date);
       
       const response = await axios.get(
-        `http://localhost:8000/api/reports/export/csv?${params.toString()}`,
+        `${API_URL}/reports/export/csv?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -129,7 +130,7 @@ const Reports: React.FC = () => {
       if (filters.transaction_type) params.append('transaction_type', filters.transaction_type);
       
       const response = await axios.get(
-        `http://localhost:8000/api/reports/export/pdf?${params.toString()}`,
+        `${API_URL}/reports/export/pdf?${params.toString()}`,
         { 
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'

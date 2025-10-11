@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
-
-import { API_URL } from '../services/api';
 
 interface Phone {
   id: number;
@@ -1171,7 +1170,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
                 <h3 className="font-semibold text-blue-900 mb-2">📥 Step 1: Download Template</h3>
                 <p className="text-sm text-blue-800 mb-3">Download the Excel template, fill in your phone data, then upload it here.</p>
                 <a
-                  href="http://localhost:8000/api/bulk-upload/phones/template"
+                  href="${API_URL}/bulk-upload/phones/template"
                   download
                   className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
                 >

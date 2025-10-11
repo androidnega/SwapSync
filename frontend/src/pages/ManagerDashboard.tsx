@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getToken } from '../services/authService';
+import { API_URL } from '../services/api';
 import Phones from './Phones';
 import SwapManager from './SwapManager';
 import PendingResales from './PendingResales';
@@ -42,7 +43,7 @@ const ManagerDashboard: React.FC = () => {
   const fetchStats = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/staff/stats', {
+      const response = await axios.get('${API_URL}/staff/stats', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(response.data);
@@ -57,10 +58,10 @@ const ManagerDashboard: React.FC = () => {
     try {
       const token = getToken();
       const [pendingResponse, phonesResponse] = await Promise.all([
-        axios.get('http://localhost:8000/api/swaps/pending-resales', {
+        axios.get('${API_URL}/swaps/pending-resales', {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get('http://localhost:8000/api/phones/', {
+        axios.get('${API_URL}/phones/', {
           headers: { Authorization: `Bearer ${token}` }
         }),
       ]);

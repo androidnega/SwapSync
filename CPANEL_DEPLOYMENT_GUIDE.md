@@ -292,16 +292,16 @@ In cPanel:
 Open these URLs in your browser:
 
 1. **API Documentation:**
-   ```
-   https://digitstec.store/docs
-   ```
+```
+https://digitstec.store/docs
+```
    Should show FastAPI Swagger UI
 
 2. **Health Check:**
-   ```
-   https://digitstec.store/api/health
-   ```
-   Should return: `{"status": "healthy"}`
+```
+https://digitstec.store/api/health
+```
+Should return: `{"status": "healthy"}`
 
 3. **Alternative API Docs:**
    ```

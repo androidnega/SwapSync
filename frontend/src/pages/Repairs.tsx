@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
-
-import { API_URL } from '../services/api';
 
 interface Repair {
   id: number;
@@ -39,7 +38,7 @@ const Repairs: React.FC = () => {
 
   const fetchUserRole = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/auth/me', {
+      const response = await axios.get('${API_URL}/auth/me', {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       setUserRole(response.data.role);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -89,7 +90,7 @@ const StaffManagement: React.FC = () => {
   const fetchCurrentUser = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/auth/me', {
+      const response = await axios.get('${API_URL}/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCurrentUser(response.data);
@@ -101,7 +102,7 @@ const StaffManagement: React.FC = () => {
   const fetchStaff = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/staff/my-staff', {
+      const response = await axios.get('${API_URL}/staff/my-staff', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStaff(response.data);
@@ -119,7 +120,7 @@ const StaffManagement: React.FC = () => {
   const fetchCompanies = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/staff/admin/companies', {
+      const response = await axios.get('${API_URL}/staff/admin/companies', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCompanies(response.data.companies || []);
@@ -140,7 +141,7 @@ const StaffManagement: React.FC = () => {
     try {
       const token = getToken();
       await axios.post(
-        'http://localhost:8000/api/auth/register',
+        '${API_URL}/auth/register',
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -175,7 +176,7 @@ const StaffManagement: React.FC = () => {
     try {
       const token = getToken();
       await axios.put(
-        `http://localhost:8000/api/staff/update/${selectedUser.id}`,
+        `${API_URL}/staff/update/${selectedUser.id}`,
         editData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -203,7 +204,7 @@ const StaffManagement: React.FC = () => {
     try {
       const token = getToken();
       await axios.post(
-        `http://localhost:8000/api/staff/reset-password/${selectedUser.id}`,
+        `${API_URL}/staff/reset-password/${selectedUser.id}`,
         { new_password: newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -232,7 +233,7 @@ const StaffManagement: React.FC = () => {
     try {
       const token = getToken();
       await axios.delete(
-        `http://localhost:8000/api/staff/delete/${user.id}`,
+        `${API_URL}/staff/delete/${user.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

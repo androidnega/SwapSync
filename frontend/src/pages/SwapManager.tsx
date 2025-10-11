@@ -3,6 +3,7 @@
  * Record swap transactions and view swap history
  */
 import { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import { swapAPI, customerAPI, phoneAPI } from '../services/api';
 import PhoneSelectionModal from '../components/PhoneSelectionModal';
 import SwapReceipt from '../components/SwapReceipt';
@@ -76,7 +77,7 @@ const SwapManager = () => {
 
   const fetchCompanyName = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/auth/me', {
+      const response = await axios.get('${API_URL}/auth/me', {
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
       });
       setCompanyName(response.data.company_name || 'SwapSync Shop');

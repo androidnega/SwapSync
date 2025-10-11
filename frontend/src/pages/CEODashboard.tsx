@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getToken } from '../services/authService';
+import { API_URL } from '../services/api';
 
 interface StaffMember {
   id: number;
@@ -32,7 +33,7 @@ const CEODashboard: React.FC = () => {
   const fetchStats = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/staff/stats', {
+      const response = await axios.get('${API_URL}/staff/stats', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(response.data);

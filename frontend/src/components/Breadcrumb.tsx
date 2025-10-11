@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faChevronRight, faChevronDown, faUser, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import { getToken } from '../services/authService';
+import { API_URL } from '../services/api';
 
 interface BreadcrumbProps {
   customItems?: Array<{ label: string; path?: string }>;
@@ -39,7 +40,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ customItems }) => {
   const fetchUser = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('http://localhost:8000/api/auth/me', {
+      const response = await axios.get('${API_URL}/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser(response.data);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../services/api';
 import SwapManager from './SwapManager';
 import PendingResales from './PendingResales';
 import CompletedSwaps from './CompletedSwaps';
@@ -22,10 +23,10 @@ const SwappingHub: React.FC = () => {
     try {
       const token = getToken();
       const [pendingResponse, phonesResponse] = await Promise.all([
-        axios.get('http://localhost:8000/api/swaps/pending-resales', {
+        axios.get('${API_URL}/swaps/pending-resales', {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get('http://localhost:8000/api/phones/', {
+        axios.get('${API_URL}/phones/', {
           headers: { Authorization: `Bearer ${token}` }
         }),
       ]);
