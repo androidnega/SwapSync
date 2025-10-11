@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwapSync SMS Setup</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🚀 SwapSync SMS Setup</h1>
+        <p class="subtitle">One-time configuration for SMS notifications</p>
+        
+        <form id="setupForm">
+            <label for="apiUrl">🌐 Your Railway Backend URL:</label>
+            <input 
+                type="text" 
+                id="apiUrl" 
+                value="https://api.digitstec.store/api" 
+                placeholder="https://api.digitstec.store/api"
+            >
+            
+            <label for="apiKey">🔑 Arkasel API Key:</label>
+            <input 
+                type="password" 
+                id="apiKey" 
+                placeholder="Enter your Arkasel API key"
+                required
+            >
+            
+            <label for="senderId">📱 Sender ID:</label>
+            <input 
+                type="text" 
+                id="senderId" 
+                value="SwapSync" 
+                placeholder="SwapSync"
+            >
+            
+            <label for="username">👤 Admin Username:</label>
+            <input 
+                type="text" 
+                id="username" 
+                placeholder="admin"
+                required
+            >
+            
+            <label for="password">🔒 Admin Password:</label>
+            <input 
+                type="password" 
+                id="password" 
+                placeholder="Your admin password"
+                required
+            >
+            
+            <button type="submit" id="submitBtn">
+                💾 Save SMS Configuration
+            </button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('setupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const senderId = document.getElementById('senderId').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Setting up...';
+            resultDiv.innerHTML = '';
+            
+            try {
+                // Step 1: Login
+                resultDiv.innerHTML = '<div class="info">🔐 Step 1: Logging in...</div>';
+                
+                const loginResponse = await fetch(`${apiUrl}/auth/login-json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (!loginResponse.ok) {
+                    throw new Error('Login failed. Check username/password.');
+                }
+                
+                const loginData = await loginResponse.json();
+                const token = loginData.access_token;
+                
+                resultDiv.innerHTML += '<div class="success">✅ Logged in successfully!</div>';
+                
+                // Step 2: Save SMS Config
+                resultDiv.innerHTML += '<div class="info">💾 Step 2: Saving SMS configuration...</div>';
+                
+                const configResponse = await fetch(`${apiUrl}/sms-config/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        arkasel_api_key: apiKey,
+                        arkasel_sender_id: senderId,
+                        enabled: true
+                    })
+                });
+                
+                if (!configResponse.ok) {
+                    const errorData = await configResponse.json();
+                    throw new Error(errorData.detail || 'Failed to save config');
+                }
+                
+                const configData = await configResponse.json();
+                
+                resultDiv.innerHTML += '<div class="success">✅ SMS configuration saved!</div>';
+                resultDiv.innerHTML += `<div class="success">
+📊 Status:
+   Arkasel enabled: ${configData.arkasel_enabled ? '✅' : '❌'}
+   SMS enabled: ${configData.enabled ? '✅' : '❌'}
+</div>`;
+                
+                // Step 3: Check Debug Info
+                resultDiv.innerHTML += '<div class="info">🔍 Step 3: Verifying configuration...</div>';
+                
+                const debugResponse = await fetch(`${apiUrl}/sms-config/debug`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const debugData = await debugResponse.json();
+                
+                if (debugData.arkasel_decrypted_length > 0) {
+                    resultDiv.innerHTML += `<div class="success">
+✅ SETUP COMPLETE!
+
+📊 Verification:
+   API Key Length: ${debugData.arkasel_decrypted_length} characters
+   Arkasel Enabled: ${debugData.arkasel_enabled ? '✅ Yes' : '❌ No'}
+   SMS Enabled: ${debugData.sms_enabled ? '✅ Yes' : '❌ No'}
+   Updated By: ${debugData.updated_by}
+
+🎉 SMS is ready to use!
+
+⚠️ IMPORTANT: Restart Railway backend service for changes to take effect!
+   Railway Dashboard → Backend → ⋮ → Restart
+
+After restart:
+✅ Create a manager with phone number
+✅ Manager will receive SMS with credentials!
+</div>`;
+                } else {
+                    resultDiv.innerHTML += '<div class="error">⚠️ API key saved but verification failed. May need to restart Railway.</div>';
+                }
+                
+                submitBtn.textContent = '✅ Setup Complete!';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                submitBtn.disabled = false;
+                submitBtn.textContent = '💾 Save SMS Configuration';
+            }
+        });
+    </script>
+</body>
+</html>
+
