@@ -8,7 +8,7 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.MODE === 'development' && 
                      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:8000/api'
-  : 'https://api.digitstec.store';
+  : 'https://api.digitstec.store/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
