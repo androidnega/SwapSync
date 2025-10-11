@@ -251,9 +251,11 @@ const Login: React.FC = () => {
 
           </div>
         </div>
-        
-        {/* Copyright - Below card (fixed position) */}
-        <p className="text-center text-xs text-gray-500 mt-4">
+      </div>
+      
+      {/* Copyright - Horizontally centered below card */}
+      <div className="w-full max-w-sm mx-auto mt-4">
+        <p className="text-center text-xs text-gray-500">
           © 2025 SwapSync v1.0.0 · Developed by{' '}
           <a 
             href="tel:+233257940791" 
