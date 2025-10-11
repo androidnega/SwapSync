@@ -3,6 +3,7 @@ Master migration runner - automatically runs all migration scripts
 """
 import os
 import sys
+import subprocess
 import glob
 
 def run_migrations():
@@ -21,10 +22,23 @@ def run_migrations():
     for migration_file in migration_files:
         print(f"\n▶️  Running: {migration_file}")
         try:
-            # Execute the migration script
-            with open(migration_file) as f:
-                exec(f.read())
-            print(f"✅ {migration_file} completed successfully!")
+            # Run migration as subprocess (safer than exec)
+            result = subprocess.run(
+                [sys.executable, migration_file],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            if result.returncode == 0:
+                print(f"✅ {migration_file} completed successfully!")
+                if result.stdout:
+                    print(result.stdout)
+            else:
+                # Migration failed, but don't crash
+                print(f"⚠️  {migration_file} had an issue (this may be normal if already applied)")
+                if result.stderr:
+                    print(f"   Error: {result.stderr[:200]}")  # Truncate long errors
         except Exception as e:
             # Don't fail if migration already applied or has minor errors
             print(f"⚠️  {migration_file}: {str(e)}")
@@ -37,7 +51,7 @@ if __name__ == "__main__":
     try:
         run_migrations()
     except Exception as e:
-        print(f"❌ Migration error: {e}")
+        print(f"⚠️  Migration runner error: {e}")
+        print("⚠️  Continuing to start server anyway...")
         # Don't exit with error code - allow server to start anyway
-        # sys.exit(1)
 
