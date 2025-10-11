@@ -253,19 +253,17 @@ const Login: React.FC = () => {
         </div>
       </div>
       
-      {/* Copyright - Below card */}
-      <div className="mt-6 text-center">
-        <p className="text-xs text-gray-500">
-          © 2025 SwapSync v1.0.0 · Developed by{' '}
-          <a 
-            href="tel:+233257940791" 
-            className="text-gray-700 hover:text-blue-600 transition"
-            style={{ textDecoration: 'none' }}
-          >
-            Manuel
-          </a>
-        </p>
-      </div>
+      {/* Copyright - Simple text below card */}
+      <p className="mt-6 text-center text-xs text-gray-500">
+        © 2025 SwapSync v1.0.0 · Developed by{' '}
+        <a 
+          href="tel:+233257940791" 
+          className="text-gray-700 hover:text-blue-600 transition"
+          style={{ textDecoration: 'none' }}
+        >
+          Manuel
+        </a>
+      </p>
 
       {/* Info Modal */}
       {showInfoModal && (

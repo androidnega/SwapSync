@@ -132,6 +132,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
 
 const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
   
   const menuItems = sidebarMenus[user.role] || [];
@@ -156,21 +157,52 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
   };
 
   return (
-    <div 
-      className={`${
-        isCollapsed ? 'w-20' : 'w-64'
-      } bg-gray-900 text-white h-screen flex flex-col transition-all duration-300 ease-in-out relative`}
-    >
-      {/* Toggle Button */}
+    <>
+      {/* Mobile Hamburger Button - Fixed Position */}
       <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-6 bg-gray-800 hover:bg-gray-700 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg z-10"
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="md:hidden fixed top-4 left-4 z-50 bg-gray-900 text-white p-3 rounded-lg shadow-lg"
       >
-        <FontAwesomeIcon 
-          icon={isCollapsed ? faChevronRight : faChevronLeft} 
-          className="text-xs"
-        />
+        <FontAwesomeIcon icon={faBars} className="text-xl" />
       </button>
+
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div 
+        className={`
+          ${isCollapsed ? 'w-20' : 'w-64'}
+          bg-gray-900 text-white h-screen flex flex-col transition-all duration-300 ease-in-out relative
+          
+          ${/* Mobile: Overlay sidebar */}
+          md:relative fixed inset-y-0 left-0 z-40
+          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
+      >
+        {/* Desktop Toggle Button */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden md:block absolute -right-3 top-6 bg-gray-800 hover:bg-gray-700 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg z-10"
+        >
+          <FontAwesomeIcon 
+            icon={isCollapsed ? faChevronRight : faChevronLeft} 
+            className="text-xs"
+          />
+        </button>
+
+        {/* Mobile Close Button */}
+        <button
+          onClick={() => setIsMobileOpen(false)}
+          className="md:hidden absolute top-4 right-4 text-white text-2xl"
+        >
+          ×
+        </button>
 
       {/* Logo/Brand */}
       <div className="p-4 border-b border-gray-800">
@@ -264,7 +296,10 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
       {/* Logout Button */}
       <div className="p-4 border-t border-gray-800">
         <button
-          onClick={onLogout}
+          onClick={() => {
+            setIsMobileOpen(false);
+            onLogout();
+          }}
           className={`w-full flex items-center ${
             isCollapsed ? 'justify-center px-2' : 'px-4'
           } py-3 rounded-lg bg-red-600 hover:bg-red-700 transition-colors`}
@@ -275,6 +310,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
         </button>
       </div>
     </div>
+    </>
   );
 };
 
