@@ -5,7 +5,8 @@
 import axios from 'axios';
 
 // EMERGENCY: Force immediate cache bust
-console.log('🚨 EMERGENCY CACHE BUST v4.0 - FORCE DEPLOY');
+console.log('🚨 EMERGENCY CACHE BUST v4.1 - FORCE VERCEL DEPLOY');
+console.log('🚨 VERIFICATION: This is the latest code - v4.1');
 
 // API Base URL Configuration - ALWAYS HTTPS in production
 const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
