@@ -312,36 +312,37 @@ const Login: React.FC = () => {
 
       {/* Password Reset Modal */}
       {showResetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
-            {/* Close Button */}
-            <button
-              onClick={() => {
-                setShowResetModal(false);
-                setResetStep('request');
-                setResetMessage('');
-                setResetError('');
-              }}
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 text-2xl leading-none"
-            >
-              ×
-            </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full relative">
+            <div className="bg-white border-b border-gray-200 p-4 relative">
+              <button
+                onClick={() => {
+                  setShowResetModal(false);
+                  setResetStep('request');
+                  setResetMessage('');
+                  setResetError('');
+                }}
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+              <h2 className="text-lg font-bold text-gray-800 pr-6">Reset Password</h2>
+              <p className="text-xs text-gray-600 mt-1">
+                {resetStep === 'request' 
+                  ? 'Receive reset code via SMS' 
+                  : 'Enter code and new password'}
+              </p>
+            </div>
+            
+            <div className="p-6" style={{ minHeight: '320px', maxHeight: '320px', overflowY: 'auto' }}>
 
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 pr-8">Reset Password</h2>
-            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
-              {resetStep === 'request' 
-                ? 'Enter your account details to receive a reset code via SMS' 
-                : 'Enter the code sent to your phone and your new password'}
-            </p>
-
-            {/* Messages */}
             {resetMessage && (
-              <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-green-50 text-green-800 rounded-lg text-xs sm:text-sm">
+              <div className="mb-3 p-2 bg-green-50 text-green-800 rounded text-xs">
                 {resetMessage}
               </div>
             )}
             {resetError && (
-              <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-red-50 text-red-800 rounded-lg text-xs sm:text-sm">
+              <div className="mb-3 p-2 bg-red-50 text-red-800 rounded text-xs">
                 {resetError}
               </div>
             )}
