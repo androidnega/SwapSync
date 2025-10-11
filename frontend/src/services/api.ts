@@ -11,12 +11,14 @@ const API_BASE_URL = isDevelopment
   : 'https://api.digitstec.store/api';
 
 // Debug logging with timestamp to verify fresh code
-console.log('🔍 API Configuration (v2.1):', {
+console.log('🔍 API Configuration (v3.0 - CACHE BUST):', {
   hostname: window.location.hostname,
   isDevelopment,
   apiUrl: API_BASE_URL,
   timestamp: new Date().toISOString(),
-  protocol: window.location.protocol
+  protocol: window.location.protocol,
+  buildVersion: '3.0-cache-bust',
+  randomId: Math.random().toString(36).substring(7)
 });
 
 // Force HTTPS in production - double check
