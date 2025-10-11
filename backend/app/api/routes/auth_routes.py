@@ -15,7 +15,6 @@ from app.core.auth import (
 )
 from app.models.user import User, UserRole
 from app.models.user_session import UserSession
-from app.models.password_reset import PasswordResetRequest
 from app.schemas.user import (
     UserCreate,
     UserLogin,
@@ -24,12 +23,6 @@ from app.schemas.user import (
     Token
 )
 from app.schemas.session import SessionResponse, SessionStats
-from app.schemas.password_reset import (
-    PasswordResetRequest as PasswordResetRequestSchema,
-    PasswordResetComplete,
-    PasswordResetResponse,
-    AdminPasswordGenerate
-)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
