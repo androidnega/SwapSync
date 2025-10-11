@@ -15,7 +15,6 @@ from app.models.category import Category
 from app.models.brand import Brand
 from app.models.product import Product, StockMovement
 from app.models.product_sale import ProductSale
-from app.models.password_reset import PasswordResetRequest
 from app.models.user_session import UserSession
 from app.models.audit_code import AuditCode
 
@@ -23,6 +22,6 @@ __all__ = [
     "Customer", "Phone", "PhoneStatus", "Swap", "Sale", "Repair", 
     "ResaleStatus", "User", "UserRole", "ActivityLog", "Invoice", 
     "SMSLog", "Category", "Brand", "Product", "StockMovement", "ProductSale",
-    "PasswordResetRequest", "UserSession", "AuditCode"
+    "UserSession", "AuditCode"
 ]
 

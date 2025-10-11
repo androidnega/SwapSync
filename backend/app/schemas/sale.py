@@ -35,9 +35,9 @@ class SaleResponse(BaseModel):
     original_price: float
     discount_amount: float
     amount_paid: float
-    invoice_number: str | None = None
-    customer_phone: str | None = None
-    customer_email: str | None = None
+    invoice_number: Optional[str] = None
+    customer_phone: Optional[str] = None
+    customer_email: Optional[str] = None
     sms_sent: int = 0
     email_sent: int = 0
     created_by_user_id: Optional[int] = None
