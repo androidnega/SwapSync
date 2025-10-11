@@ -11,8 +11,8 @@ class UserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     full_name: str = Field(..., min_length=1, max_length=100)
+    phone_number: str = Field(..., min_length=10, max_length=20)  # Required for OTP & password reset
     company_name: Optional[str] = Field(None, max_length=100)  # For CEOs
-    phone_number: Optional[str] = Field(None, max_length=20)  # For OTP login
     password: str = Field(..., min_length=6)
     role: str = Field(default="shop_keeper", pattern="^(shop_keeper|repairer|admin)$")
 
