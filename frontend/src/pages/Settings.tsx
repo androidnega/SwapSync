@@ -378,7 +378,7 @@ const Settings: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">System Settings</h1>
 
         {/* Status Message */}
