@@ -12,6 +12,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     full_name: str = Field(..., min_length=1, max_length=100)
     company_name: Optional[str] = Field(None, max_length=100)  # For CEOs
+    phone_number: Optional[str] = Field(None, max_length=20)  # For OTP login
     password: str = Field(..., min_length=6)
     role: str = Field(default="shop_keeper", pattern="^(shop_keeper|repairer|admin)$")
 
