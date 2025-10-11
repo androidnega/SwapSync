@@ -8,9 +8,23 @@ import base64
 from cryptography.fernet import Fernet
 import os
 
-# Generate or load encryption key (in production, use env variable)
-ENCRYPTION_KEY = os.getenv("SMS_ENCRYPTION_KEY", Fernet.generate_key().decode())
-cipher = Fernet(ENCRYPTION_KEY.encode() if isinstance(ENCRYPTION_KEY, str) else ENCRYPTION_KEY)
+# CRITICAL: Use stable encryption key!
+# If not set in env, use a deterministic default (NOT RANDOM!)
+# In production, MUST set SMS_ENCRYPTION_KEY env variable in Railway
+DEFAULT_KEY = "SwapSync-SMS-Encryption-Key-2025-Change-In-Production-Please=="  # Base64-compatible
+ENCRYPTION_KEY = os.getenv("SMS_ENCRYPTION_KEY", DEFAULT_KEY)
+
+# Ensure key is proper length for Fernet (must be 32 bytes base64-encoded = 44 chars)
+try:
+    # Try to use the key as-is
+    cipher = Fernet(ENCRYPTION_KEY.encode() if isinstance(ENCRYPTION_KEY, str) else ENCRYPTION_KEY)
+    print(f"[SMS_CONFIG] ✅ Using encryption key from environment")
+except Exception:
+    # If key is invalid, generate a proper one from the default
+    import hashlib
+    key_hash = hashlib.sha256(DEFAULT_KEY.encode()).digest()
+    cipher = Fernet(base64.urlsafe_b64encode(key_hash))
+    print(f"[SMS_CONFIG] ⚠️ Generated Fernet key from hash (set SMS_ENCRYPTION_KEY env var!)")
 
 
 class SMSConfig(Base):
