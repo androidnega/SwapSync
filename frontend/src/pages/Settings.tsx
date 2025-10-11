@@ -483,33 +483,52 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
-      {/* Maintenance Mode */}
+      {/* Login Controls */}
       <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
-        <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">🔧 Maintenance Mode</h2>
-        <div className="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between">
-          <div>
-            <p className="text-sm md:text-base text-gray-600 font-semibold">
-              {maintenanceMode ? (
-                <span className="text-red-600">Maintenance ON</span>
-              ) : (
-                <span className="text-green-600">System Operational</span>
-              )}
-            </p>
-            <p className="text-xs md:text-sm text-gray-500 mt-1">
-              Temporarily disable transactions during updates
-            </p>
+        <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">🔐 Login Controls</h2>
+        
+        <div className="space-y-4">
+          {/* OTP Login Toggle */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">SMS OTP Login</p>
+              <p className="text-xs text-gray-500">Allow users to login with SMS OTP</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={smsConfig.enabled}
+                onChange={(e) => setSmsConfig({ ...smsConfig, enabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+            </label>
           </div>
-          <button
-            onClick={handleToggleMaintenance}
-            disabled={loading}
-            className={`w-full md:w-auto px-4 md:px-6 py-2 rounded font-medium text-sm ${
-              maintenanceMode
-                ? 'bg-green-600 hover:bg-green-700 text-white'
-                : 'bg-orange-600 hover:bg-orange-700 text-white'
-            } disabled:opacity-50`}
-          >
-            {maintenanceMode ? 'Disable' : 'Enable'}
-          </button>
+
+          {/* Maintenance Mode */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">
+                {maintenanceMode ? (
+                  <span className="text-red-600">Maintenance Mode ON</span>
+                ) : (
+                  <span className="text-gray-800">Maintenance Mode</span>
+                )}
+              </p>
+              <p className="text-xs text-gray-500">Disable transactions during updates</p>
+            </div>
+            <button
+              onClick={handleToggleMaintenance}
+              disabled={loading}
+              className={`px-4 py-1.5 rounded font-medium text-xs ${
+                maintenanceMode
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'bg-orange-600 hover:bg-orange-700 text-white'
+              } disabled:opacity-50`}
+            >
+              {maintenanceMode ? 'Disable' : 'Enable'}
+            </button>
+          </div>
         </div>
       </div>
 

@@ -150,8 +150,8 @@ const Login: React.FC = () => {
             </button>
           </div>
 
-          {/* Login Form Container - Fixed Height */}
-          <div className="p-6" style={{ minHeight: '320px', maxHeight: '320px' }}>
+          {/* Login Form Container - Reduced Height */}
+          <div className="p-6" style={{ minHeight: '280px', maxHeight: '280px' }}>
             {/* Login Method Toggle */}
             <div className="flex items-center justify-center gap-3 text-sm mb-4">
               <button
@@ -250,19 +250,19 @@ const Login: React.FC = () => {
             )}
 
           </div>
-
-          {/* Copyright - Right after form */}
-          <p className="text-center text-xs text-gray-500 pt-4 pb-6 border-t border-gray-100 mt-4">
-            © 2025 SwapSync v1.0.0 · Developed by{' '}
-            <a 
-              href="tel:+233257940791" 
-              className="text-gray-700 hover:text-blue-600 transition"
-              style={{ textDecoration: 'none' }}
-            >
-              Manuel
-            </a>
-          </p>
         </div>
+        
+        {/* Copyright - Below card (fixed position) */}
+        <p className="text-center text-xs text-gray-500 mt-4">
+          © 2025 SwapSync v1.0.0 · Developed by{' '}
+          <a 
+            href="tel:+233257940791" 
+            className="text-gray-700 hover:text-blue-600 transition"
+            style={{ textDecoration: 'none' }}
+          >
+            Manuel
+          </a>
+        </p>
       </div>
 
       {/* Info Modal */}
