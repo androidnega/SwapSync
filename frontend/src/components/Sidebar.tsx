@@ -268,6 +268,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
           <Link
             key={item.route}
             to={item.route}
+            onClick={() => setIsMobileOpen(false)}  // Auto-close on mobile
             className={`flex items-center ${
               isCollapsed ? 'justify-center px-2' : 'px-4'
             } py-3 mx-2 rounded-lg transition-colors ${

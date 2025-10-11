@@ -802,33 +802,33 @@ const StaffManagement: React.FC = () => {
 
         {/* Companies View - Admin Only */}
         {viewMode === 'companies' && isSystemAdmin() && (
-          <div className="space-y-6">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h2 className="text-lg font-semibold text-blue-900 mb-1">📊 All Companies Overview</h2>
-              <p className="text-sm text-blue-700">View all companies (managers) and their staff members</p>
+          <div className="space-y-4 md:space-y-6">
+            <div className="bg-blue-50 p-3 md:p-4 rounded-lg border border-blue-200">
+              <h2 className="text-base md:text-lg font-semibold text-blue-900 mb-1">📊 All Companies Overview</h2>
+              <p className="text-xs md:text-sm text-blue-700">View all companies (managers) and their staff members</p>
             </div>
 
             {companies.length === 0 ? (
-              <div className="bg-white p-12 rounded-xl shadow text-center">
-                <div className="text-6xl mb-4">🏢</div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Companies Yet</h3>
-                <p className="text-gray-600">Create managers to see companies here</p>
+              <div className="bg-white p-8 md:p-12 rounded-xl shadow text-center">
+                <div className="text-4xl md:text-6xl mb-4">🏢</div>
+                <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">No Companies Yet</h3>
+                <p className="text-sm md:text-base text-gray-600">Create managers to see companies here</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {companies.map((company) => (
                   <div key={company.manager.id} className="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
                     {/* Company Header */}
-                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 border-b border-gray-200">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-2xl font-bold text-purple-900 mb-1">
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 md:p-6 border-b border-gray-200">
+                      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
+                        <div className="flex-1">
+                          <h3 className="text-xl md:text-2xl font-bold text-purple-900 mb-1">
                             {company.manager.company_name || 'Unnamed Company'}
                           </h3>
-                          <p className="text-gray-600 mb-3">Manager: {company.manager.full_name}</p>
-                          <div className="flex gap-4 text-sm">
+                          <p className="text-sm md:text-base text-gray-600 mb-2 md:mb-3">Manager: {company.manager.full_name}</p>
+                          <div className="flex flex-col md:flex-row md:gap-4 gap-1 text-xs md:text-sm">
                             <span className="flex items-center gap-1">
-                              <span className="font-semibold">Email:</span> {company.manager.email}
+                              <span className="font-semibold">Email:</span> <span className="truncate">{company.manager.email}</span>
                             </span>
                             {company.manager.phone_number && (
                               <span className="flex items-center gap-1">
@@ -837,15 +837,15 @@ const StaffManagement: React.FC = () => {
                             )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        <div className="flex md:flex-col items-center md:items-end gap-2 md:gap-0 md:text-right">
+                          <div className={`px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap ${
                             company.manager.is_active 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
                             {company.manager.is_active ? '✓ Active' : '✗ Inactive'}
                           </div>
-                          <div className="mt-2 text-sm text-gray-600">
+                          <div className="text-xs md:text-sm text-gray-600 md:mt-2">
                             {company.staff_count} staff member{company.staff_count !== 1 ? 's' : ''}
                           </div>
                         </div>
@@ -854,26 +854,26 @@ const StaffManagement: React.FC = () => {
 
                     {/* Staff List */}
                     {company.staff.length > 0 ? (
-                      <div className="p-6">
-                        <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <div className="p-4 md:p-6">
+                        <h4 className="text-sm md:text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
                           <span>👥</span> Staff Members
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
                           {company.staff.map((staff) => (
-                            <div key={staff.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="font-semibold text-gray-800">{staff.full_name}</div>
-                                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                            <div key={staff.id} className="bg-gray-50 p-3 md:p-4 rounded-lg border border-gray-200">
+                              <div className="flex items-start justify-between mb-2 gap-2">
+                                <div className="font-semibold text-gray-800 text-sm md:text-base truncate flex-1">{staff.full_name}</div>
+                                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap ${
                                   staff.role === 'shop_keeper' ? 'bg-blue-100 text-blue-800' :
                                   staff.role === 'repairer' ? 'bg-green-100 text-green-800' :
                                   'bg-gray-100 text-gray-800'
                                 }`}>
-                                  {staff.role === 'shop_keeper' ? 'Shop Keeper' :
-                                   staff.role === 'repairer' ? 'Repairer' : staff.role}
+                                  {staff.role === 'shop_keeper' ? 'Shop' :
+                                   staff.role === 'repairer' ? 'Repair' : staff.role}
                                 </span>
                               </div>
-                              <div className="text-sm text-gray-600 mb-1">@{staff.username}</div>
-                              <div className="text-sm text-gray-600">{staff.email}</div>
+                              <div className="text-xs md:text-sm text-gray-600 mb-1 truncate">@{staff.username}</div>
+                              <div className="text-xs md:text-sm text-gray-600 truncate">{staff.email}</div>
                               <div className="mt-2">
                                 <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
                                   staff.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'

@@ -78,9 +78,16 @@ const SystemDatabase: React.FC = () => {
     setMessage('');
     try {
       const response = await api.post('/maintenance/backup/create');
-      setMessage(`✅ Backup created: ${response.data.backup_filename}`);
-      fetchBackups();
-      setTimeout(() => setMessage(''), 3000);
+      
+      // Check if PostgreSQL (Railway)
+      if (response.data.success === false) {
+        setMessage(`ℹ️ ${response.data.message}\n\n💡 Tip: ${response.data.tip}\n\n📋 ${response.data.instructions}`);
+      } else {
+        setMessage(`✅ Backup created: ${response.data.backup_filename}`);
+        fetchBackups();
+      }
+      
+      setTimeout(() => setMessage(''), 8000);  // Longer timeout for Railway message
     } catch (error: any) {
       setMessage(`❌ Failed to create backup: ${error.response?.data?.detail || error.message}`);
     }
@@ -368,31 +375,47 @@ const SystemDatabase: React.FC = () => {
 
                 <div className="space-y-2">
                   {backups.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No backups available. Create your first backup!</p>
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 mb-4">No backups available.</p>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
+                        <h4 className="font-semibold text-blue-900 mb-2">📦 Railway PostgreSQL Backups</h4>
+                        <p className="text-sm text-blue-700">
+                          Railway provides automatic daily backups for PostgreSQL databases.
+                          Access them from: <strong>Railway Dashboard → PostgreSQL service → Backups tab</strong>
+                        </p>
+                      </div>
+                    </div>
                   ) : (
                     backups.map((backup) => (
                       <div
                         key={backup.filename}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        className="flex flex-col md:flex-row md:items-center justify-between p-3 md:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 gap-3"
                       >
-                        <div>
-                          <p className="font-medium text-gray-800">{backup.filename}</p>
-                          <p className="text-sm text-gray-500">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-800 text-sm md:text-base">{backup.filename}</p>
+                          <p className="text-xs md:text-sm text-gray-500">
                             {new Date(backup.created_at).toLocaleString()} • {backup.size_mb} MB
                           </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
+                          <a
+                            href={`/api/maintenance/backup/download/${backup.filename}`}
+                            download
+                            className="flex-1 md:flex-none px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium text-center"
+                          >
+                            📥 Download
+                          </a>
                           <button
                             onClick={() => handleRestoreBackup(backup.filename)}
-                            className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium"
+                            className="flex-1 md:flex-none px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium"
                           >
-                            Restore
+                            🔄 Restore
                           </button>
                           <button
                             onClick={() => handleDeleteBackup(backup.filename)}
-                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium"
+                            className="flex-1 md:flex-none px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium"
                           >
-                            Delete
+                            🗑️ Delete
                           </button>
                         </div>
                       </div>

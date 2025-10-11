@@ -1,23 +1,20 @@
 """
 SMS Configuration Routes - Admin-only SMS settings management
+NOW WITH DATABASE STORAGE AND ENCRYPTION! 🔐
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-import json
-import os
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.models.user import User, UserRole
+from app.models.sms_config import SMSConfig
 from app.core.sms import configure_sms, get_sms_service
 
 router = APIRouter(prefix="/sms-config", tags=["SMS Configuration"])
-
-# Configuration file path
-CONFIG_FILE = "sms_config.json"
 
 
 class SMSConfigUpdate(BaseModel):
@@ -40,21 +37,15 @@ class SMSConfigResponse(BaseModel):
     hubtel_enabled: bool
 
 
-def _load_config() -> dict:
-    """Load SMS config from file"""
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            pass
-    return {}
-
-
-def _save_config(config: dict):
-    """Save SMS config to file"""
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(config, f, indent=2)
+def _get_or_create_config(db: Session) -> SMSConfig:
+    """Get existing config or create new one (singleton)"""
+    config = db.query(SMSConfig).first()
+    if not config:
+        config = SMSConfig()
+        db.add(config)
+        db.commit()
+        db.refresh(config)
+    return config
 
 
 @router.get("/", response_model=SMSConfigResponse)
@@ -65,6 +56,7 @@ def get_sms_config(
     """
     Get current SMS configuration (Admin only)
     - Returns masked API keys (shows if set, not actual values)
+    - NOW FROM DATABASE! 🔐
     """
     # Only admin can view/edit SMS config
     if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
@@ -73,18 +65,18 @@ def get_sms_config(
             detail="Only administrators can view SMS configuration"
         )
     
-    config = _load_config()
+    config = _get_or_create_config(db)
     sms_service = get_sms_service()
     
     return {
-        "arkasel_api_key_set": bool(config.get("arkasel_api_key")),
-        "arkasel_sender_id": config.get("arkasel_sender_id", "SwapSync"),
-        "hubtel_client_id_set": bool(config.get("hubtel_client_id")),
-        "hubtel_client_secret_set": bool(config.get("hubtel_client_secret")),
-        "hubtel_sender_id": config.get("hubtel_sender_id", "SwapSync"),
-        "enabled": config.get("enabled", False),
-        "arkasel_enabled": sms_service.arkasel_enabled,
-        "hubtel_enabled": sms_service.hubtel_enabled
+        "arkasel_api_key_set": bool(config.get_arkasel_api_key()),
+        "arkasel_sender_id": config.arkasel_sender_id or "SwapSync",
+        "hubtel_client_id_set": bool(config.get_hubtel_client_id()),
+        "hubtel_client_secret_set": bool(config.get_hubtel_client_secret()),
+        "hubtel_sender_id": config.hubtel_sender_id or "SwapSync",
+        "enabled": config.sms_enabled,
+        "arkasel_enabled": config.arkasel_enabled,
+        "hubtel_enabled": config.hubtel_enabled
     }
 
 
@@ -96,7 +88,7 @@ def update_sms_config(
 ):
     """
     Update SMS configuration (Admin only)
-    - Saves to file
+    - Saves to DATABASE (encrypted!) 🔐
     - Reconfigures SMS service
     """
     # Only admin can update SMS config
@@ -106,33 +98,38 @@ def update_sms_config(
             detail="Only administrators can update SMS configuration"
         )
     
-    # Load existing config
-    config = _load_config()
+    # Get or create config
+    config = _get_or_create_config(db)
     
-    # Update with new values (only if provided)
+    # Update with new values (only if provided) - ENCRYPTED!
     if config_data.arkasel_api_key is not None:
-        config["arkasel_api_key"] = config_data.arkasel_api_key
+        config.set_arkasel_api_key(config_data.arkasel_api_key)
     if config_data.arkasel_sender_id is not None:
-        config["arkasel_sender_id"] = config_data.arkasel_sender_id
+        config.arkasel_sender_id = config_data.arkasel_sender_id
     if config_data.hubtel_client_id is not None:
-        config["hubtel_client_id"] = config_data.hubtel_client_id
+        config.set_hubtel_client_id(config_data.hubtel_client_id)
     if config_data.hubtel_client_secret is not None:
-        config["hubtel_client_secret"] = config_data.hubtel_client_secret
+        config.set_hubtel_client_secret(config_data.hubtel_client_secret)
     if config_data.hubtel_sender_id is not None:
-        config["hubtel_sender_id"] = config_data.hubtel_sender_id
+        config.hubtel_sender_id = config_data.hubtel_sender_id
     
-    config["enabled"] = config_data.enabled
+    # Enable/disable
+    config.sms_enabled = config_data.enabled
+    config.arkasel_enabled = bool(config_data.arkasel_api_key)
+    config.hubtel_enabled = bool(config_data.hubtel_client_id and config_data.hubtel_client_secret)
+    config.updated_by = current_user.username
     
-    # Save to file
-    _save_config(config)
+    # Save to database
+    db.commit()
+    db.refresh(config)
     
-    # Reconfigure SMS service
+    # Reconfigure SMS service with decrypted values
     configure_sms(
-        arkasel_api_key=config.get("arkasel_api_key", ""),
-        arkasel_sender_id=config.get("arkasel_sender_id", "SwapSync"),
-        hubtel_client_id=config.get("hubtel_client_id", ""),
-        hubtel_client_secret=config.get("hubtel_client_secret", ""),
-        hubtel_sender_id=config.get("hubtel_sender_id", "SwapSync")
+        arkasel_api_key=config.get_arkasel_api_key() or "",
+        arkasel_sender_id=config.arkasel_sender_id or "SwapSync",
+        hubtel_client_id=config.get_hubtel_client_id() or "",
+        hubtel_client_secret=config.get_hubtel_client_secret() or "",
+        hubtel_sender_id=config.hubtel_sender_id or "SwapSync"
     )
     
     # Log activity
@@ -142,20 +139,20 @@ def update_sms_config(
         user=current_user,
         action="updated SMS configuration",
         module="settings",
-        details=f"Arkasel: {'enabled' if config.get('arkasel_api_key') else 'disabled'}, Hubtel: {'enabled' if config.get('hubtel_client_id') else 'disabled'}"
+        details=f"Arkasel: {'enabled' if config.get_arkasel_api_key() else 'disabled'}, Hubtel: {'enabled' if config.get_hubtel_client_id() else 'disabled'}"
     )
     
     sms_service = get_sms_service()
     
     return {
-        "arkasel_api_key_set": bool(config.get("arkasel_api_key")),
-        "arkasel_sender_id": config.get("arkasel_sender_id", "SwapSync"),
-        "hubtel_client_id_set": bool(config.get("hubtel_client_id")),
-        "hubtel_client_secret_set": bool(config.get("hubtel_client_secret")),
-        "hubtel_sender_id": config.get("hubtel_sender_id", "SwapSync"),
-        "enabled": config.get("enabled", False),
-        "arkasel_enabled": sms_service.arkasel_enabled,
-        "hubtel_enabled": sms_service.hubtel_enabled
+        "arkasel_api_key_set": bool(config.get_arkasel_api_key()),
+        "arkasel_sender_id": config.arkasel_sender_id or "SwapSync",
+        "hubtel_client_id_set": bool(config.get_hubtel_client_id()),
+        "hubtel_client_secret_set": bool(config.get_hubtel_client_secret()),
+        "hubtel_sender_id": config.hubtel_sender_id or "SwapSync",
+        "enabled": config.sms_enabled,
+        "arkasel_enabled": config.arkasel_enabled,
+        "hubtel_enabled": config.hubtel_enabled
     }
 
 
