@@ -282,14 +282,14 @@ const StaffManagement: React.FC = () => {
   const entityName = isSystemAdmin() ? 'Manager' : 'Staff Member';
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-6 space-y-6">
-        <div className="flex justify-between items-center">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+      <div className="mx-0 md:mx-6 space-y-4 md:space-y-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">{pageTitle}</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{pageTitle}</h1>
+            <p className="text-sm md:text-base text-gray-600 mt-1">
               {isSystemAdmin() 
-                ? 'Manage Manager accounts and their business access'
+                ? 'Manage Manager accounts and business access'
                 : 'Manage your shopkeepers and repairers'
               }
             </p>
@@ -303,12 +303,13 @@ const StaffManagement: React.FC = () => {
                 username: '',
                 email: '',
                 full_name: '',
+                phone_number: '',
                 company_name: '',
                 password: '',
                 role: isSystemAdmin() ? 'manager' : 'shop_keeper'
               });
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-sm md:text-base whitespace-nowrap"
           >
             <FontAwesomeIcon icon={faUserPlus} />
             {showCreateForm ? 'Cancel' : createButtonText}
@@ -317,14 +318,14 @@ const StaffManagement: React.FC = () => {
 
         {/* Success Message */}
         {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+          <div className="bg-green-100 border border-green-400 text-green-700 px-3 md:px-4 py-2 md:py-3 rounded text-sm md:text-base">
             {success}
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-3 md:px-4 py-2 md:py-3 rounded text-sm md:text-base">
             {error}
           </div>
         )}

@@ -235,17 +235,17 @@ const SystemDatabase: React.FC = () => {
   const totalRecords = tables.reduce((sum, table) => sum + table.records, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-6 space-y-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+      <div className="mx-0 md:mx-6 space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Database Management</h1>
-          <p className="text-gray-600 mt-1">
-            System database, backups, and CEO data management
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Database Management</h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1">
+            System database, backups, and Manager data
           </p>
         </div>
 
         {message && (
-          <div className={`p-4 rounded-lg ${
+          <div className={`p-3 md:p-4 rounded-lg text-sm md:text-base ${
             message.includes('✅') ? 'bg-green-50 text-green-800' :
             message.includes('❌') ? 'bg-red-50 text-red-800' :
             'bg-blue-50 text-blue-800'
@@ -255,43 +255,43 @@ const SystemDatabase: React.FC = () => {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow">
-            <div className="flex items-center gap-3 mb-2">
-              <FontAwesomeIcon icon={faDatabase} className="text-3xl text-blue-600" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6">
+          <div className="bg-white p-3 md:p-6 rounded-xl shadow">
+            <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+              <FontAwesomeIcon icon={faDatabase} className="text-xl md:text-3xl text-blue-600" />
               <div>
-                <p className="text-sm text-gray-600">Database</p>
-                <p className="text-2xl font-bold">SQLite</p>
+                <p className="text-xs md:text-sm text-gray-600">Database</p>
+                <p className="text-lg md:text-2xl font-bold">SQLite</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow">
-            <div className="flex items-center gap-3 mb-2">
-              <FontAwesomeIcon icon={faTable} className="text-3xl text-green-600" />
+          <div className="bg-white p-3 md:p-6 rounded-xl shadow">
+            <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+              <FontAwesomeIcon icon={faTable} className="text-xl md:text-3xl text-green-600" />
               <div>
-                <p className="text-sm text-gray-600">Total Tables</p>
-                <p className="text-2xl font-bold">{tables.length}</p>
+                <p className="text-xs md:text-sm text-gray-600">Tables</p>
+                <p className="text-lg md:text-2xl font-bold">{tables.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow">
-            <div className="flex items-center gap-3 mb-2">
-              <FontAwesomeIcon icon={faChartBar} className="text-3xl text-purple-600" />
+          <div className="bg-white p-3 md:p-6 rounded-xl shadow">
+            <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+              <FontAwesomeIcon icon={faChartBar} className="text-xl md:text-3xl text-purple-600" />
               <div>
-                <p className="text-sm text-gray-600">Total Records</p>
-                <p className="text-2xl font-bold">{totalRecords}</p>
+                <p className="text-xs md:text-sm text-gray-600">Records</p>
+                <p className="text-lg md:text-2xl font-bold">{totalRecords}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow">
-            <div className="flex items-center gap-3 mb-2">
-              <FontAwesomeIcon icon={faServer} className="text-3xl text-indigo-600" />
+          <div className="bg-white p-3 md:p-6 rounded-xl shadow">
+            <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+              <FontAwesomeIcon icon={faServer} className="text-xl md:text-3xl text-indigo-600" />
               <div>
-                <p className="text-sm text-gray-600">Backups</p>
-                <p className="text-2xl font-bold">{backups.length}</p>
+                <p className="text-xs md:text-sm text-gray-600">Backups</p>
+                <p className="text-lg md:text-2xl font-bold">{backups.length}</p>
               </div>
             </div>
           </div>

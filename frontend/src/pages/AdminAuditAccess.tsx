@@ -81,17 +81,17 @@ const AdminAuditAccess: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-6 space-y-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+      <div className="mx-0 md:mx-6 space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Manager Audit Access</h1>
-          <p className="text-gray-600 mt-1">
-            Access Manager business data for auditing purposes (requires Manager's audit code)
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Manager Audit Access</h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1">
+            Access Manager data (requires audit code)
           </p>
         </div>
 
         {message && (
-          <div className={`p-4 rounded-lg ${message.includes('✅') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+          <div className={`p-3 md:p-4 rounded-lg text-sm md:text-base ${message.includes('✅') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
             {message}
           </div>
         )}
@@ -99,9 +99,9 @@ const AdminAuditAccess: React.FC = () => {
         {!managerData ? (
           <>
             {/* Manager Selection */}
-            <div className="bg-white rounded-xl shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Select Manager to Audit</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl shadow p-4 md:p-6">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">Select Manager to Audit</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {managers.map(manager => (
                   <div
                     key={manager.id}
@@ -137,15 +137,15 @@ const AdminAuditAccess: React.FC = () => {
 
             {/* Audit Code Entry */}
             {selectedManager && (
-              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-lg p-8 border-2 border-purple-200">
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-lg p-4 md:p-8 border-2 border-purple-200">
                 <div className="max-w-md mx-auto">
-                  <div className="text-center mb-6">
-                    <div className="bg-purple-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FontAwesomeIcon icon={faLock} className="text-2xl" />
+                  <div className="text-center mb-4 md:mb-6">
+                    <div className="bg-purple-600 text-white w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                      <FontAwesomeIcon icon={faLock} className="text-xl md:text-2xl" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">Enter Audit Code</h3>
-                    <p className="text-gray-600 text-sm mt-2">
-                      Request the 6-digit audit code from <strong>{selectedManager.full_name}</strong>
+                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Enter Audit Code</h3>
+                    <p className="text-gray-600 text-xs md:text-sm mt-2">
+                      Request code from <strong>{selectedManager.full_name}</strong>
                       {selectedManager.company_name && <> ({selectedManager.company_name})</>}
                     </p>
                   </div>

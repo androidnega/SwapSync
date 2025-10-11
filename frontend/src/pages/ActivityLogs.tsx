@@ -94,8 +94,8 @@ const ActivityLogs: React.FC = () => {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+      <div className="p-3 md:p-6">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-3 md:px-4 py-2 md:py-3 rounded text-sm md:text-base">
           {error}
         </div>
       </div>
@@ -103,27 +103,27 @@ const ActivityLogs: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+      <div className="space-y-4 md:space-y-6">
         <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Activity Logs</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Activity Logs</h1>
         <button
           onClick={fetchActivities}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm md:text-base"
         >
-          🔄 Refresh
+          🔄 <span className="hidden sm:inline">Refresh</span>
         </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow">
-        <div className="flex items-center justify-between">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Module</label>
+      <div className="bg-white p-3 md:p-4 rounded-xl shadow">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="w-full md:w-auto">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Filter by Module</label>
             <select
               value={filterModule}
               onChange={(e) => setFilterModule(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full md:w-auto px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {modules.map(module => (
                 <option key={module} value={module}>
@@ -132,42 +132,42 @@ const ActivityLogs: React.FC = () => {
               ))}
             </select>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-xs md:text-sm text-gray-600">
             Showing {paginatedActivities.length} of {filteredActivities.length} activities
           </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-xl shadow">
-          <div className="text-sm text-gray-500 mb-1">Total Activities</div>
-          <div className="text-3xl font-bold text-blue-600">{activities.length}</div>
+      <div className="grid grid-cols-3 gap-2 md:gap-4">
+        <div className="bg-white p-3 md:p-6 rounded-xl shadow">
+          <div className="text-xs md:text-sm text-gray-500 mb-1">Total</div>
+          <div className="text-xl md:text-3xl font-bold text-blue-600">{activities.length}</div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow">
-          <div className="text-sm text-gray-500 mb-1">Unique Users</div>
-          <div className="text-3xl font-bold text-green-600">
+        <div className="bg-white p-3 md:p-6 rounded-xl shadow">
+          <div className="text-xs md:text-sm text-gray-500 mb-1">Users</div>
+          <div className="text-xl md:text-3xl font-bold text-green-600">
             {new Set(activities.map(a => a.user.id)).size}
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow">
-          <div className="text-sm text-gray-500 mb-1">Modules Active</div>
-          <div className="text-3xl font-bold text-purple-600">
+        <div className="bg-white p-3 md:p-6 rounded-xl shadow">
+          <div className="text-xs md:text-sm text-gray-500 mb-1">Modules</div>
+          <div className="text-xl md:text-3xl font-bold text-purple-600">
             {new Set(activities.map(a => a.module)).size}
           </div>
         </div>
       </div>
 
       {/* Activity Timeline */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">
+      <div className="bg-white p-3 md:p-6 rounded-xl shadow">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 md:mb-4 gap-2">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800">
             Recent Activities ({filteredActivities.length})
           </h2>
           {totalPages > 1 && (
-            <div className="text-sm text-gray-600">
+            <div className="text-xs md:text-sm text-gray-600">
               Page {currentPage} of {totalPages}
             </div>
           )}

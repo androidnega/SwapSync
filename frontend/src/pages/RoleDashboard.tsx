@@ -226,37 +226,37 @@ const RoleDashboard: React.FC = () => {
         
         {/* System Admin Info Section (No Quick Actions) */}
         {(dashboardData.user_role === 'admin' || dashboardData.user_role === 'super_admin') && (
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl shadow-sm p-6 border border-indigo-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">System Administrator</h2>
-            <p className="text-gray-600 mb-4">
-              You have system-level access. Use the sidebar to manage companies, view system logs, and configure platform settings.
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl shadow-sm p-4 md:p-6 border border-indigo-100">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-2 md:mb-3">System Administrator</h2>
+            <p className="text-sm md:text-base text-gray-600 mb-3 md:mb-4">
+              Manage companies, view logs, and configure settings.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2 md:gap-4">
               <button
                 onClick={() => navigate('/staff-management')}
-                className="p-4 bg-white hover:bg-indigo-50 rounded-lg text-center transition border border-indigo-200"
+                className="p-2 md:p-4 bg-white hover:bg-indigo-50 rounded-lg text-center transition border border-indigo-200"
               >
-                <div className="text-3xl mb-2">🏢</div>
-                <div className="font-semibold text-indigo-700">Manage Companies</div>
-                <div className="text-sm text-gray-600">View companies & their staff</div>
+                <div className="text-2xl md:text-3xl mb-1 md:mb-2">🏢</div>
+                <div className="text-xs md:text-sm font-semibold text-indigo-700">Companies</div>
+                <div className="text-xs text-gray-600 hidden md:block">View companies & staff</div>
               </button>
               
               <button
                 onClick={() => navigate('/activity-logs')}
-                className="p-4 bg-white hover:bg-purple-50 rounded-lg text-center transition border border-purple-200"
+                className="p-2 md:p-4 bg-white hover:bg-purple-50 rounded-lg text-center transition border border-purple-200"
               >
-                <div className="text-3xl mb-2">🖥️</div>
-                <div className="font-semibold text-purple-700">System Logs</div>
-                <div className="text-sm text-gray-600">View platform activity</div>
+                <div className="text-2xl md:text-3xl mb-1 md:mb-2">🖥️</div>
+                <div className="text-xs md:text-sm font-semibold text-purple-700">Logs</div>
+                <div className="text-xs text-gray-600 hidden md:block">Platform activity</div>
               </button>
               
               <button
                 onClick={() => navigate('/settings')}
-                className="p-4 bg-white hover:bg-green-50 rounded-lg text-center transition border border-green-200"
+                className="p-2 md:p-4 bg-white hover:bg-green-50 rounded-lg text-center transition border border-green-200"
               >
-                <div className="text-3xl mb-2">⚙️</div>
-                <div className="font-semibold text-green-700">Settings</div>
-                <div className="text-sm text-gray-600">System configuration</div>
+                <div className="text-2xl md:text-3xl mb-1 md:mb-2">⚙️</div>
+                <div className="text-xs md:text-sm font-semibold text-green-700">Settings</div>
+                <div className="text-xs text-gray-600 hidden md:block">Configuration</div>
               </button>
             </div>
           </div>

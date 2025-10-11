@@ -202,20 +202,20 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-          <FontAwesomeIcon icon={faUsers} className="text-blue-600" />
+    <div className="p-3 md:p-6">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2 md:gap-3">
+          <FontAwesomeIcon icon={faUsers} className="text-blue-600 text-xl md:text-2xl" />
           User Management
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
           View, edit, and manage all system users
         </p>
       </div>
 
       {/* Message Display */}
       {message && (
-        <div className={`mb-6 p-4 rounded-lg ${
+        <div className={`mb-4 md:mb-6 p-3 md:p-4 rounded-lg text-sm md:text-base ${
           message.startsWith('✅') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
         }`}>
           {message}
@@ -223,7 +223,7 @@ const UserManagement: React.FC = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-4 md:mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div>
@@ -287,51 +287,51 @@ const UserManagement: React.FC = () => {
       {/* Users Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Full Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Company</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Full Name</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Email</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Phone</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Company</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{user.username}</div>
+                  <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                    <div className="font-medium text-gray-900 text-xs md:text-sm">{user.username}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-gray-900">{user.full_name}</div>
+                  <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap hidden sm:table-cell">
+                    <div className="text-gray-900 text-xs md:text-sm">{user.full_name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-gray-600">{user.email}</div>
+                  <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap hidden md:table-cell">
+                    <div className="text-gray-600 text-xs">{user.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-gray-600">{user.phone_number}</div>
+                  <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap hidden lg:table-cell">
+                    <div className="text-gray-600 text-xs">{user.phone_number}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
                       {user.role.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-gray-600">{user.company_name}</div>
+                  <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap hidden md:table-cell">
+                    <div className="text-gray-600 text-xs">{user.company_name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap hidden sm:table-cell">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
                       {user.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex gap-2">
+                  <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm">
+                    <div className="flex gap-1 md:gap-2">
                       <button
                         onClick={() => handleEditClick(user)}
                         className="text-blue-600 hover:text-blue-800 transition-colors"

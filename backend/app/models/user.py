@@ -39,6 +39,7 @@ class User(Base):
     parent_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Who created this user
     audit_code = Column(String, nullable=True)  # For System Admin access to Manager data
     is_active = Column(Integer, default=1)  # 1=active, 0=inactive
+    must_change_password = Column(Integer, default=1)  # 1 = must change on first login, 0 = password changed
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
     current_session_id = Column(Integer, nullable=True)  # Track current active session
