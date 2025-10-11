@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
-import swapsyncImage from '../assets/img/swapsync.webp';
+import swapsyncImage from '../assets/img/swapsyng.png';
 import { API_URL } from '../services/api';
 import OTPLogin from '../components/OTPLogin';
 

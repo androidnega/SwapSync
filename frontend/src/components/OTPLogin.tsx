@@ -148,7 +148,15 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
               placeholder="Enter your user ID"
               required
               disabled={loading}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className={`w-full px-3 py-2 text-sm border-2 rounded focus:outline-none transition-all ${
+                !userId.trim()
+                  ? 'border-gray-300 focus:border-blue-500'
+                  : userId.length < 3
+                  ? 'border-red-400 bg-red-50 focus:border-red-500'
+                  : userId.length < 5
+                  ? 'border-yellow-400 bg-yellow-50 focus:border-yellow-500'
+                  : 'border-green-500 bg-green-50 focus:border-green-600'
+              }`}
               autoFocus
             />
           </div>
@@ -158,7 +166,7 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
             disabled={loading || !userId.trim()}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition disabled:opacity-50 text-sm"
           >
-            {loading ? 'Sending...' : 'Send OTP Code'}
+            {loading ? 'Sending...' : 'Request'}
           </button>
         </form>
       )}
