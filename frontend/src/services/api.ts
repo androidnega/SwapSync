@@ -16,9 +16,13 @@ const getApiBaseUrl = () => {
     return 'http://localhost:8000/api';
   }
   
-  // Use the current host for network access
-  const hostname = window.location.hostname;
-  return `http://${hostname}:8000/api`;
+  // Production: Use custom backend domain
+  if (window.location.hostname.includes('digitstec.store') || window.location.hostname.includes('vercel.app')) {
+    return 'https://api.digitstec.store';
+  }
+  
+  // Development: Use localhost
+  return 'http://localhost:8000/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
