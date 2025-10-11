@@ -41,6 +41,6 @@ Thumbs.db
 
 # Sensitive
 *CREDENTIALS*
-*PASSWORD*
+# *PASSWORD* - Commented out to allow FirstLoginPasswordChange.tsx
 *API_KEY*
 *SECRET*
