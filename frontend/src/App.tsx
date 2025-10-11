@@ -78,6 +78,11 @@ function AppContent() {
     navigate('/login');
   };
 
+  // Show maintenance page if maintenance mode is ON (except for admins)
+  if (maintenanceMode && user?.role !== 'admin' && user?.role !== 'super_admin' && location.pathname !== '/maintenance' && location.pathname !== '/login') {
+    return <Maintenance reason={maintenanceMode ? "System maintenance in progress" : undefined} />;
+  }
+
   // Show login page if not authenticated
   if (isLoginPage) {
     return (
