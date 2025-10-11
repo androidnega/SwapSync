@@ -125,13 +125,13 @@ const RoleDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Breadcrumb />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-7xl mx-auto">
         {/* Header with Stock Alert Badge */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Welcome! Here's your overview based on your role.
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-xs md:text-sm text-gray-600 mt-1">
+              Welcome! Here's your overview
             </p>
           </div>
           
@@ -147,7 +147,7 @@ const RoleDashboard: React.FC = () => {
         </div>
 
         {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
           {dashboardData.cards.map((card) => (
             <DashboardCard
               key={card.id}
@@ -170,9 +170,9 @@ const RoleDashboard: React.FC = () => {
 
         {/* Quick Actions - Role-Based */}
         {(dashboardData.user_role === 'manager' || dashboardData.user_role === 'ceo' || dashboardData.user_role === 'shop_keeper' || dashboardData.user_role === 'repairer') && (
-          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 border border-gray-200">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               {/* CEO & Shop Keeper Only - Swapping Hub */}
               {(dashboardData.user_role === 'shop_keeper' || dashboardData.user_role === 'manager' || dashboardData.user_role === 'ceo') && (
                 <button
