@@ -20,6 +20,9 @@ export interface LoginResponse {
 class AuthService {
   private tokenKey = 'access_token';
   private userKey = 'user';
+  private lastActivityKey = 'last_activity';
+  private sessionTimeout = 30 * 60 * 1000; // 30 minutes in milliseconds
+  private timeoutCheckInterval: NodeJS.Timeout | null = null;
 
   async login(username: string, password: string): Promise<LoginResponse> {
     const response = await axios.post<LoginResponse>(`${API_URL}/auth/login-json`, {
@@ -30,6 +33,8 @@ class AuthService {
     if (response.data.access_token) {
       this.setToken(response.data.access_token);
       this.setUser(response.data.user);
+      this.updateLastActivity(); // Track session start
+      this.startSessionMonitoring(); // Start monitoring for timeout
     }
     
     return response.data;
@@ -49,6 +54,8 @@ class AuthService {
   logout() {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
+    localStorage.removeItem(this.lastActivityKey);
+    this.stopSessionMonitoring();
   }
 
   getToken(): string | null {
@@ -76,13 +83,25 @@ class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const hasToken = !!this.getToken();
+    if (hasToken && this.isSessionExpired()) {
+      // Session expired, auto-logout
+      this.logout();
+      return false;
+    }
+    return hasToken;
   }
 
   async getCurrentUser(): Promise<User> {
     const token = this.getToken();
     if (!token) {
       throw new Error('Not authenticated');
+    }
+
+    // Check session timeout
+    if (this.isSessionExpired()) {
+      this.logout();
+      throw new Error('Session expired');
     }
 
     const response = await axios.get<User>(`${API_URL}/auth/me`, {
@@ -92,7 +111,74 @@ class AuthService {
     });
 
     this.setUser(response.data);
+    this.updateLastActivity(); // Update activity on API call
     return response.data;
+  }
+
+  // Session timeout management
+  updateLastActivity() {
+    localStorage.setItem(this.lastActivityKey, Date.now().toString());
+  }
+
+  getLastActivity(): number {
+    const lastActivity = localStorage.getItem(this.lastActivityKey);
+    return lastActivity ? parseInt(lastActivity, 10) : 0;
+  }
+
+  isSessionExpired(): boolean {
+    const lastActivity = this.getLastActivity();
+    if (!lastActivity) return false;
+    
+    const now = Date.now();
+    const timeSinceLastActivity = now - lastActivity;
+    return timeSinceLastActivity > this.sessionTimeout;
+  }
+
+  getRemainingSessionTime(): number {
+    const lastActivity = this.getLastActivity();
+    if (!lastActivity) return 0;
+    
+    const elapsed = Date.now() - lastActivity;
+    const remaining = this.sessionTimeout - elapsed;
+    return Math.max(0, remaining);
+  }
+
+  startSessionMonitoring() {
+    // Clear any existing interval
+    this.stopSessionMonitoring();
+    
+    // Check session every minute
+    this.timeoutCheckInterval = setInterval(() => {
+      if (this.isAuthenticated() && this.isSessionExpired()) {
+        console.log('⏰ Session expired - auto logout');
+        this.logout();
+        window.location.href = '/login?reason=timeout';
+      }
+    }, 60000); // Check every 1 minute
+  }
+
+  stopSessionMonitoring() {
+    if (this.timeoutCheckInterval) {
+      clearInterval(this.timeoutCheckInterval);
+      this.timeoutCheckInterval = null;
+    }
+  }
+
+  // Initialize session (call this on app start)
+  initializeSession() {
+    if (this.isAuthenticated()) {
+      // Check if session is still valid
+      if (this.isSessionExpired()) {
+        this.logout();
+        return false;
+      }
+      // Start monitoring for this session
+      this.startSessionMonitoring();
+      // Update activity (user opened a new tab)
+      this.updateLastActivity();
+      return true;
+    }
+    return false;
   }
 }
 
@@ -108,6 +194,9 @@ export const getUser = () => authService.getUser();
 export const setUser = (user: User) => authService.setUser(user);
 export const isAuthenticated = () => authService.isAuthenticated();
 export const getCurrentUser = () => authService.getCurrentUser();
+export const updateLastActivity = () => authService.updateLastActivity();
+export const initializeSession = () => authService.initializeSession();
+export const getRemainingSessionTime = () => authService.getRemainingSessionTime();
 
 export default authService;
 

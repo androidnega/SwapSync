@@ -29,7 +29,7 @@ import SwappingHub from './pages/SwappingHub';
 import ProductsHub from './pages/ProductsHub';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
-import { getToken, removeToken } from './services/authService';
+import { getToken, removeToken, initializeSession, updateLastActivity } from './services/authService';
 import axios from 'axios';
 import './App.css';
 
@@ -49,8 +49,35 @@ function AppContent() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUserInfo();
+    // Initialize session (check if valid, start monitoring)
+    const sessionValid = initializeSession();
+    
+    if (sessionValid) {
+      fetchUserInfo();
+    } else if (!isLoginPage) {
+      navigate('/login');
+    }
+    
     checkMaintenanceStatus();
+
+    // Track user activity (update session on any interaction)
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    const handleActivity = () => {
+      if (getToken()) {
+        updateLastActivity();
+      }
+    };
+
+    activityEvents.forEach(event => {
+      window.addEventListener(event, handleActivity);
+    });
+
+    // Cleanup
+    return () => {
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
+    };
   }, []);
 
   const checkMaintenanceStatus = async () => {

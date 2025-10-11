@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import authService from '../services/authService';
 import swapsyncImage from '../assets/img/swapsyng.png';
 import { API_URL } from '../services/api';
@@ -25,6 +25,17 @@ const Login: React.FC = () => {
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Check for session timeout
+  useEffect(() => {
+    const reason = searchParams.get('reason');
+    if (reason === 'timeout') {
+      setError('⏰ Your session has expired due to inactivity. Please login again.');
+      // Clear the query parameter
+      window.history.replaceState({}, '', '/login');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
