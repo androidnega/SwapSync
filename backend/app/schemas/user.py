@@ -37,12 +37,14 @@ class UserResponse(BaseModel):
     unique_id: Optional[str] = None
     username: str
     email: str
+    phone_number: Optional[str] = None
     full_name: str
     display_name: Optional[str] = None
     profile_picture: Optional[str] = None
     company_name: Optional[str] = None  # For CEOs
     role: str
     is_active: int
+    must_change_password: Optional[int] = None  # For first-login password change
     created_at: datetime
     last_login: Optional[datetime] = None
 

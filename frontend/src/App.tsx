@@ -29,6 +29,7 @@ import SwappingHub from './pages/SwappingHub';
 import ProductsHub from './pages/ProductsHub';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
+import FirstLoginPasswordChange from './components/FirstLoginPasswordChange';
 import { getToken, removeToken, initializeSession, updateLastActivity } from './services/authService';
 import axios from 'axios';
 import './App.css';
@@ -115,6 +116,21 @@ function AppContent() {
     setUser(null);
     navigate('/login');
   };
+
+  const handlePasswordChanged = async () => {
+    // Refresh user data after password change
+    await fetchUserInfo();
+  };
+
+  // Show first-login password change modal if required
+  if (user && user.must_change_password === 1 && !isLoginPage) {
+    return (
+      <FirstLoginPasswordChange 
+        username={user.username}
+        onPasswordChanged={handlePasswordChanged}
+      />
+    );
+  }
 
   // Show maintenance page if maintenance mode is ON (except for admins)
   if (maintenanceMode && user?.role !== 'admin' && user?.role !== 'super_admin' && location.pathname !== '/maintenance' && location.pathname !== '/login') {

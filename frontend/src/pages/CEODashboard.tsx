@@ -66,7 +66,7 @@ const CEODashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      <div className="mx-6 space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">CEO Dashboard</h1>
         <button

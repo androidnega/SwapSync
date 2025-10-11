@@ -318,30 +318,53 @@ def delete_user(
 
 @router.post("/change-password")
 def change_password(
-    current_password: str,
     new_password: str,
+    confirm_password: str = None,
+    current_password: str = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Change current user's password
+    Supports:
+    - Regular password change (requires current_password)
+    - First-login password change (must_change_password=1, no current_password needed)
     """
-    if not current_user.verify_password(current_password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Current password is incorrect"
-        )
+    # Check if this is a first-login password change
+    is_first_login = hasattr(current_user, 'must_change_password') and current_user.must_change_password == 1
     
+    # Verify current password (unless first login)
+    if not is_first_login and current_password:
+        if not current_user.verify_password(current_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect"
+            )
+    
+    # Validate new password
     if len(new_password) < 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="New password must be at least 6 characters"
         )
     
+    # Validate password confirmation
+    if confirm_password and new_password != confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passwords do not match"
+        )
+    
+    # Update password
     current_user.hashed_password = User.hash_password(new_password)
+    
+    # Clear must_change_password flag
+    if hasattr(current_user, 'must_change_password'):
+        current_user.must_change_password = 0
+    
     db.commit()
     
-    return {"message": "Password changed successfully"}
+    return {"message": "Password changed successfully", "first_login_complete": is_first_login}
 
 
 @router.post("/logout")
