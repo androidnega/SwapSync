@@ -98,6 +98,14 @@ async def request_otp(
     Request OTP code via SMS
     Sends 4-digit code to user's registered phone number
     """
+    # Check if OTP login is enabled
+    from app.core.sms import sms_service
+    if not sms_service or not sms_service.enabled:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="OTP login is currently disabled. Please use password login."
+        )
+    
     # Find user by username
     user = db.query(User).filter(User.username == request_data.username).first()
     

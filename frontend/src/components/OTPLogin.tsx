@@ -82,7 +82,7 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
 
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userId.trim()) return;
+    if (!userId.trim() || !isValid) return;
 
     setLoading(true);
     setError('');
@@ -98,7 +98,11 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
         setCountdown(response.data.expires_in || 300);
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to send OTP. Please try again.');
+      if (err.response?.status === 503) {
+        setError('OTP login is currently disabled by administrator');
+      } else {
+        setError(err.response?.data?.detail || 'Failed to send OTP. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

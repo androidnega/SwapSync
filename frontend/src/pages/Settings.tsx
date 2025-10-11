@@ -492,13 +492,36 @@ const Settings: React.FC = () => {
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
             <div>
               <p className="text-sm font-semibold text-gray-800">SMS OTP Login</p>
-              <p className="text-xs text-gray-500">Allow users to login with SMS OTP</p>
+              <p className="text-xs text-gray-500">
+                {smsConfig.enabled ? (
+                  <span className="text-green-600 font-medium">✓ Enabled - Users can login with OTP</span>
+                ) : (
+                  <span className="text-gray-500">Disabled - Password only</span>
+                )}
+              </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={smsConfig.enabled}
-                onChange={(e) => setSmsConfig({ ...smsConfig, enabled: e.target.checked })}
+                onChange={async (e) => {
+                  const newEnabled = e.target.checked;
+                  setSmsConfig({ ...smsConfig, enabled: newEnabled });
+                  
+                  // Auto-save when toggled
+                  try {
+                    const token = getToken();
+                    await axios.post(`${API_URL}/sms-config/`, 
+                      { ...smsConfig, enabled: newEnabled },
+                      { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    setMessage(newEnabled ? '✅ OTP Login enabled' : '✅ OTP Login disabled');
+                    setTimeout(() => setMessage(''), 3000);
+                  } catch (err: any) {
+                    setMessage('❌ Failed to update OTP setting');
+                    setSmsConfig({ ...smsConfig, enabled: !newEnabled });
+                  }
+                }}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
@@ -515,7 +538,13 @@ const Settings: React.FC = () => {
                   <span className="text-gray-800">Maintenance Mode</span>
                 )}
               </p>
-              <p className="text-xs text-gray-500">Show maintenance page to all users</p>
+              <p className="text-xs text-gray-500">
+                {maintenanceMode ? (
+                  <span className="text-red-600 font-medium">⚠️ All users see maintenance page</span>
+                ) : (
+                  <span className="text-gray-500">System is operational</span>
+                )}
+              </p>
             </div>
             <button
               onClick={handleToggleMaintenance}
