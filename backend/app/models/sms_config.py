@@ -44,9 +44,11 @@ class SMSConfig(Base):
         if not value:
             return None
         try:
-            return cipher.encrypt(value.encode()).decode()
+            encrypted = cipher.encrypt(value.encode()).decode()
+            print(f"[SMS_CONFIG] Encrypted value (length: {len(value)} → {len(encrypted)})")
+            return encrypted
         except Exception as e:
-            print(f"Encryption error: {e}")
+            print(f"[SMS_CONFIG] ❌ Encryption error: {e}")
             return None
     
     @staticmethod
@@ -55,9 +57,12 @@ class SMSConfig(Base):
         if not encrypted_value:
             return None
         try:
-            return cipher.decrypt(encrypted_value.encode()).decode()
+            decrypted = cipher.decrypt(encrypted_value.encode()).decode()
+            print(f"[SMS_CONFIG] Decrypted value (length: {len(encrypted_value)} → {len(decrypted)})")
+            return decrypted
         except Exception as e:
-            print(f"Decryption error: {e}")
+            print(f"[SMS_CONFIG] ❌ Decryption error: {e}")
+            print(f"[SMS_CONFIG]    Encrypted value length: {len(encrypted_value) if encrypted_value else 0}")
             return None
     
     def set_arkasel_api_key(self, api_key: str):

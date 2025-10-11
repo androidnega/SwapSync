@@ -112,27 +112,39 @@ def update_sms_config(
     # Get or create config
     config = _get_or_create_config(db)
     
+    print(f"[SMS_CONFIG] 💾 Updating SMS config for user: {current_user.username}")
+    print(f"[SMS_CONFIG]    Config ID: {config.id}")
+    print(f"[SMS_CONFIG]    Arkasel API Key provided: {bool(config_data.arkasel_api_key)}")
+    print(f"[SMS_CONFIG]    Hubtel Client ID provided: {bool(config_data.hubtel_client_id)}")
+    
     # Update with new values (only if provided) - ENCRYPTED!
-    if config_data.arkasel_api_key is not None:
+    if config_data.arkasel_api_key is not None and config_data.arkasel_api_key.strip():
+        print(f"[SMS_CONFIG]    Setting Arkasel API key (length: {len(config_data.arkasel_api_key)})")
         config.set_arkasel_api_key(config_data.arkasel_api_key)
+        config.arkasel_enabled = True
     if config_data.arkasel_sender_id is not None:
         config.arkasel_sender_id = config_data.arkasel_sender_id
-    if config_data.hubtel_client_id is not None:
+    if config_data.hubtel_client_id is not None and config_data.hubtel_client_id.strip():
+        print(f"[SMS_CONFIG]    Setting Hubtel Client ID (length: {len(config_data.hubtel_client_id)})")
         config.set_hubtel_client_id(config_data.hubtel_client_id)
-    if config_data.hubtel_client_secret is not None:
+    if config_data.hubtel_client_secret is not None and config_data.hubtel_client_secret.strip():
+        print(f"[SMS_CONFIG]    Setting Hubtel Client Secret (length: {len(config_data.hubtel_client_secret)})")
         config.set_hubtel_client_secret(config_data.hubtel_client_secret)
     if config_data.hubtel_sender_id is not None:
         config.hubtel_sender_id = config_data.hubtel_sender_id
     
     # Enable/disable
     config.sms_enabled = config_data.enabled
-    config.arkasel_enabled = bool(config_data.arkasel_api_key)
     config.hubtel_enabled = bool(config_data.hubtel_client_id and config_data.hubtel_client_secret)
     config.updated_by = current_user.username
+    
+    print(f"[SMS_CONFIG]    Final state - Arkasel enabled: {config.arkasel_enabled}, Hubtel enabled: {config.hubtel_enabled}")
     
     # Save to database
     db.commit()
     db.refresh(config)
+    
+    print(f"[SMS_CONFIG] ✅ Config saved to database!")
     
     # Reconfigure SMS service with decrypted values
     configure_sms(
@@ -173,6 +185,43 @@ def update_sms_config(
         "arkasel_enabled": config.arkasel_enabled,
         "hubtel_enabled": config.hubtel_enabled
     }
+
+
+@router.get("/debug")
+def debug_sms_config(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Debug endpoint to check SMS config status"""
+    if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    try:
+        config = db.query(SMSConfig).first()
+        if not config:
+            return {
+                "status": "no_config",
+                "message": "No SMS config found in database. Table may not exist.",
+                "solution": "Run migration: migrate_add_sms_config_table.py"
+            }
+        
+        return {
+            "status": "config_exists",
+            "config_id": config.id,
+            "arkasel_api_key_encrypted": bool(config.arkasel_api_key_encrypted),
+            "arkasel_api_key_encrypted_length": len(config.arkasel_api_key_encrypted) if config.arkasel_api_key_encrypted else 0,
+            "arkasel_decrypted_length": len(config.get_arkasel_api_key()) if config.get_arkasel_api_key() else 0,
+            "arkasel_enabled": config.arkasel_enabled,
+            "sms_enabled": config.sms_enabled,
+            "updated_by": config.updated_by,
+            "updated_at": str(config.updated_at)
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "message": "Failed to query SMS config. Table may not exist."
+        }
 
 
 @router.post("/test")
