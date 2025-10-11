@@ -1,2 +1,2 @@
-web: python migrate_add_must_change_password.py && uvicorn main:app --host 0.0.0.0 --port $PORT
+web: python run_migrations.py && uvicorn main:app --host 0.0.0.0 --port $PORT
 
