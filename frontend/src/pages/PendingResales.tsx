@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getToken } from '../services/authService';
 import PendingResaleReceipt from '../components/PendingResaleReceipt';
 
-const API_URL = 'http://localhost:8000/api';
+import { API_URL } from '../services/api';
 
 interface PendingSwap {
   id: number;

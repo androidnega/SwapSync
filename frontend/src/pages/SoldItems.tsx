@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getToken } from '../services/authService';
 import SaleReceipt from '../components/SaleReceipt';
 
-const API_URL = 'http://localhost:8000/api';
+import { API_URL } from '../services/api';
 
 interface ProductSale {
   id: number;

@@ -5,7 +5,7 @@ import Breadcrumb from '../components/Breadcrumb';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faEnvelope, faPhone, faBriefcase, faImage, faEdit } from '@fortawesome/free-solid-svg-icons';
 
-const API_URL = 'http://localhost:8000/api';
+import { API_URL } from '../services/api';
 
 interface UserProfile {
   id: number;

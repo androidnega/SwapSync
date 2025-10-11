@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 
-const API_URL = 'http://localhost:8000/api';
+import { API_URL } from '../services/api';
 
 interface Product {
   id: number;

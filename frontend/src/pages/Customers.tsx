@@ -4,7 +4,7 @@ import { getToken } from '../services/authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faPhone, faEnvelope, faCalendar, faKey, faEye, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
 
-const API_URL = 'http://localhost:8000/api';
+import { API_URL } from '../services/api';
 
 interface Customer {
   id: number;
