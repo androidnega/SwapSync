@@ -128,13 +128,13 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-3 sm:p-4">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden max-w-4xl w-full">
         <div className="grid md:grid-cols-2">
           {/* Left Side - Image and Description */}
-          <div className="bg-blue-600 p-8 flex flex-col justify-center text-white">
-            <div className="mb-6">
-              <div className="w-full h-64 rounded-lg mb-6 shadow-lg overflow-hidden">
+          <div className="bg-blue-600 p-4 sm:p-6 md:p-8 flex flex-col justify-center text-white">
+            <div className="mb-4 md:mb-6">
+              <div className="w-full h-32 sm:h-40 md:h-48 lg:h-56 rounded-lg mb-3 md:mb-6 shadow-lg overflow-hidden">
                 <img 
                   src={swapsyncImage} 
                   alt="SwapSync - Phone Management" 
@@ -150,13 +150,13 @@ const Login: React.FC = () => {
                   }}
                 />
               </div>
-              <h1 className="text-3xl font-bold mb-2">SwapSync</h1>
-              <p className="text-blue-100 text-sm">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 md:mb-2">SwapSync</h1>
+              <p className="text-blue-100 text-xs sm:text-sm">
                 Phone Swapping & Repair Shop Management System
               </p>
             </div>
 
-            <div className="space-y-3 text-sm">
+            <div className="space-y-2 md:space-y-3 text-xs sm:text-sm">
               <div className="flex items-start">
                 <span className="mr-2">✓</span>
                 <span>Manage phone swaps and sales</span>
@@ -177,21 +177,21 @@ const Login: React.FC = () => {
           </div>
 
           {/* Right Side - Login Form */}
-          <div className="p-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
-              <p className="text-gray-600 text-sm">Login to access your dashboard</p>
+          <div className="p-4 sm:p-6 md:p-8">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Welcome Back</h2>
+              <p className="text-gray-600 text-xs sm:text-sm">Login to access your dashboard</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {error && (
-                <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm">
+                <div className="bg-red-50 text-red-800 p-2 sm:p-3 rounded-lg text-xs sm:text-sm">
                   {error}
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Username
                 </label>
                 <input
@@ -200,13 +200,13 @@ const Login: React.FC = () => {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   placeholder="Enter username"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={loading}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Password
                 </label>
                 <input
@@ -215,7 +215,7 @@ const Login: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Enter password"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={loading}
                 />
               </div>
@@ -223,17 +223,17 @@ const Login: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 text-sm sm:text-base"
               >
                 {loading ? 'Logging in...' : 'Login'}
               </button>
 
               {/* Forgot Password Link */}
-              <div className="text-center">
+              <div className="text-center pt-1">
                 <button
                   type="button"
                   onClick={() => setShowResetModal(true)}
-                  className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 hover:underline"
                 >
                   Forgot Password?
                 </button>
@@ -245,7 +245,7 @@ const Login: React.FC = () => {
       </div>
       
       {/* Developer Credit - Below Card */}
-      <div className="mt-6 text-center text-sm text-gray-600">
+      <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-600 px-2">
         <p>
           System developed and managed by{' '}
           <a 
@@ -257,13 +257,13 @@ const Login: React.FC = () => {
             Manuel
           </a>
         </p>
-        <p className="mt-2 text-xs text-gray-500">© 2025 SwapSync v1.0.0</p>
+        <p className="mt-1 sm:mt-2 text-xs text-gray-500">© 2025 SwapSync v1.0.0</p>
       </div>
 
       {/* Password Reset Modal */}
       {showResetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             {/* Close Button */}
             <button
               onClick={() => {
@@ -272,13 +272,13 @@ const Login: React.FC = () => {
                 setResetMessage('');
                 setResetError('');
               }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 text-2xl leading-none"
             >
               ×
             </button>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Reset Password</h2>
-            <p className="text-sm text-gray-600 mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 pr-8">Reset Password</h2>
+            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
               {resetStep === 'request' 
                 ? 'Enter your account details to receive a reset code via SMS' 
                 : 'Enter the code sent to your phone and your new password'}
@@ -286,21 +286,21 @@ const Login: React.FC = () => {
 
             {/* Messages */}
             {resetMessage && (
-              <div className="mb-4 p-3 bg-green-50 text-green-800 rounded-lg text-sm">
+              <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-green-50 text-green-800 rounded-lg text-xs sm:text-sm">
                 {resetMessage}
               </div>
             )}
             {resetError && (
-              <div className="mb-4 p-3 bg-red-50 text-red-800 rounded-lg text-sm">
+              <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-red-50 text-red-800 rounded-lg text-xs sm:text-sm">
                 {resetError}
               </div>
             )}
 
             {/* Step 1: Request Reset */}
             {resetStep === 'request' && (
-              <form onSubmit={handleResetRequest} className="space-y-4">
+              <form onSubmit={handleResetRequest} className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Username *
                   </label>
                   <input
@@ -309,12 +309,12 @@ const Login: React.FC = () => {
                     value={resetData.username}
                     onChange={(e) => setResetData({ ...resetData, username: e.target.value })}
                     placeholder="Your username"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Email *
                   </label>
                   <input
@@ -323,12 +323,12 @@ const Login: React.FC = () => {
                     value={resetData.email}
                     onChange={(e) => setResetData({ ...resetData, email: e.target.value })}
                     placeholder="Email used during registration"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Phone Number *
                   </label>
                   <input
@@ -337,7 +337,7 @@ const Login: React.FC = () => {
                     value={resetData.phone_number}
                     onChange={(e) => setResetData({ ...resetData, phone_number: e.target.value })}
                     placeholder="Phone number used during registration"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <p className="mt-1 text-xs text-gray-500">Format: +233XXXXXXXXX or 0XXXXXXXXX</p>
                 </div>
@@ -345,7 +345,7 @@ const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 text-sm sm:text-base"
                 >
                   {loading ? 'Sending...' : '📱 Send Reset Code via SMS'}
                 </button>
@@ -354,9 +354,9 @@ const Login: React.FC = () => {
 
             {/* Step 2: Verify and Reset */}
             {resetStep === 'verify' && (
-              <form onSubmit={handleResetComplete} className="space-y-4">
+              <form onSubmit={handleResetComplete} className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Reset Code *
                   </label>
                   <input
@@ -366,12 +366,12 @@ const Login: React.FC = () => {
                     onChange={(e) => setResetData({ ...resetData, reset_token: e.target.value })}
                     placeholder="6-digit code from SMS"
                     maxLength={6}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-widest"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-xl sm:text-2xl tracking-widest"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     New Password *
                   </label>
                   <input
@@ -380,12 +380,12 @@ const Login: React.FC = () => {
                     value={resetData.new_password}
                     onChange={(e) => setResetData({ ...resetData, new_password: e.target.value })}
                     placeholder="At least 6 characters"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Confirm Password *
                   </label>
                   <input
@@ -394,14 +394,14 @@ const Login: React.FC = () => {
                     value={resetData.confirm_password}
                     onChange={(e) => setResetData({ ...resetData, confirm_password: e.target.value })}
                     placeholder="Re-enter new password"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 text-sm sm:text-base"
                 >
                   {loading ? 'Resetting...' : '✓ Reset Password'}
                 </button>
@@ -409,7 +409,7 @@ const Login: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setResetStep('request')}
-                  className="w-full text-sm text-gray-600 hover:text-gray-800"
+                  className="w-full text-xs sm:text-sm text-gray-600 hover:text-gray-800"
                 >
                   ← Back to request
                 </button>
