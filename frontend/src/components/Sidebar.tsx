@@ -178,9 +178,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
       <div 
         className={`
           ${isCollapsed ? 'w-20' : 'w-64'}
-          bg-gray-900 text-white h-screen flex flex-col transition-all duration-300 ease-in-out relative
-          
-          ${/* Mobile: Overlay sidebar */}
+          bg-gray-900 text-white h-screen flex flex-col transition-all duration-300 ease-in-out
           md:relative fixed inset-y-0 left-0 z-40
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
