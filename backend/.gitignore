@@ -25,6 +25,9 @@ swapsync.db
 *API_KEY*
 *SECRET*
 
+# But allow migration files with these words in filename
+!migrate_*.py
+
 # Logs
 *.log
 logs/
