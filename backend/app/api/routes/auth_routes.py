@@ -112,6 +112,7 @@ def register_user(
                 username=new_user.username,
                 password=user_data.password,
                 phone_number=new_user.phone_number,
+                role=new_user.role,
                 company_name=company_name
             )
             

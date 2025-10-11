@@ -60,19 +60,94 @@ def send_sms(phone_number: str, message: str) -> dict:
         return {"success": False, "error": str(e)}
 
 
-def send_welcome_sms(username: str, password: str, phone_number: str, company_name: str = "SwapSync"):
+def send_welcome_sms(username: str, password: str, phone_number: str, role: str, company_name: str = "SwapSync"):
     """Send welcome SMS when account is created"""
-    message = f"""Welcome to {company_name}!
+    
+    # Role-specific welcome messages
+    role_messages = {
+        'manager': f"""Welcome to {company_name}!
 
-Your account has been created:
+🎯 MANAGER ACCOUNT CREATED
 Username: {username}
 Password: {password}
 
-Login at: https://swap-sync.vercel.app
+🔗 Login: https://swapsync.digitstec.store
 
-Thank you for joining SwapSync!
+📱 As a Manager, you can:
+• Create shop keepers & repairers
+• Manage your business operations
+• View analytics & reports
+• Access all company features
+
+Welcome to SwapSync!
+
+- SwapSync Team""",
+        
+        'shop_keeper': f"""Welcome to {company_name}!
+
+🛍️ SHOP KEEPER ACCOUNT CREATED
+Username: {username}
+Password: {password}
+
+🔗 Login: https://swapsync.digitstec.store
+
+📱 As a Shop Keeper, you can:
+• Process phone swaps & sales
+• Manage customer transactions
+• Handle daily operations
+
+Welcome to SwapSync!
+
+- SwapSync Team""",
+        
+        'repairer': f"""Welcome to {company_name}!
+
+🔧 REPAIRER ACCOUNT CREATED
+Username: {username}
+Password: {password}
+
+🔗 Login: https://swapsync.digitstec.store
+
+📱 As a Repairer, you can:
+• Manage repair jobs
+• Update repair status
+• Track repair progress
+
+Welcome to SwapSync!
+
+- SwapSync Team""",
+        
+        'ceo': f"""Welcome to {company_name}!
+
+👑 CEO ACCOUNT CREATED
+Username: {username}
+Password: {password}
+
+🔗 Login: https://swapsync.digitstec.store
+
+📱 As a CEO, you can:
+• Full business management
+• Create managers & staff
+• Access all system features
+• View company analytics
+
+Welcome to SwapSync!
 
 - SwapSync Team"""
+    }
+    
+    # Get role-specific message or default
+    message = role_messages.get(role.lower(), f"""Welcome to {company_name}!
+
+ACCOUNT CREATED
+Username: {username}
+Password: {password}
+
+🔗 Login: https://swapsync.digitstec.store
+
+Welcome to SwapSync!
+
+- SwapSync Team""")
     
     return send_sms(phone_number, message)
 
