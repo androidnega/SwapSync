@@ -349,10 +349,10 @@ const Login: React.FC = () => {
 
             {/* Step 1: Request Reset */}
             {resetStep === 'request' && (
-              <form onSubmit={handleResetRequest} className="space-y-3 sm:space-y-4">
+              <form onSubmit={handleResetRequest} className="space-y-3">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Username *
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Username
                   </label>
                   <input
                     type="text"
@@ -360,45 +360,47 @@ const Login: React.FC = () => {
                     value={resetData.username}
                     onChange={(e) => setResetData({ ...resetData, username: e.target.value })}
                     placeholder="Your username"
-                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    disabled={loading}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Email *
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Email
                   </label>
                   <input
                     type="email"
                     required
                     value={resetData.email}
                     onChange={(e) => setResetData({ ...resetData, email: e.target.value })}
-                    placeholder="Email used during registration"
-                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="your@email.com"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    disabled={loading}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Phone Number *
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Phone Number
                   </label>
                   <input
                     type="tel"
                     required
                     value={resetData.phone_number}
                     onChange={(e) => setResetData({ ...resetData, phone_number: e.target.value })}
-                    placeholder="Phone number used during registration"
-                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="024XXXXXXX"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    disabled={loading}
                   />
-                  <p className="mt-1 text-xs text-gray-500">Format: +233XXXXXXXXX or 0XXXXXXXXX</p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 text-sm sm:text-base"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition disabled:opacity-50 text-sm"
                 >
-                  {loading ? 'Sending...' : '📱 Send Reset Code via SMS'}
+                  {loading ? 'Sending...' : 'Send Reset Code'}
                 </button>
               </form>
             )}
