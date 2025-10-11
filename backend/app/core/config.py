@@ -27,8 +27,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
     
-    # Database
-    DATABASE_URL: str = get_database_path()
+    # Database - Use env var if set, otherwise default to SQLite
+    DATABASE_URL: str = os.getenv("DATABASE_URL", get_database_path())
     
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"
