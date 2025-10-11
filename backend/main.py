@@ -40,29 +40,35 @@ async def startup_event():
     finally:
         db.close()
     
-    # Initialize SMS service from config file
+    # Initialize SMS service from DATABASE (not JSON file!)
     try:
-        import json
-        import os
         from app.core.sms import configure_sms
+        from app.models.sms_config import SMSConfig
         
-        config_file = "sms_config.json"
-        if os.path.exists(config_file):
-            with open(config_file, 'r') as f:
-                sms_config = json.load(f)
-            
-            configure_sms(
-                arkasel_api_key=sms_config.get("arkasel_api_key", ""),
-                arkasel_sender_id=sms_config.get("arkasel_sender_id", "SwapSync"),
-                hubtel_client_id=sms_config.get("hubtel_client_id", ""),
-                hubtel_client_secret=sms_config.get("hubtel_client_secret", ""),
-                hubtel_sender_id=sms_config.get("hubtel_sender_id", "SwapSync")
-            )
-            logger.info("✅ SMS service configured from sms_config.json")
-        else:
-            logger.warning("⚠️ SMS config file not found. SMS service not configured.")
+        # Load SMS config from database
+        db = SessionLocal()
+        try:
+            sms_config = db.query(SMSConfig).first()
+            if sms_config:
+                # Configure with decrypted values from database
+                configure_sms(
+                    arkasel_api_key=sms_config.get_arkasel_api_key() or "",
+                    arkasel_sender_id=sms_config.arkasel_sender_id or "SwapSync",
+                    hubtel_client_id=sms_config.get_hubtel_client_id() or "",
+                    hubtel_client_secret=sms_config.get_hubtel_client_secret() or "",
+                    hubtel_sender_id=sms_config.hubtel_sender_id or "SwapSync"
+                )
+                logger.info("✅ SMS service configured from database")
+                logger.info(f"   📱 Arkasel: {'✅ Enabled' if sms_config.arkasel_enabled else '❌ Disabled'}")
+                logger.info(f"   📱 Hubtel: {'✅ Enabled' if sms_config.hubtel_enabled else '❌ Disabled'}")
+            else:
+                logger.warning("⚠️ No SMS config in database. SMS service not configured.")
+                logger.warning("   💡 Configure SMS in Settings page")
+        finally:
+            db.close()
     except Exception as e:
         logger.error(f"❌ Failed to configure SMS service: {e}")
+        logger.warning("   SMS notifications will be disabled")
     
     # Start background scheduler
     try:
