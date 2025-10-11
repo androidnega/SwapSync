@@ -17,6 +17,16 @@ from app.core.sms import sms_service
 router = APIRouter(prefix="/auth/otp", tags=["OTP Authentication"])
 
 
+class UserIDValidationRequest(BaseModel):
+    user_id: str
+
+
+class UserIDValidationResponse(BaseModel):
+    valid: bool
+    has_phone: bool
+    message: str
+
+
 class OTPRequestModel(BaseModel):
     username: str
 
@@ -40,6 +50,42 @@ class OTPVerifyResponse(BaseModel):
     token_type: str = "bearer"
     user: Optional[dict] = None
     message: Optional[str] = None
+
+
+@router.post("/validate-userid", response_model=UserIDValidationResponse)
+async def validate_user_id(
+    validation_data: UserIDValidationRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Validate if user ID exists and has phone number
+    Used for real-time validation during OTP login
+    """
+    # Check by unique_id or username
+    user = db.query(User).filter(
+        (User.unique_id == validation_data.user_id) | 
+        (User.username == validation_data.user_id)
+    ).first()
+    
+    if not user:
+        return UserIDValidationResponse(
+            valid=False,
+            has_phone=False,
+            message="User ID not found"
+        )
+    
+    if not user.phone_number:
+        return UserIDValidationResponse(
+            valid=True,
+            has_phone=False,
+            message="No phone number registered. Use password login."
+        )
+    
+    return UserIDValidationResponse(
+        valid=True,
+        has_phone=True,
+        message="User ID validated"
+    )
 
 
 @router.post("/request", response_model=OTPRequestResponse)

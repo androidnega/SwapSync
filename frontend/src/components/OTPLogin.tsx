@@ -17,10 +17,50 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
   const [userId, setUserId] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [isValid, setIsValid] = useState(false);
   const [error, setError] = useState('');
   const [maskedPhone, setMaskedPhone] = useState('');
   const [countdown, setCountdown] = useState(300); // 5 minutes
   const [canResend, setCanResend] = useState(false);
+
+  // Debounced user ID validation
+  useEffect(() => {
+    if (!userId.trim() || userId.length < 3) {
+      setIsValid(false);
+      setError('');
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setValidating(true);
+      setError('');
+      
+      try {
+        const response = await axios.post(`${API_URL}/auth/otp/validate-userid`, {
+          user_id: userId.trim()
+        });
+        
+        if (response.data.valid && response.data.has_phone) {
+          setIsValid(true);
+          setError('');
+        } else if (response.data.valid && !response.data.has_phone) {
+          setIsValid(false);
+          setError('No phone number registered. Use password login.');
+        } else {
+          setIsValid(false);
+          setError('User ID not found');
+        }
+      } catch (err) {
+        setIsValid(false);
+        setError('');
+      } finally {
+        setValidating(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [userId]);
 
   // Countdown timer
   useEffect(() => {
@@ -141,29 +181,47 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
             <label className="block text-xs font-medium text-gray-700 mb-1">
               User ID
             </label>
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="Enter your user ID"
-              required
-              disabled={loading}
-              className={`w-full px-3 py-2 text-sm border-2 rounded focus:outline-none transition-all ${
-                !userId.trim()
-                  ? 'border-gray-300 focus:border-blue-500'
-                  : userId.length < 3
-                  ? 'border-red-400 bg-red-50 focus:border-red-500'
-                  : userId.length < 5
-                  ? 'border-yellow-400 bg-yellow-50 focus:border-yellow-500'
-                  : 'border-green-500 bg-green-50 focus:border-green-600'
-              }`}
-              autoFocus
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value.toUpperCase())}
+                placeholder="e.g., ADM-0001"
+                required
+                disabled={loading}
+                maxLength={9}
+                className={`w-full px-3 py-2 text-sm border-2 rounded focus:outline-none transition-all ${
+                  !userId.trim()
+                    ? 'border-gray-300 focus:border-blue-500'
+                    : validating
+                    ? 'border-blue-400 bg-blue-50'
+                    : isValid
+                    ? 'border-green-500 bg-green-50 focus:border-green-600'
+                    : userId.length < 3
+                    ? 'border-red-400 bg-red-50 focus:border-red-500'
+                    : 'border-yellow-400 bg-yellow-50 focus:border-yellow-500'
+                }`}
+                autoFocus
+              />
+              {validating && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                </div>
+              )}
+              {isValid && !validating && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600">
+                  ✓
+                </div>
+              )}
+            </div>
+            {error && (
+              <p className="text-xs text-red-600 mt-1">{error}</p>
+            )}
           </div>
 
           <button
             type="submit"
-            disabled={loading || !userId.trim()}
+            disabled={loading || !isValid || validating}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition disabled:opacity-50 text-sm"
           >
             {loading ? 'Sending...' : 'Request'}
