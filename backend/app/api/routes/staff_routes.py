@@ -376,9 +376,25 @@ def delete_user(
     # Store username before deletion
     deleted_username = user_to_delete.username
     
-    # Delete user (will cascade to related records based on model relationships)
-    db.delete(user_to_delete)
-    db.commit()
+    # Check if user has staff members (cannot delete manager with staff)
+    staff_count = db.query(User).filter(User.parent_user_id == user_id).count()
+    if staff_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete user with {staff_count} staff members. Please reassign or delete staff first."
+        )
+    
+    try:
+        # Delete user (will cascade to related records based on model relationships)
+        db.delete(user_to_delete)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Error deleting user {user_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete user: {str(e)}"
+        )
     
     # Log the activity
     from app.core.activity_logger import log_activity
