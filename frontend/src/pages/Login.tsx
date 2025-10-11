@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import swapsyncImage from '../assets/img/swapsync.webp';
+import { API_URL } from '../services/api';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -49,7 +50,7 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/password-reset/request', {
+      const response = await fetch(`${API_URL}/auth/password-reset/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -92,7 +93,7 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/password-reset/complete', {
+      const response = await fetch(`${API_URL}/auth/password-reset/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

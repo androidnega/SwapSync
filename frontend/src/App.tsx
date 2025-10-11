@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
+import { API_URL } from './services/api';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleDashboard from './pages/RoleDashboard';
 import SystemDatabase from './pages/SystemDatabase';
@@ -58,7 +59,7 @@ function AppContent() {
     if (!token) return;
 
     try {
-      const response = await axios.get('http://localhost:8000/api/auth/me', {
+      const response = await axios.get(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser(response.data);
