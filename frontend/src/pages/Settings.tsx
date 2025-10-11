@@ -277,23 +277,39 @@ const Settings: React.FC = () => {
     try {
       const token = getToken();
       
-      // Prepare data (only send if changed from masked value)
+      // Prepare data - CRITICAL: Only send API keys if user actually entered new values
       const payload: any = {
         enabled: smsConfig.enabled,
         arkasel_sender_id: smsConfig.arkasel_sender_id,
         hubtel_sender_id: smsConfig.hubtel_sender_id
       };
       
-      // Only include API keys if they're not the masked placeholder
-      if (smsConfig.arkasel_api_key && smsConfig.arkasel_api_key !== '********') {
+      // Only include API keys if they're NOT the masked placeholder AND not empty
+      // This prevents overwriting existing encrypted keys with the placeholder
+      if (smsConfig.arkasel_api_key && 
+          smsConfig.arkasel_api_key !== '********' && 
+          smsConfig.arkasel_api_key.trim() !== '') {
         payload.arkasel_api_key = smsConfig.arkasel_api_key;
       }
-      if (smsConfig.hubtel_client_id && smsConfig.hubtel_client_id !== '********') {
+      
+      if (smsConfig.hubtel_client_id && 
+          smsConfig.hubtel_client_id !== '********' && 
+          smsConfig.hubtel_client_id.trim() !== '') {
         payload.hubtel_client_id = smsConfig.hubtel_client_id;
       }
-      if (smsConfig.hubtel_client_secret && smsConfig.hubtel_client_secret !== '********') {
+      
+      if (smsConfig.hubtel_client_secret && 
+          smsConfig.hubtel_client_secret !== '********' && 
+          smsConfig.hubtel_client_secret.trim() !== '') {
         payload.hubtel_client_secret = smsConfig.hubtel_client_secret;
       }
+      
+      console.log('💾 Saving SMS config (API keys excluded if masked):', {
+        ...payload,
+        arkasel_api_key: payload.arkasel_api_key ? '***' : 'not included',
+        hubtel_client_id: payload.hubtel_client_id ? '***' : 'not included',
+        hubtel_client_secret: payload.hubtel_client_secret ? '***' : 'not included'
+      });
       
       const response = await axios.post(`${API_URL}/sms-config/`, payload, {
         headers: { Authorization: `Bearer ${token}` }
@@ -365,15 +381,18 @@ const Settings: React.FC = () => {
           <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">
             <div className="md:col-span-2">
               <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">
-                API Key
+                API Key {smsConfig.arkasel_api_key === '********' && <span className="text-green-600 text-xs">✓ Configured</span>}
               </label>
               <input
                 type="password"
                 value={smsConfig.arkasel_api_key}
                 onChange={(e) => setSmsConfig({ ...smsConfig, arkasel_api_key: e.target.value })}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                placeholder="Enter API key"
+                placeholder={smsConfig.arkasel_api_key === '********' ? 'API key saved (enter new one to update)' : 'Enter API key'}
               />
+              {smsConfig.arkasel_api_key === '********' && (
+                <p className="text-xs text-green-600 mt-1">✓ API key is securely stored. Leave as-is to keep current key, or enter a new one to update.</p>
+              )}
             </div>
 
             <div>
@@ -508,11 +527,16 @@ const Settings: React.FC = () => {
                   const newEnabled = e.target.checked;
                   setSmsConfig({ ...smsConfig, enabled: newEnabled });
                   
-                  // Auto-save when toggled
+                  // Auto-save when toggled - ONLY send enabled status, NOT the masked API keys!
                   try {
                     const token = getToken();
                     await axios.post(`${API_URL}/sms-config/`, 
-                      { ...smsConfig, enabled: newEnabled },
+                      { 
+                        enabled: newEnabled,
+                        arkasel_sender_id: smsConfig.arkasel_sender_id,
+                        hubtel_sender_id: smsConfig.hubtel_sender_id
+                        // DON'T send masked API keys (********) - they're already in DB!
+                      },
                       { headers: { Authorization: `Bearer ${token}` } }
                     );
                     setMessage(newEnabled ? '✅ OTP Login enabled' : '✅ OTP Login disabled');
