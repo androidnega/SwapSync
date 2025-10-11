@@ -13,8 +13,8 @@ interface OTPLoginProps {
 }
 
 const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
-  const [step, setStep] = useState<'username' | 'otp'>('username');
-  const [username, setUsername] = useState('');
+  const [step, setStep] = useState<'userid' | 'otp'>('userid');
+  const [userId, setUserId] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -42,14 +42,14 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
 
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim()) return;
+    if (!userId.trim()) return;
 
     setLoading(true);
     setError('');
 
     try {
       const response = await axios.post(`${API_URL}/auth/otp/request`, {
-        username: username.trim()
+        username: userId.trim()
       });
 
       if (response.data.success) {
@@ -70,7 +70,7 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
 
     try {
       const response = await axios.post(`${API_URL}/auth/otp/verify`, {
-        username: username.trim(),
+        username: userId.trim(),
         otp_code: otpCode
       });
 
@@ -97,7 +97,7 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
     try {
       setLoading(true);
       const response = await axios.post(`${API_URL}/auth/otp/request`, {
-        username: username.trim()
+        username: userId.trim()
       });
       
       if (response.data.success) {
@@ -126,14 +126,14 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
           SMS Login
         </h2>
         <p className="text-gray-600">
-          {step === 'username' 
-            ? 'Enter your username to receive OTP'
+          {step === 'userid' 
+            ? 'Enter your user ID to receive OTP'
             : 'Enter the 4-digit code sent to your phone'}
         </p>
       </div>
 
-      {/* Username Step */}
-      {step === 'username' && (
+      {/* User ID Step */}
+      {step === 'userid' && (
         <form onSubmit={handleRequestOTP} className="space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm animate-shake">
@@ -143,13 +143,13 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Username
+              User ID
             </label>
             <input
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="Enter your user ID"
               required
               disabled={loading}
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -159,7 +159,7 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
 
           <button
             type="submit"
-            disabled={loading || !username.trim()}
+            disabled={loading || !userId.trim()}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-4 rounded-xl hover:shadow-lg transform hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {loading ? (
@@ -233,16 +233,16 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
             </p>
           )}
 
-          {/* Change Username */}
+          {/* Change User ID */}
           <button
             onClick={() => {
-              setStep('username');
+              setStep('userid');
               setOtp('');
               setError('');
             }}
             className="w-full text-gray-600 hover:text-gray-800 underline text-sm"
           >
-            ← Change Username
+            ← Change User ID
           </button>
         </div>
       )}

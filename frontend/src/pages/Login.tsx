@@ -179,37 +179,38 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Side - Login Form */}
-          <div className="p-4 sm:p-6 md:p-8">
-            <div className="mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Welcome Back</h2>
-              <p className="text-gray-600 text-xs sm:text-sm">Login to access your dashboard</p>
-            </div>
-
-            {/* Login Method Toggle */}
-            <div className="flex gap-2 mb-6">
-              <button
-                type="button"
-                onClick={() => setLoginMethod('password')}
-                className={`flex-1 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition ${
-                  loginMethod === 'password'
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                🔑 Password
-              </button>
-              <button
-                type="button"
-                onClick={() => setLoginMethod('otp')}
-                className={`flex-1 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition ${
-                  loginMethod === 'otp'
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                📱 SMS OTP
-              </button>
+          {/* Login Form */}
+          <div className="p-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">Welcome Back</h2>
+              <p className="text-gray-600 text-sm text-center mb-4">Login to access your dashboard</p>
+              
+              {/* Login Method Toggle - Text Links */}
+              <div className="flex items-center justify-center gap-3 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('password')}
+                  className={`transition-all ${
+                    loginMethod === 'password'
+                      ? 'text-blue-600 font-semibold underline decoration-2 underline-offset-4'
+                      : 'text-gray-500 hover:text-blue-600'
+                  }`}
+                >
+                  🔑 Password
+                </button>
+                <span className="text-gray-300">|</span>
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('otp')}
+                  className={`transition-all ${
+                    loginMethod === 'otp'
+                      ? 'text-blue-600 font-semibold underline decoration-2 underline-offset-4'
+                      : 'text-gray-500 hover:text-blue-600'
+                  }`}
+                >
+                  📱 SMS OTP
+                </button>
+              </div>
             </div>
 
             {loginMethod === 'password' ? (
@@ -281,7 +282,6 @@ const Login: React.FC = () => {
               />
             )}
 
-          </div>
         </div>
       </div>
       
