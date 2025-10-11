@@ -10,12 +10,20 @@ const API_BASE_URL = isDevelopment
   ? 'http://localhost:8000/api'
   : 'https://api.digitstec.store/api';
 
-// Debug logging
-console.log('🔍 API Configuration:', {
+// Debug logging with timestamp to verify fresh code
+console.log('🔍 API Configuration (v2.1):', {
   hostname: window.location.hostname,
   isDevelopment,
-  apiUrl: API_BASE_URL
+  apiUrl: API_BASE_URL,
+  timestamp: new Date().toISOString(),
+  protocol: window.location.protocol
 });
+
+// Force HTTPS in production - double check
+if (!isDevelopment && API_BASE_URL.startsWith('http://')) {
+  console.error('🚨 CRITICAL: Using HTTP in production! This should never happen!');
+  throw new Error('HTTP detected in production - security violation');
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
