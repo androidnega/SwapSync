@@ -253,17 +253,16 @@ const Login: React.FC = () => {
         </div>
       </div>
       
-      {/* Copyright - Integrated into card */}
-      <div className="text-center text-xs text-gray-500 mt-4">
-        <p>© 2025 SwapSync v1.0.0</p>
-        <p className="mt-1">Developed by Manuel</p>
-        <p className="mt-1">
+      {/* Copyright - Below card */}
+      <div className="mt-6 text-center">
+        <p className="text-xs text-gray-500">
+          © 2025 SwapSync v1.0.0 · Developed by{' '}
           <a 
-            href="tel:+233543903334" 
-            className="text-blue-600 hover:text-blue-700"
+            href="tel:+233257940791" 
+            className="text-gray-700 hover:text-blue-600 transition"
             style={{ textDecoration: 'none' }}
           >
-            +233 54 390 3334
+            Manuel
           </a>
         </p>
       </div>
@@ -279,14 +278,7 @@ const Login: React.FC = () => {
               ×
             </button>
             
-            <div className="text-center mb-4">
-              <div className="w-24 h-24 mx-auto mb-3 rounded-lg overflow-hidden bg-gray-100 p-2">
-                <img 
-                  src={swapsyncImage} 
-                  alt="SwapSync" 
-                  className="w-full h-full object-cover rounded"
-                />
-              </div>
+            <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">SwapSync</h2>
               <p className="text-sm text-gray-600 mt-1">
                 Phone Swapping & Repair Shop Management System
