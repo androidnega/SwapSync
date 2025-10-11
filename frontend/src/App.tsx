@@ -107,6 +107,7 @@ function AppContent() {
       <div className="flex-1 overflow-y-auto">
         <Routes>
           <Route path="/not-authorized" element={<NotAuthorized />} />
+          <Route path="/maintenance" element={<Maintenance />} />
           
           {/* Dashboard - All roles */}
           <Route path="/" element={<RoleDashboard />} />
