@@ -98,30 +98,31 @@ def register_user(
     )
     
     # Send welcome SMS with credentials
-    try:
-        from app.core.sms import sms_service
-        if sms_service and sms_service.enabled and new_user.phone_number:
-            company_name = new_user.company_name or current_user.company_name or "SwapSync"
-            welcome_message = f"""Welcome to {company_name}!
-
-Your account has been created:
-Username: {new_user.username}
-Password: {user_data.password}
-
-Login at: https://swap-sync.vercel.app
-
-Please change your password on first login.
-
-- SwapSync Team"""
-            
-            sms_service.send_sms(
-                phone_number=new_user.phone_number,
-                message=welcome_message,
-                company_name=company_name
-            )
-    except Exception as e:
-        print(f"⚠️ Failed to send welcome SMS: {e}")
-        # Don't fail user creation if SMS fails
+    # TODO: Re-enable after must_change_password column is added
+    # try:
+    #     from app.core.sms import sms_service
+    #     if sms_service and sms_service.enabled and new_user.phone_number:
+    #         company_name = new_user.company_name or current_user.company_name or "SwapSync"
+    #         welcome_message = f"""Welcome to {company_name}!
+    # 
+    # Your account has been created:
+    # Username: {new_user.username}
+    # Password: {user_data.password}
+    # 
+    # Login at: https://swap-sync.vercel.app
+    # 
+    # Please change your password on first login.
+    # 
+    # - SwapSync Team"""
+    #         
+    #         sms_service.send_sms(
+    #             phone_number=new_user.phone_number,
+    #             message=welcome_message,
+    #             company_name=company_name
+    #         )
+    # except Exception as e:
+    #     print(f"⚠️ Failed to send welcome SMS: {e}")
+    #     # Don't fail user creation if SMS fails
     
     return new_user
 
