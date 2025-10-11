@@ -254,10 +254,7 @@ const Login: React.FC = () => {
           {/* Copyright - Inside card at bottom */}
           <div className="border-t border-gray-100 pt-4 pb-4 text-center">
             <p className="text-xs text-gray-500">
-              © 2025 SwapSync v1.0.0
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Developed by{' '}
+              © 2025 SwapSync v1.0.0 · Developed by{' '}
               <a 
                 href="tel:+233257940791" 
                 className="text-gray-700 hover:text-blue-600 transition font-medium"
