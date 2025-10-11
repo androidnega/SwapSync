@@ -65,7 +65,7 @@ const SalesManager = () => {
   const fetchUserRole = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('${API_URL}/auth/me', {
+      const response = await axios.get(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserRole(response.data.role);

@@ -34,7 +34,7 @@ const ActivityLogs: React.FC = () => {
   const fetchActivities = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('${API_URL}/staff/activities?limit=100', {
+      const response = await axios.get(`${API_URL}/staff/activities?limit=100`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setActivities(response.data);

@@ -88,7 +88,7 @@ const ProductSales = () => {
   const fetchUserRole = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('${API_URL}/auth/me', {
+      const response = await axios.get(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserRole(response.data.role);
@@ -134,7 +134,7 @@ const ProductSales = () => {
   const handleCreateQuickCustomer = async () => {
     try {
       const token = getToken();
-      const response = await axios.post('${API_URL}/customers/', newCustomerData, {
+      const response = await axios.post(`${API_URL}/customers/`, newCustomerData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

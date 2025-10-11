@@ -61,7 +61,7 @@ const Reports: React.FC = () => {
     try {
       const token = getToken();
       const response = await axios.get(
-        '${API_URL}/staff/list',
+        `${API_URL}/staff/list`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setStaffList(response.data);

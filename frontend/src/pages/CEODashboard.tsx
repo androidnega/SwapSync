@@ -33,7 +33,7 @@ const CEODashboard: React.FC = () => {
   const fetchStats = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('${API_URL}/staff/stats', {
+      const response = await axios.get(`${API_URL}/staff/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(response.data);

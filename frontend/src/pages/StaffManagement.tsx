@@ -90,7 +90,7 @@ const StaffManagement: React.FC = () => {
   const fetchCurrentUser = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('${API_URL}/auth/me', {
+      const response = await axios.get(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCurrentUser(response.data);
@@ -102,7 +102,7 @@ const StaffManagement: React.FC = () => {
   const fetchStaff = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('${API_URL}/staff/my-staff', {
+      const response = await axios.get(`${API_URL}/staff/my-staff`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStaff(response.data);
@@ -120,7 +120,7 @@ const StaffManagement: React.FC = () => {
   const fetchCompanies = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('${API_URL}/staff/admin/companies', {
+      const response = await axios.get(`${API_URL}/staff/admin/companies`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCompanies(response.data.companies || []);
@@ -141,7 +141,7 @@ const StaffManagement: React.FC = () => {
     try {
       const token = getToken();
       await axios.post(
-        '${API_URL}/auth/register',
+        `${API_URL}/auth/register`,
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

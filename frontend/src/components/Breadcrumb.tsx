@@ -40,7 +40,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ customItems }) => {
   const fetchUser = async () => {
     try {
       const token = getToken();
-      const response = await axios.get('${API_URL}/auth/me', {
+      const response = await axios.get(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser(response.data);
