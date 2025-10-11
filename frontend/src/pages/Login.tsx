@@ -159,9 +159,10 @@ const Login: React.FC = () => {
                 onClick={() => setLoginMethod('password')}
                 className={`transition-all ${
                   loginMethod === 'password'
-                    ? 'text-blue-600 font-semibold underline decoration-2 underline-offset-4'
+                    ? 'text-blue-600 font-semibold'
                     : 'text-gray-500 hover:text-blue-600'
                 }`}
+                style={{ textDecoration: 'none' }}
               >
                 🔑 Password
               </button>
@@ -171,9 +172,10 @@ const Login: React.FC = () => {
                 onClick={() => setLoginMethod('otp')}
                 className={`transition-all ${
                   loginMethod === 'otp'
-                    ? 'text-blue-600 font-semibold underline decoration-2 underline-offset-4'
+                    ? 'text-blue-600 font-semibold'
                     : 'text-gray-500 hover:text-blue-600'
                 }`}
+                style={{ textDecoration: 'none' }}
               >
                 📱 SMS OTP
               </button>
@@ -251,9 +253,19 @@ const Login: React.FC = () => {
         </div>
       </div>
       
-      {/* Developer Credit */}
-      <div className="mt-4 text-center text-xs text-gray-500">
+      {/* Copyright - Integrated into card */}
+      <div className="text-center text-xs text-gray-500 mt-4">
         <p>© 2025 SwapSync v1.0.0</p>
+        <p className="mt-1">Developed by Manuel</p>
+        <p className="mt-1">
+          <a 
+            href="tel:+233543903334" 
+            className="text-blue-600 hover:text-blue-700"
+            style={{ textDecoration: 'none' }}
+          >
+            +233 54 390 3334
+          </a>
+        </p>
       </div>
 
       {/* Info Modal */}
