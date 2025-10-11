@@ -452,10 +452,11 @@ const Login: React.FC = () => {
               </form>
             )}
           </div>
-        )}
-      </>
-    );
-  };
+        </div>
+      )}
+    </>
+  );
+};
   
   export default Login;
 
