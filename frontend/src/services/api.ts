@@ -4,28 +4,11 @@
  */
 import axios from 'axios';
 
-// API Base URL - Always use production backend
-const getApiBaseUrl = () => {
-  // Check if there's an environment variable set
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  
-  // In Electron, always use localhost
-  if (window.location.protocol === 'file:') {
-    return 'http://localhost:8000/api';
-  }
-  
-  // For localhost development, use localhost backend
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:8000/api';
-  }
-  
-  // For all deployed versions (Vercel, custom domains), use production API
-  return 'https://api.digitstec.store';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+// API Base URL Configuration
+const API_BASE_URL = import.meta.env.MODE === 'development' && 
+                     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000/api'
+  : 'https://api.digitstec.store';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
