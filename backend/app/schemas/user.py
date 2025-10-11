@@ -12,9 +12,9 @@ class UserCreate(BaseModel):
     email: EmailStr
     full_name: str = Field(..., min_length=1, max_length=100)
     phone_number: str = Field(..., min_length=10, max_length=20)  # Required for OTP & password reset
-    company_name: Optional[str] = Field(None, max_length=100)  # For CEOs
+    company_name: Optional[str] = Field(None, max_length=100)  # For Managers
     password: str = Field(..., min_length=6)
-    role: str = Field(default="shop_keeper", pattern="^(shop_keeper|repairer|admin)$")
+    role: str = Field(default="shop_keeper", pattern="^(shop_keeper|repairer|admin|manager|ceo)$")
 
 
 class UserLogin(BaseModel):
@@ -27,7 +27,7 @@ class UserUpdate(BaseModel):
     """Schema for updating user information"""
     email: Optional[EmailStr] = None
     full_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    role: Optional[str] = Field(None, pattern="^(shop_keeper|repairer|admin)$")
+    role: Optional[str] = Field(None, pattern="^(shop_keeper|repairer|admin|manager|ceo)$")
     is_active: Optional[bool] = None
 
 
