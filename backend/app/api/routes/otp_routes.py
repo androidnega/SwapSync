@@ -13,7 +13,6 @@ from app.models.otp_session import OTPSession
 from app.models.user import User
 from app.core.auth import create_access_token
 from app.core.sms import sms_service
-from app.schemas.user import User as UserSchema
 
 router = APIRouter(prefix="/auth/otp", tags=["OTP Authentication"])
 
