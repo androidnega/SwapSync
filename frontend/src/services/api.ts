@@ -1,8 +1,11 @@
 /**
- * API Service Layer
+ * API Service Layer - V4.0 EMERGENCY CACHE BUST
  * Handles all backend API calls
  */
 import axios from 'axios';
+
+// EMERGENCY: Force immediate cache bust
+console.log('🚨 EMERGENCY CACHE BUST v4.0 - FORCE DEPLOY');
 
 // API Base URL Configuration - ALWAYS HTTPS in production
 const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -10,16 +13,21 @@ const API_BASE_URL = isDevelopment
   ? 'http://localhost:8000/api'
   : 'https://api.digitstec.store/api';
 
-// Debug logging with timestamp to verify fresh code
-console.log('🔍 API Configuration (v3.0 - CACHE BUST):', {
+// EMERGENCY DEBUG - V4.0 FORCE DEPLOY
+console.log('🚨 EMERGENCY API Configuration (v4.0 - FORCE DEPLOY):', {
   hostname: window.location.hostname,
   isDevelopment,
   apiUrl: API_BASE_URL,
   timestamp: new Date().toISOString(),
   protocol: window.location.protocol,
-  buildVersion: '3.0-cache-bust',
-  randomId: Math.random().toString(36).substring(7)
+  buildVersion: '4.0-EMERGENCY-FORCE-DEPLOY',
+  emergencyId: 'FORCE-' + Date.now(),
+  forceDeploy: true
 });
+
+// EMERGENCY: Force immediate HTTPS validation
+console.log('🚨 EMERGENCY: Checking API URL:', API_BASE_URL);
+console.log('🚨 EMERGENCY: Is HTTPS?', API_BASE_URL.startsWith('https://'));
 
 // Force HTTPS in production - double check
 if (!isDevelopment && API_BASE_URL.startsWith('http://')) {
