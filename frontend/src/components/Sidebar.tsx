@@ -83,6 +83,8 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Reports', icon: faClipboardList, route: '/reports' },
     { name: 'Profit Reports (PDF)', icon: faChartPie, route: '/profit-reports' },
     { name: 'Staff Management', icon: faUsers, route: '/staff-management' },
+    { name: 'Phone Brands', icon: faTags, route: '/brands' },
+    { name: 'Product Categories', icon: faBox, route: '/categories' },
     { name: 'Audit Code', icon: faKey, route: '/audit-code' },
     { name: 'Activity Logs', icon: faClipboardList, route: '/activity-logs' },
     { name: 'Customers', icon: faUserCircle, route: '/customers' },

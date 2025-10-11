@@ -97,54 +97,33 @@ def register_user(
         details=f"Created {target_role.value} account"
     )
     
-    # Send welcome SMS with credentials
+    # Send welcome SMS with credentials - SIMPLIFIED!
     try:
-        from app.core.sms import sms_service
+        from app.core.simple_sms import send_welcome_sms
         
-        print(f"[WELCOME_SMS] Attempting to send SMS to {new_user.username}")
-        print(f"[WELCOME_SMS]    Phone: {new_user.phone_number}")
-        print(f"[WELCOME_SMS]    SMS Service enabled: {sms_service.enabled if sms_service else 'No service'}")
-        
-        if sms_service and sms_service.enabled and new_user.phone_number:
+        if new_user.phone_number:
             company_name = new_user.company_name or current_user.company_name or "SwapSync"
             
-            # Format phone number (ensure it's valid)
-            phone = new_user.phone_number.strip()
-            if not phone.startswith('+') and not phone.startswith('0'):
-                phone = '0' + phone  # Add leading 0 if missing
-            
-            print(f"[WELCOME_SMS]    Formatted phone: {phone}")
+            print(f"[WELCOME_SMS] 📱 Sending SMS to {new_user.username}")
+            print(f"[WELCOME_SMS]    Phone: {new_user.phone_number}")
             print(f"[WELCOME_SMS]    Company: {company_name}")
             
-            welcome_message = f"""Welcome to {company_name}!
-
-Your account has been created:
-Username: {new_user.username}
-Password: {user_data.password}
-
-Login at: https://swap-sync.vercel.app
-
-Thank you for joining SwapSync!
-
-- SwapSync Team"""
-            
-            result = sms_service.send_sms(
-                phone_number=phone,
-                message=welcome_message,
+            result = send_welcome_sms(
+                username=new_user.username,
+                password=user_data.password,
+                phone_number=new_user.phone_number,
                 company_name=company_name
             )
             
-            print(f"[WELCOME_SMS] ✅ SMS sent! Result: {result}")
+            if result.get('success'):
+                print(f"[WELCOME_SMS] ✅ SMS sent successfully!")
+            else:
+                print(f"[WELCOME_SMS] ❌ SMS failed: {result.get('error')}")
         else:
-            print(f"[WELCOME_SMS] ❌ SMS not sent!")
-            print(f"[WELCOME_SMS]    Service exists: {bool(sms_service)}")
-            print(f"[WELCOME_SMS]    Service enabled: {sms_service.enabled if sms_service else 'N/A'}")
-            print(f"[WELCOME_SMS]    Phone number: {bool(new_user.phone_number)}")
+            print(f"[WELCOME_SMS] ⚠️ No phone number provided, skipping SMS")
             
     except Exception as e:
-        print(f"[WELCOME_SMS] ❌ Failed to send welcome SMS: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"[WELCOME_SMS] ❌ Error: {e}")
         # Don't fail user creation if SMS fails
     
     return new_user
