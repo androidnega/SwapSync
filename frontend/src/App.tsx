@@ -30,7 +30,6 @@ import ProductsHub from './pages/ProductsHub';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
 import FirstLoginPasswordChange from './components/FirstLoginPasswordChange';
-import RoleDebug from './components/RoleDebug';
 import { getToken, removeToken, initializeSession, updateLastActivity } from './services/authService';
 import axios from 'axios';
 import './App.css';
@@ -166,8 +165,6 @@ function AppContent() {
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
-        {/* Debug Component - Remove after fixing */}
-        <RoleDebug user={user} />
         <Routes>
           <Route path="/not-authorized" element={<NotAuthorized />} />
           <Route path="/maintenance" element={<Maintenance />} />
