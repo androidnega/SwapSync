@@ -2,7 +2,7 @@
 Product Schemas - For all inventory items
 """
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 
@@ -128,7 +128,7 @@ class ProductSearchFilters(BaseModel):
 
 class BulkProductUpload(BaseModel):
     """Schema for bulk product upload"""
-    products: list[ProductCreate]
+    products: List[ProductCreate]
 
 
 class ProductSummary(BaseModel):

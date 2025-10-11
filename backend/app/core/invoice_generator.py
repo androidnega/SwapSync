@@ -2,6 +2,7 @@
 Invoice Generation Utilities
 """
 from datetime import datetime
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from app.models.invoice import Invoice
 from app.models.swap import Swap
@@ -123,12 +124,12 @@ def create_sale_invoice(
     return invoice
 
 
-def get_invoice_by_number(db: Session, invoice_number: str) -> Invoice | None:
+def get_invoice_by_number(db: Session, invoice_number: str) -> Optional[Invoice]:
     """Get invoice by invoice number"""
     return db.query(Invoice).filter(Invoice.invoice_number == invoice_number).first()
 
 
-def get_invoices_by_customer(db: Session, customer_id: int) -> list[Invoice]:
+def get_invoices_by_customer(db: Session, customer_id: int) -> List[Invoice]:
     """Get all invoices for a customer"""
     return (
         db.query(Invoice)
