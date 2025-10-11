@@ -32,9 +32,31 @@ const api = axios.create({
   },
   // Force HTTPS and prevent caching issues
   timeout: 10000,
+  // Force HTTPS protocol
+  httpsAgent: undefined,
+  // Prevent protocol downgrade
+  maxRedirects: 0,
 });
 
-// Add auth token to all requests
+// Override axios defaults to force HTTPS
+api.defaults.baseURL = API_BASE_URL;
+api.defaults.timeout = 10000;
+
+// Add request interceptor to force HTTPS
+api.interceptors.request.use((config) => {
+  // Force HTTPS in production
+  if (config.url && config.url.startsWith('http://api.digitstec.store')) {
+    config.url = config.url.replace('http://', 'https://');
+    console.log('🔧 FORCED HTTPS:', config.url);
+  }
+  if (config.baseURL && config.baseURL.startsWith('http://api.digitstec.store')) {
+    config.baseURL = config.baseURL.replace('http://', 'https://');
+    console.log('🔧 FORCED HTTPS baseURL:', config.baseURL);
+  }
+  return config;
+});
+
+// Add auth token to all requests (second interceptor)
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
