@@ -360,6 +360,22 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleShowDebugInfo = async () => {
+    setLoading(true);
+    try {
+      const token = getToken();
+      const response = await axios.get(`${API_URL}/sms-config/debug`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDebugInfo(response.data);
+      setShowDebugInfo(true);
+    } catch (error: any) {
+      setMessage(`❌ Failed to get debug info: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
@@ -498,6 +514,14 @@ const Settings: React.FC = () => {
           >
             📱 Test SMS
           </button>
+          <button
+            onClick={handleShowDebugInfo}
+            disabled={loading}
+            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50"
+            title="Check SMS config status in database"
+          >
+            🔍 Debug Info
+          </button>
           <a
             href="https://sms.arkesel.com"
             target="_blank"
@@ -507,6 +531,47 @@ const Settings: React.FC = () => {
             Open Arkasel Dashboard
           </a>
         </div>
+
+        {/* Debug Info Modal */}
+        {showDebugInfo && debugInfo && (
+          <div className="mt-4 bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-xs overflow-x-auto">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-white font-bold">🔍 SMS Config Debug Info</h3>
+              <button
+                onClick={() => setShowDebugInfo(false)}
+                className="text-red-400 hover:text-red-300"
+              >
+                ✕ Close
+              </button>
+            </div>
+            <pre className="whitespace-pre-wrap">{JSON.stringify(debugInfo, null, 2)}</pre>
+            
+            {debugInfo.status === 'no_config' && (
+              <div className="mt-3 bg-red-900 bg-opacity-50 border border-red-500 p-3 rounded text-red-200">
+                <p className="font-bold">❌ Table Missing!</p>
+                <p className="mt-1">{debugInfo.message}</p>
+                <p className="mt-1 text-yellow-300">Solution: {debugInfo.solution}</p>
+              </div>
+            )}
+            
+            {debugInfo.status === 'config_exists' && debugInfo.arkasel_decrypted_length === 0 && (
+              <div className="mt-3 bg-yellow-900 bg-opacity-50 border border-yellow-500 p-3 rounded text-yellow-200">
+                <p className="font-bold">⚠️ API Key Not Saved!</p>
+                <p className="mt-1">Table exists but API key is empty in database.</p>
+                <p className="mt-1 text-green-300">Action: Enter your API key above and click Save.</p>
+              </div>
+            )}
+            
+            {debugInfo.status === 'config_exists' && debugInfo.arkasel_decrypted_length > 0 && (
+              <div className="mt-3 bg-green-900 bg-opacity-50 border border-green-500 p-3 rounded text-green-200">
+                <p className="font-bold">✅ API Key Saved!</p>
+                <p className="mt-1">Encrypted: {debugInfo.arkasel_api_key_encrypted_length} chars → Decrypted: {debugInfo.arkasel_decrypted_length} chars</p>
+                <p className="mt-1">Arkasel enabled: {debugInfo.arkasel_enabled ? '✅ Yes' : '❌ No'}</p>
+                <p className="mt-1">SMS enabled: {debugInfo.sms_enabled ? '✅ Yes' : '❌ No'}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Login Controls */}
