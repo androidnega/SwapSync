@@ -515,7 +515,7 @@ const Settings: React.FC = () => {
                   <span className="text-gray-800">Maintenance Mode</span>
                 )}
               </p>
-              <p className="text-xs text-gray-500">Disable transactions during updates</p>
+              <p className="text-xs text-gray-500">Show maintenance page to all users</p>
             </div>
             <button
               onClick={handleToggleMaintenance}
