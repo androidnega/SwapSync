@@ -43,13 +43,24 @@ function App() {
 
 function AppContent() {
   const [user, setUser] = useState<any>(null);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchUserInfo();
+    checkMaintenanceStatus();
   }, []);
+
+  const checkMaintenanceStatus = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/maintenance/status`);
+      setMaintenanceMode(response.data.maintenance_mode || false);
+    } catch (err) {
+      console.error('Failed to check maintenance status:', err);
+    }
+  };
 
   const fetchUserInfo = async () => {
     const token = getToken();

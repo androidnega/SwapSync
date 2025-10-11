@@ -76,8 +76,21 @@ def disable_maintenance_mode():
 def create_database_backup():
     """
     Create a backup of the database
+    Note: PostgreSQL backups are managed by Railway
     """
     try:
+        from app.core.config import settings
+        
+        # Check if using PostgreSQL (Railway production)
+        if "postgresql" in settings.DATABASE_URL.lower():
+            return {
+                "success": False,
+                "message": "PostgreSQL backups are managed by Railway",
+                "tip": "Railway provides automatic daily backups",
+                "instructions": "Go to Railway Dashboard → PostgreSQL service → Backups tab"
+            }
+        
+        # SQLite backup (local development only)
         backup_info = create_backup()
         return {
             "success": True,
