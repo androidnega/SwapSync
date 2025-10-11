@@ -20,6 +20,7 @@ import Reports from './pages/Reports';
 import ProfitReports from './pages/ProfitReports';
 import Login from './pages/Login';
 import NotAuthorized from './pages/NotAuthorized';
+import Maintenance from './pages/Maintenance';
 import ManagerAuditCode from './pages/ManagerAuditCode';
 import AdminAuditAccess from './pages/AdminAuditAccess';
 import PhoneCategories from './pages/PhoneCategories';
