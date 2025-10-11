@@ -340,9 +340,9 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-6 space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">System Settings</h1>
 
         {/* Status Message */}
         {message && (
@@ -352,41 +352,37 @@ const Settings: React.FC = () => {
       )}
 
       {/* SMS Configuration */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">📱 SMS Configuration (Ghana)</h2>
-        <p className="text-gray-600 mb-4 text-sm">Configure Arkasel (Primary) and Hubtel (Fallback) for SMS notifications</p>
+      <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">📱 SMS Configuration</h2>
+        <p className="text-gray-600 mb-4 text-xs md:text-sm">Configure Arkasel (Primary) and Hubtel (Fallback)</p>
         
         {/* Arkasel Configuration (Primary) */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+          <h3 className="text-sm md:text-base font-semibold text-blue-900 mb-3 flex items-center gap-2">
             <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">PRIMARY</span>
-            Arkasel SMS (Ghana)
+            Arkasel SMS
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Arkasel API Key
-                <a href="https://sms.arkesel.com" target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 hover:underline text-xs">
-                  Get API Key →
-                </a>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">
+                API Key
               </label>
               <input
                 type="password"
                 value={smsConfig.arkasel_api_key}
                 onChange={(e) => setSmsConfig({ ...smsConfig, arkasel_api_key: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your Arkasel API key"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                placeholder="Enter API key"
               />
-              <p className="text-xs text-gray-500 mt-1">Get from: https://sms.arkesel.com → Settings → API Settings</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Arkasel Sender ID</label>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Sender ID</label>
               <input
                 type="text"
                 value={smsConfig.arkasel_sender_id}
                 onChange={(e) => setSmsConfig({ ...smsConfig, arkasel_sender_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
                 placeholder="SwapSync"
               />
             </div>
@@ -394,46 +390,43 @@ const Settings: React.FC = () => {
         </div>
 
         {/* Hubtel Configuration (Fallback) */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+          <h3 className="text-sm md:text-base font-semibold text-green-900 mb-3 flex items-center gap-2">
             <span className="bg-green-600 text-white px-2 py-1 rounded text-xs">FALLBACK</span>
-            Hubtel SMS (Ghana)
+            Hubtel SMS
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Hubtel Client ID
-                <a href="https://developers.hubtel.com" target="_blank" rel="noopener noreferrer" className="ml-2 text-green-600 hover:underline text-xs">
-                  Get Credentials →
-                </a>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
+                Client ID
               </label>
               <input
                 type="text"
                 value={smsConfig.hubtel_client_id}
                 onChange={(e) => setSmsConfig({ ...smsConfig, hubtel_client_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                placeholder="Enter Hubtel Client ID"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500"
+                placeholder="Client ID"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Hubtel Client Secret</label>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Client Secret</label>
               <input
                 type="password"
                 value={smsConfig.hubtel_client_secret}
                 onChange={(e) => setSmsConfig({ ...smsConfig, hubtel_client_secret: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                placeholder="Enter Hubtel Client Secret"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500"
+                placeholder="Secret"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Hubtel Sender ID</label>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Sender ID</label>
               <input
                 type="text"
                 value={smsConfig.hubtel_sender_id}
                 onChange={(e) => setSmsConfig({ ...smsConfig, hubtel_sender_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500"
                 placeholder="SwapSync"
               />
             </div>
@@ -491,28 +484,25 @@ const Settings: React.FC = () => {
       </div>
 
       {/* Maintenance Mode */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">🔧 Maintenance Mode</h2>
-        <div className="flex items-center justify-between">
+      <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">🔧 Maintenance Mode</h2>
+        <div className="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between">
           <div>
-            <p className="text-gray-600">
+            <p className="text-sm md:text-base text-gray-600 font-semibold">
               {maintenanceMode ? (
-                <>
-                  <span className="text-red-600 font-semibold">Maintenance mode is ON</span>
-                  {maintenanceReason && <span className="text-sm text-gray-500"> - {maintenanceReason}</span>}
-                </>
+                <span className="text-red-600">Maintenance ON</span>
               ) : (
-                <span className="text-green-600 font-semibold">System is operational</span>
+                <span className="text-green-600">System Operational</span>
               )}
             </p>
-            <p className="text-sm text-gray-500 mt-1">
-              Enable maintenance mode to temporarily disable transaction endpoints during system updates
+            <p className="text-xs md:text-sm text-gray-500 mt-1">
+              Temporarily disable transactions during updates
             </p>
           </div>
           <button
             onClick={handleToggleMaintenance}
             disabled={loading}
-            className={`px-6 py-2 rounded-lg font-medium ${
+            className={`w-full md:w-auto px-4 md:px-6 py-2 rounded font-medium text-sm ${
               maintenanceMode
                 ? 'bg-green-600 hover:bg-green-700 text-white'
                 : 'bg-orange-600 hover:bg-orange-700 text-white'
