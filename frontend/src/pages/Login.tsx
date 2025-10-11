@@ -131,50 +131,44 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-3 sm:p-4">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden max-w-4xl w-full">
-        <div className="grid md:grid-cols-2">
-          {/* Left Side - Image and Description */}
-          <div className="bg-blue-600 p-4 sm:p-6 md:p-8 flex flex-col justify-center text-white">
-            <div className="mb-4 md:mb-6">
-              <div className="w-full h-32 sm:h-40 md:h-48 lg:h-56 rounded-lg mb-3 md:mb-6 shadow-lg overflow-hidden">
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-3 sm:p-4">
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-md">
+          {/* Welcome Modal Header */}
+          <div className="bg-gradient-to-br from-blue-600 to-purple-700 p-8 text-white text-center">
+            <div className="mb-4 flex justify-center">
+              <div className="w-40 h-40 rounded-2xl shadow-2xl overflow-hidden bg-white p-2">
                 <img 
                   src={swapsyncImage} 
-                  alt="SwapSync - Phone Management" 
-                  className="w-full h-full object-cover"
-                  style={{ 
-                    objectPosition: 'center 20%',
-                    transform: 'scale(1.05)',
-                    transformOrigin: 'center center'
-                  }}
+                  alt="SwapSync" 
+                  className="w-full h-full object-cover rounded-xl"
                   onError={(e) => {
-                    // Fallback if image doesn't load
                     e.currentTarget.style.display = 'none';
                   }}
                 />
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 md:mb-2">SwapSync</h1>
-              <p className="text-blue-100 text-xs sm:text-sm">
-                Phone Swapping & Repair Shop Management System
-              </p>
             </div>
-
-            <div className="space-y-2 md:space-y-3 text-xs sm:text-sm">
+            <h1 className="text-3xl font-bold mb-2">SwapSync</h1>
+            <p className="text-blue-100 text-base mb-6">
+              Phone Swapping & Repair Shop Management System
+            </p>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 space-y-2.5 text-left">
               <div className="flex items-start">
-                <span className="mr-2">✓</span>
-                <span>Manage phone swaps and sales</span>
+                <span className="mr-3 text-lg">✓</span>
+                <span className="text-sm">Manage phone swaps and sales</span>
               </div>
               <div className="flex items-start">
-                <span className="mr-2">✓</span>
-                <span>Track repairs with SMS notifications</span>
+                <span className="mr-3 text-lg">✓</span>
+                <span className="text-sm">Track repairs with SMS notifications</span>
               </div>
               <div className="flex items-start">
-                <span className="mr-2">✓</span>
-                <span>Automatic profit/loss calculation</span>
+                <span className="mr-3 text-lg">✓</span>
+                <span className="text-sm">Automatic profit/loss calculation</span>
               </div>
               <div className="flex items-start">
-                <span className="mr-2">✓</span>
-                <span>Complete analytics and reporting</span>
+                <span className="mr-3 text-lg">✓</span>
+                <span className="text-sm">Complete analytics and reporting</span>
               </div>
             </div>
           </div>
