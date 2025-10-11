@@ -59,6 +59,7 @@ const StaffManagement: React.FC = () => {
     username: '',
     email: '',
     full_name: '',
+    phone_number: '',
     company_name: '',
     password: '',
     role: 'shop_keeper'
@@ -152,6 +153,7 @@ const StaffManagement: React.FC = () => {
         username: '',
         email: '',
         full_name: '',
+        phone_number: '',
         company_name: '',
         password: '',
         role: isSystemAdmin() ? 'manager' : 'shop_keeper'
@@ -418,6 +420,21 @@ const StaffManagement: React.FC = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="john@example.com"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={formData.phone_number}
+                    onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0241234567"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">For OTP login & password reset</p>
                 </div>
 
                 <div>
