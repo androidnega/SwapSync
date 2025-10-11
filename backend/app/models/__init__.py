@@ -17,11 +17,12 @@ from app.models.product import Product, StockMovement
 from app.models.product_sale import ProductSale
 from app.models.user_session import UserSession
 from app.models.audit_code import AuditCode
+from app.models.otp_session import OTPSession
 
 __all__ = [
     "Customer", "Phone", "PhoneStatus", "Swap", "Sale", "Repair", 
     "ResaleStatus", "User", "UserRole", "ActivityLog", "Invoice", 
     "SMSLog", "Category", "Brand", "Product", "StockMovement", "ProductSale",
-    "UserSession", "AuditCode"
+    "UserSession", "AuditCode", "OTPSession"
 ]
 

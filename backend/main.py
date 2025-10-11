@@ -96,9 +96,13 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Import OTP routes
+from app.api.routes import otp_routes
+
 # Include routers
 app.include_router(ping.router, tags=["Health Check"])
 app.include_router(auth_routes.router, prefix="/api")
+app.include_router(otp_routes.router, prefix="/api")
 app.include_router(staff_routes.router, prefix="/api")
 app.include_router(dashboard_routes.router, prefix="/api")
 app.include_router(invoice_routes.router, prefix="/api")

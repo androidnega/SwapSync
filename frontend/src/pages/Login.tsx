@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import swapsyncImage from '../assets/img/swapsync.webp';
 import { API_URL } from '../services/api';
+import OTPLogin from '../components/OTPLogin';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<'password' | 'otp'>('password');
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
   const [resetData, setResetData] = useState({
@@ -184,7 +186,34 @@ const Login: React.FC = () => {
               <p className="text-gray-600 text-xs sm:text-sm">Login to access your dashboard</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            {/* Login Method Toggle */}
+            <div className="flex gap-2 mb-6">
+              <button
+                type="button"
+                onClick={() => setLoginMethod('password')}
+                className={`flex-1 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition ${
+                  loginMethod === 'password'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                🔑 Password
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginMethod('otp')}
+                className={`flex-1 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition ${
+                  loginMethod === 'otp'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                📱 SMS OTP
+              </button>
+            </div>
+
+            {loginMethod === 'password' ? (
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {error && (
                 <div className="bg-red-50 text-red-800 p-2 sm:p-3 rounded-lg text-xs sm:text-sm">
                   {error}
@@ -240,6 +269,17 @@ const Login: React.FC = () => {
                 </button>
               </div>
             </form>
+            ) : (
+              <OTPLogin
+                onSuccess={(token, user) => {
+                  authService.setToken(token);
+                  authService.setUser(user);
+                  navigate('/');
+                  window.location.reload();
+                }}
+                onCancel={() => setLoginMethod('password')}
+              />
+            )}
 
           </div>
         </div>
