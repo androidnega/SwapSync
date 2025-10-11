@@ -107,7 +107,7 @@ const OTPInput: React.FC<OTPInputProps> = ({
   };
 
   return (
-    <div className="flex gap-3 justify-center">
+    <div className="flex gap-2 justify-center">
       {Array.from({ length }).map((_, index) => (
         <input
           key={index}
@@ -123,12 +123,12 @@ const OTPInput: React.FC<OTPInputProps> = ({
           onFocus={() => handleFocus(index)}
           disabled={disabled}
           className={`
-            w-14 h-16 sm:w-16 sm:h-20 text-3xl sm:text-4xl font-bold text-center
-            border-3 rounded-xl transition-all duration-200 shadow-lg
+            w-12 h-12 text-2xl font-bold text-center
+            border-2 rounded transition-all duration-200
             ${error
               ? 'border-red-500 bg-red-50 text-red-600 animate-shake'
               : activeIndex === index && !disabled
-              ? 'border-blue-600 ring-4 ring-blue-200 scale-110 bg-blue-50'
+              ? 'border-blue-600 ring-2 ring-blue-200 bg-blue-50'
               : value[index]
               ? 'border-green-500 bg-green-50 text-green-700'
               : 'border-gray-300 bg-white'
@@ -136,13 +136,6 @@ const OTPInput: React.FC<OTPInputProps> = ({
             ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-50' : 'hover:border-blue-400'}
             focus:outline-none font-mono
           `}
-          style={{
-            boxShadow: activeIndex === index && !disabled && !error
-              ? '0 0 0 4px rgba(59, 130, 246, 0.1)'
-              : error
-              ? '0 0 0 4px rgba(239, 68, 68, 0.1)'
-              : '0 4px 6px rgba(0, 0, 0, 0.1)'
-          }}
         />
       ))}
     </div>
