@@ -28,6 +28,7 @@ const PhoneBrands: React.FC = () => {
 
   const fetchBrands = async () => {
     try {
+      console.log('🔍 Fetching brands from:', api.defaults.baseURL);
       const response = await api.get('/brands');
       setBrands(response.data);
       setLoading(false);

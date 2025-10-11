@@ -27,6 +27,7 @@ const PhoneCategories: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
+      console.log('🔍 Fetching categories from:', api.defaults.baseURL);
       const response = await api.get('/categories');
       setCategories(response.data);
       setLoading(false);

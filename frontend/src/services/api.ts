@@ -4,22 +4,26 @@
  */
 import axios from 'axios';
 
-// API Base URL Configuration
-const API_BASE_URL = import.meta.env.MODE === 'development' && 
-                     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+// API Base URL Configuration - ALWAYS HTTPS in production
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = isDevelopment 
   ? 'http://localhost:8000/api'
   : 'https://api.digitstec.store/api';
 
-// Force HTTPS in production (security fix)
-const PRODUCTION_API_URL = 'https://api.digitstec.store/api';
-const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-const FINAL_API_URL = isProduction ? PRODUCTION_API_URL : API_BASE_URL;
+// Debug logging
+console.log('🔍 API Configuration:', {
+  hostname: window.location.hostname,
+  isDevelopment,
+  apiUrl: API_BASE_URL
+});
 
 const api = axios.create({
-  baseURL: FINAL_API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  // Force HTTPS and prevent caching issues
+  timeout: 10000,
 });
 
 // Add auth token to all requests
@@ -120,6 +124,6 @@ export const productSaleAPI = {
 };
 
 // Export API_URL for direct fetch calls
-export { FINAL_API_URL as API_URL };
+export { API_BASE_URL as API_URL };
 
 export default api;
