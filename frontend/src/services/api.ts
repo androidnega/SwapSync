@@ -114,5 +114,7 @@ export const productSaleAPI = {
   getByProduct: (productId: number) => api.get(`/product-sales/product/${productId}`),
 };
 
-export default api;
+// Export API_URL for direct fetch calls
+export { API_BASE_URL as API_URL };
 
+export default api;
