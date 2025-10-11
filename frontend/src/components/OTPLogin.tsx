@@ -118,31 +118,27 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-2xl shadow-2xl p-8">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="text-6xl mb-4">📱</div>
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-          SMS Login
-        </h2>
-        <p className="text-gray-600">
+    <div className="w-full">
+      {/* Compact Header */}
+      <div className="text-center mb-4">
+        <p className="text-sm text-gray-600">
           {step === 'userid' 
             ? 'Enter your user ID to receive OTP'
-            : 'Enter the 4-digit code sent to your phone'}
+            : 'Enter the 4-digit code'}
         </p>
       </div>
 
       {/* User ID Step */}
       {step === 'userid' && (
-        <form onSubmit={handleRequestOTP} className="space-y-6">
+        <form onSubmit={handleRequestOTP} className="space-y-3">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm animate-shake">
+            <div className="bg-red-50 text-red-700 px-3 py-2 rounded text-xs">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
               User ID
             </label>
             <input
@@ -152,7 +148,7 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
               placeholder="Enter your user ID"
               required
               disabled={loading}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               autoFocus
             />
           </div>
@@ -160,44 +156,29 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
           <button
             type="submit"
             disabled={loading || !userId.trim()}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-4 rounded-xl hover:shadow-lg transform hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition disabled:opacity-50 text-sm"
           >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                Sending OTP...
-              </span>
-            ) : (
-              'Send OTP Code'
-            )}
+            {loading ? 'Sending...' : 'Send OTP Code'}
           </button>
         </form>
       )}
 
       {/* OTP Step */}
       {step === 'otp' && (
-        <div className="space-y-6">
-          {/* Phone Display */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
-            <p className="text-sm text-blue-900 font-medium mb-1">
-              Code sent to
-            </p>
-            <p className="text-lg font-bold text-blue-700">
-              {maskedPhone}
+        <div className="space-y-3">
+          <div className="bg-blue-50 border border-blue-200 rounded p-2 text-center">
+            <p className="text-xs text-blue-900">
+              Code sent to {maskedPhone}
             </p>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center animate-shake">
+            <div className="bg-red-50 text-red-700 px-3 py-2 rounded text-xs text-center">
               {error}
             </div>
           )}
 
-          {/* OTP Input */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
-              Enter 4-Digit Code
-            </label>
             <OTPInput
               length={4}
               value={otp}
@@ -208,62 +189,36 @@ const OTPLogin: React.FC<OTPLoginProps> = ({ onSuccess, onCancel }) => {
             />
           </div>
 
-          {/* Status Info */}
-          <div className="flex items-center justify-between text-sm">
-            <span className={`font-mono font-bold ${countdown < 60 ? 'text-red-600 animate-pulse' : 'text-gray-600'}`}>
+          <div className="flex items-center justify-between text-xs text-gray-600">
+            <span className={countdown < 60 ? 'text-red-600 font-bold' : ''}>
               ⏱️ {formatTime(countdown)}
             </span>
-            <span className="text-gray-600">
-              {otp.length}/4 digits
-            </span>
+            <span>{otp.length}/4</span>
           </div>
 
-          {/* Resend Button */}
           {canResend || countdown === 0 ? (
             <button
               onClick={handleResendOTP}
               disabled={loading}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition"
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded text-sm"
             >
-              🔄 Resend OTP
+              🔄 Resend
             </button>
-          ) : (
-            <p className="text-center text-sm text-gray-500">
-              Didn't receive code? Wait {formatTime(countdown)}
-            </p>
-          )}
+          ) : null}
 
-          {/* Change User ID */}
           <button
             onClick={() => {
               setStep('userid');
               setOtp('');
               setError('');
             }}
-            className="w-full text-gray-600 hover:text-gray-800 underline text-sm"
+            className="w-full text-gray-600 hover:text-gray-800 underline text-xs"
           >
             ← Change User ID
           </button>
         </div>
       )}
 
-      {/* Cancel Button */}
-      <button
-        onClick={onCancel}
-        className="w-full mt-6 text-gray-600 hover:text-gray-800 underline text-sm font-medium"
-      >
-        ← Use Password Instead
-      </button>
-
-      {/* Info Box */}
-      <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4">
-        <p className="text-xs text-blue-900 font-semibold mb-2">🔒 Secure Login</p>
-        <ul className="text-xs text-blue-800 space-y-1">
-          <li>✓ Code valid for 5 minutes</li>
-          <li>✓ Sent to your registered phone</li>
-          <li>✓ Auto-submits after 4th digit</li>
-        </ul>
-      </div>
     </div>
   );
 };

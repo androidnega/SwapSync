@@ -12,6 +12,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'password' | 'otp'>('password');
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
   const [resetData, setResetData] = useState({
     username: '',
@@ -132,91 +133,62 @@ const Login: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-3 sm:p-4">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-md">
-          {/* Welcome Modal Header */}
-          <div className="bg-gradient-to-br from-blue-600 to-purple-700 p-8 text-white text-center">
-            <div className="mb-4 flex justify-center">
-              <div className="w-40 h-40 rounded-2xl shadow-2xl overflow-hidden bg-white p-2">
-                <img 
-                  src={swapsyncImage} 
-                  alt="SwapSync" 
-                  className="w-full h-full object-cover rounded-xl"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              </div>
-            </div>
-            <h1 className="text-3xl font-bold mb-2">SwapSync</h1>
-            <p className="text-blue-100 text-base mb-6">
-              Phone Swapping & Repair Shop Management System
-            </p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-md w-full max-w-sm">
+          {/* Header */}
+          <div className="bg-white border-b border-gray-200 p-6 text-center relative">
+            <h1 className="text-2xl font-bold text-gray-800">SwapSync</h1>
+            <p className="text-sm text-gray-500 mt-1">Login to your account</p>
             
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 space-y-2.5 text-left">
-              <div className="flex items-start">
-                <span className="mr-3 text-lg">✓</span>
-                <span className="text-sm">Manage phone swaps and sales</span>
-              </div>
-              <div className="flex items-start">
-                <span className="mr-3 text-lg">✓</span>
-                <span className="text-sm">Track repairs with SMS notifications</span>
-              </div>
-              <div className="flex items-start">
-                <span className="mr-3 text-lg">✓</span>
-                <span className="text-sm">Automatic profit/loss calculation</span>
-              </div>
-              <div className="flex items-start">
-                <span className="mr-3 text-lg">✓</span>
-                <span className="text-sm">Complete analytics and reporting</span>
-              </div>
-            </div>
+            {/* Info Button */}
+            <button
+              onClick={() => setShowInfoModal(true)}
+              className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition text-sm font-bold"
+              title="About SwapSync"
+            >
+              i
+            </button>
           </div>
 
-          {/* Login Form */}
-          <div className="p-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">Welcome Back</h2>
-              <p className="text-gray-600 text-sm text-center mb-4">Login to access your dashboard</p>
-              
-              {/* Login Method Toggle - Text Links */}
-              <div className="flex items-center justify-center gap-3 text-sm">
-                <button
-                  type="button"
-                  onClick={() => setLoginMethod('password')}
-                  className={`transition-all ${
-                    loginMethod === 'password'
-                      ? 'text-blue-600 font-semibold underline decoration-2 underline-offset-4'
-                      : 'text-gray-500 hover:text-blue-600'
-                  }`}
-                >
-                  🔑 Password
-                </button>
-                <span className="text-gray-300">|</span>
-                <button
-                  type="button"
-                  onClick={() => setLoginMethod('otp')}
-                  className={`transition-all ${
-                    loginMethod === 'otp'
-                      ? 'text-blue-600 font-semibold underline decoration-2 underline-offset-4'
-                      : 'text-gray-500 hover:text-blue-600'
-                  }`}
-                >
-                  📱 SMS OTP
-                </button>
-              </div>
+          {/* Login Form Container - Fixed Height */}
+          <div className="p-6" style={{ minHeight: '320px', maxHeight: '320px' }}>
+            {/* Login Method Toggle */}
+            <div className="flex items-center justify-center gap-3 text-sm mb-4">
+              <button
+                type="button"
+                onClick={() => setLoginMethod('password')}
+                className={`transition-all ${
+                  loginMethod === 'password'
+                    ? 'text-blue-600 font-semibold underline decoration-2 underline-offset-4'
+                    : 'text-gray-500 hover:text-blue-600'
+                }`}
+              >
+                🔑 Password
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                type="button"
+                onClick={() => setLoginMethod('otp')}
+                className={`transition-all ${
+                  loginMethod === 'otp'
+                    ? 'text-blue-600 font-semibold underline decoration-2 underline-offset-4'
+                    : 'text-gray-500 hover:text-blue-600'
+                }`}
+              >
+                📱 SMS OTP
+              </button>
             </div>
 
             {loginMethod === 'password' ? (
-              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
               {error && (
-                <div className="bg-red-50 text-red-800 p-2 sm:p-3 rounded-lg text-xs sm:text-sm">
+                <div className="bg-red-50 text-red-800 p-2 rounded text-xs">
                   {error}
                 </div>
               )}
 
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Username
                 </label>
                 <input
@@ -225,13 +197,13 @@ const Login: React.FC = () => {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   placeholder="Enter username"
-                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   disabled={loading}
                 />
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Password
                 </label>
                 <input
@@ -240,7 +212,7 @@ const Login: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Enter password"
-                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   disabled={loading}
                 />
               </div>
@@ -248,17 +220,16 @@ const Login: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 text-sm sm:text-base"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition disabled:opacity-50 text-sm"
               >
                 {loading ? 'Logging in...' : 'Login'}
               </button>
 
-              {/* Forgot Password Link */}
-              <div className="text-center pt-1">
+              <div className="text-center">
                 <button
                   type="button"
                   onClick={() => setShowResetModal(true)}
-                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                  className="text-xs text-blue-600 hover:text-blue-700 hover:underline"
                 >
                   Forgot Password?
                 </button>
@@ -280,21 +251,64 @@ const Login: React.FC = () => {
         </div>
       </div>
       
-      {/* Developer Credit - Below Card */}
-      <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-600 px-2">
-        <p>
-          System developed and managed by{' '}
-          <a 
-            href="https://www.manuelcode.info" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition"
-          >
-            Manuel
-          </a>
-        </p>
-        <p className="mt-1 sm:mt-2 text-xs text-gray-500">© 2025 SwapSync v1.0.0</p>
+      {/* Developer Credit */}
+      <div className="mt-4 text-center text-xs text-gray-500">
+        <p>© 2025 SwapSync v1.0.0</p>
       </div>
+
+      {/* Info Modal */}
+      {showInfoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowInfoModal(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            >
+              ×
+            </button>
+            
+            <div className="text-center mb-4">
+              <div className="w-24 h-24 mx-auto mb-3 rounded-lg overflow-hidden bg-gray-100 p-2">
+                <img 
+                  src={swapsyncImage} 
+                  alt="SwapSync" 
+                  className="w-full h-full object-cover rounded"
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">SwapSync</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Phone Swapping & Repair Shop Management System
+              </p>
+            </div>
+
+            <div className="space-y-2 text-sm text-gray-700">
+              <div className="flex items-start">
+                <span className="mr-2 text-green-600">✓</span>
+                <span>Manage phone swaps and sales</span>
+              </div>
+              <div className="flex items-start">
+                <span className="mr-2 text-green-600">✓</span>
+                <span>Track repairs with SMS notifications</span>
+              </div>
+              <div className="flex items-start">
+                <span className="mr-2 text-green-600">✓</span>
+                <span>Automatic profit/loss calculation</span>
+              </div>
+              <div className="flex items-start">
+                <span className="mr-2 text-green-600">✓</span>
+                <span>Complete analytics and reporting</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowInfoModal(false)}
+              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm font-medium"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Password Reset Modal */}
       {showResetModal && (
