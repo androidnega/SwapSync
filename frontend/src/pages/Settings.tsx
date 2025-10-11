@@ -131,11 +131,14 @@ const Settings: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      // Create masked values that match the actual length
+      const maskKey = (length: number = 32) => '•'.repeat(Math.max(length, 8)); // Minimum 8 dots
+      
       setSmsConfig({
-        arkasel_api_key: response.data.arkasel_api_key_set ? '********' : '',
+        arkasel_api_key: response.data.arkasel_api_key_set ? maskKey(response.data.arkasel_api_key_length || 32) : '',
         arkasel_sender_id: response.data.arkasel_sender_id || 'SwapSync',
-        hubtel_client_id: response.data.hubtel_client_id_set ? '********' : '',
-        hubtel_client_secret: response.data.hubtel_client_secret_set ? '********' : '',
+        hubtel_client_id: response.data.hubtel_client_id_set ? maskKey(response.data.hubtel_client_id_length || 20) : '',
+        hubtel_client_secret: response.data.hubtel_client_secret_set ? maskKey(response.data.hubtel_client_secret_length || 32) : '',
         hubtel_sender_id: response.data.hubtel_sender_id || 'SwapSync',
         enabled: response.data.enabled || false
       });
@@ -284,22 +287,24 @@ const Settings: React.FC = () => {
         hubtel_sender_id: smsConfig.hubtel_sender_id
       };
       
-      // Only include API keys if they're NOT the masked placeholder AND not empty
+      // Only include API keys if they're NOT masked dots (•••) AND not empty
       // This prevents overwriting existing encrypted keys with the placeholder
+      const isMasked = (value: string) => /^•+$/.test(value); // Check if only dots
+      
       if (smsConfig.arkasel_api_key && 
-          smsConfig.arkasel_api_key !== '********' && 
+          !isMasked(smsConfig.arkasel_api_key) && 
           smsConfig.arkasel_api_key.trim() !== '') {
         payload.arkasel_api_key = smsConfig.arkasel_api_key;
       }
       
       if (smsConfig.hubtel_client_id && 
-          smsConfig.hubtel_client_id !== '********' && 
+          !isMasked(smsConfig.hubtel_client_id) && 
           smsConfig.hubtel_client_id.trim() !== '') {
         payload.hubtel_client_id = smsConfig.hubtel_client_id;
       }
       
       if (smsConfig.hubtel_client_secret && 
-          smsConfig.hubtel_client_secret !== '********' && 
+          !isMasked(smsConfig.hubtel_client_secret) && 
           smsConfig.hubtel_client_secret.trim() !== '') {
         payload.hubtel_client_secret = smsConfig.hubtel_client_secret;
       }
@@ -381,17 +386,19 @@ const Settings: React.FC = () => {
           <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">
             <div className="md:col-span-2">
               <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">
-                API Key {smsConfig.arkasel_api_key === '********' && <span className="text-green-600 text-xs">✓ Configured</span>}
+                API Key {smsConfig.arkasel_api_key && /^•+$/.test(smsConfig.arkasel_api_key) && <span className="text-green-600 text-xs">✓ Configured</span>}
               </label>
               <input
                 type="password"
                 value={smsConfig.arkasel_api_key}
                 onChange={(e) => setSmsConfig({ ...smsConfig, arkasel_api_key: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                placeholder={smsConfig.arkasel_api_key === '********' ? 'API key saved (enter new one to update)' : 'Enter API key'}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono"
+                placeholder={smsConfig.arkasel_api_key && /^•+$/.test(smsConfig.arkasel_api_key) ? 'API key saved (enter new one to update)' : 'Enter API key'}
               />
-              {smsConfig.arkasel_api_key === '********' && (
-                <p className="text-xs text-green-600 mt-1">✓ API key is securely stored. Leave as-is to keep current key, or enter a new one to update.</p>
+              {smsConfig.arkasel_api_key && /^•+$/.test(smsConfig.arkasel_api_key) && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✓ API key is securely stored ({smsConfig.arkasel_api_key.length} characters). Leave as-is to keep current key, or enter a new one to update.
+                </p>
               )}
             </div>
 

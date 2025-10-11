@@ -28,9 +28,12 @@ class SMSConfigUpdate(BaseModel):
 
 class SMSConfigResponse(BaseModel):
     arkasel_api_key_set: bool
+    arkasel_api_key_length: int = 0  # Length of actual API key (for visual feedback)
     arkasel_sender_id: str
     hubtel_client_id_set: bool
+    hubtel_client_id_length: int = 0
     hubtel_client_secret_set: bool
+    hubtel_client_secret_length: int = 0
     hubtel_sender_id: str
     enabled: bool
     arkasel_enabled: bool
@@ -68,11 +71,19 @@ def get_sms_config(
     config = _get_or_create_config(db)
     sms_service = get_sms_service()
     
+    # Get actual keys to determine their lengths (for visual feedback)
+    arkasel_key = config.get_arkasel_api_key()
+    hubtel_id = config.get_hubtel_client_id()
+    hubtel_secret = config.get_hubtel_client_secret()
+    
     return {
-        "arkasel_api_key_set": bool(config.get_arkasel_api_key()),
+        "arkasel_api_key_set": bool(arkasel_key),
+        "arkasel_api_key_length": len(arkasel_key) if arkasel_key else 0,
         "arkasel_sender_id": config.arkasel_sender_id or "SwapSync",
-        "hubtel_client_id_set": bool(config.get_hubtel_client_id()),
-        "hubtel_client_secret_set": bool(config.get_hubtel_client_secret()),
+        "hubtel_client_id_set": bool(hubtel_id),
+        "hubtel_client_id_length": len(hubtel_id) if hubtel_id else 0,
+        "hubtel_client_secret_set": bool(hubtel_secret),
+        "hubtel_client_secret_length": len(hubtel_secret) if hubtel_secret else 0,
         "hubtel_sender_id": config.hubtel_sender_id or "SwapSync",
         "enabled": config.sms_enabled,
         "arkasel_enabled": config.arkasel_enabled,
@@ -144,11 +155,19 @@ def update_sms_config(
     
     sms_service = get_sms_service()
     
+    # Get actual keys to determine their lengths (for visual feedback in UI)
+    arkasel_key = config.get_arkasel_api_key()
+    hubtel_id = config.get_hubtel_client_id()
+    hubtel_secret = config.get_hubtel_client_secret()
+    
     return {
-        "arkasel_api_key_set": bool(config.get_arkasel_api_key()),
+        "arkasel_api_key_set": bool(arkasel_key),
+        "arkasel_api_key_length": len(arkasel_key) if arkasel_key else 0,
         "arkasel_sender_id": config.arkasel_sender_id or "SwapSync",
-        "hubtel_client_id_set": bool(config.get_hubtel_client_id()),
-        "hubtel_client_secret_set": bool(config.get_hubtel_client_secret()),
+        "hubtel_client_id_set": bool(hubtel_id),
+        "hubtel_client_id_length": len(hubtel_id) if hubtel_id else 0,
+        "hubtel_client_secret_set": bool(hubtel_secret),
+        "hubtel_client_secret_length": len(hubtel_secret) if hubtel_secret else 0,
         "hubtel_sender_id": config.hubtel_sender_id or "SwapSync",
         "enabled": config.sms_enabled,
         "arkasel_enabled": config.arkasel_enabled,
