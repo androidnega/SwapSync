@@ -405,67 +405,67 @@ const Login: React.FC = () => {
 
             {/* Step 2: Verify and Reset */}
             {resetStep === 'verify' && (
-              <form onSubmit={handleResetComplete} className="space-y-3 sm:space-y-4">
+              <form onSubmit={handleResetComplete} className="space-y-3">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Reset Code *
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Reset Code
                   </label>
                   <input
                     type="text"
                     required
                     value={resetData.reset_token}
                     onChange={(e) => setResetData({ ...resetData, reset_token: e.target.value })}
-                    placeholder="6-digit code from SMS"
-                    maxLength={6}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-xl sm:text-2xl tracking-widest"
+                    placeholder="Code from SMS"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    New Password *
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    New Password
                   </label>
                   <input
                     type="password"
                     required
                     value={resetData.new_password}
                     onChange={(e) => setResetData({ ...resetData, new_password: e.target.value })}
-                    placeholder="At least 6 characters"
-                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Min 6 characters"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Confirm Password *
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Confirm Password
                   </label>
                   <input
                     type="password"
                     required
                     value={resetData.confirm_password}
                     onChange={(e) => setResetData({ ...resetData, confirm_password: e.target.value })}
-                    placeholder="Re-enter new password"
-                    className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Confirm password"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 text-sm sm:text-base"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded transition disabled:opacity-50 text-sm"
                 >
-                  {loading ? 'Resetting...' : '✓ Reset Password'}
+                  {loading ? 'Resetting...' : 'Reset Password'}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setResetStep('request')}
-                  className="w-full text-xs sm:text-sm text-gray-600 hover:text-gray-800"
+                  className="w-full text-xs text-gray-600 hover:text-gray-800 underline"
                 >
-                  ← Back to request
+                  ← Back
                 </button>
               </form>
             )}
+            </div>
           </div>
         </div>
       )}
