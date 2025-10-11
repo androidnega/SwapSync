@@ -1,706 +1,647 @@
-# SwapSync cPanel Deployment Guide for digitstec.store
+# SwapSync cPanel Deployment Guide
 
-## Complete Step-by-Step Deployment Instructions
+## 🚀 Complete Deployment Guide for digitstec.store
 
-This document provides everything you need to deploy SwapSync to your cPanel hosting with the domain **digitstec.store**.
+This guide provides step-by-step instructions to deploy SwapSync to your cPanel hosting using Git.
 
 ---
 
 ## 📋 Table of Contents
 1. [Prerequisites](#prerequisites)
-2. [Step 1: Prepare Your Local Files](#step-1-prepare-your-local-files)
-3. [Step 2: Build Frontend for Production](#step-2-build-frontend-for-production)
-4. [Step 3: Prepare Backend Files](#step-3-prepare-backend-files)
-5. [Step 4: Upload Files to cPanel](#step-4-upload-files-to-cpanel)
-6. [Step 5: Setup Python Application in cPanel](#step-5-setup-python-application-in-cpanel)
-7. [Step 6: Configure Environment Variables](#step-6-configure-environment-variables)
-8. [Step 7: Initialize Database](#step-7-initialize-database)
-9. [Step 8: Final Testing](#step-8-final-testing)
-10. [Troubleshooting](#troubleshooting)
+2. [Method 1: Git Deployment (Recommended)](#method-1-git-deployment-recommended)
+3. [Method 2: Manual Upload](#method-2-manual-upload)
+4. [Post-Deployment Configuration](#post-deployment-configuration)
+5. [Testing Your Deployment](#testing-your-deployment)
+6. [Updating Your Deployment](#updating-your-deployment)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Prerequisites
 
 ### What You Need:
-- ✅ cPanel hosting account with Python support (Python 3.8+)
+- ✅ cPanel hosting account with Python 3.9+ support
 - ✅ Domain: `digitstec.store` pointed to your cPanel hosting
-- ✅ FTP/File Manager access to cPanel
-- ✅ SSH access (optional but recommended)
-- ✅ Your SwapSync project files (current directory)
+- ✅ SSH or Terminal access to cPanel
+- ✅ GitHub repository: `https://github.com/androidnega/SwapSync.git`
+- ✅ cPanel username (e.g., `manuelc8`)
 
-### Check Your cPanel Python Version:
-1. Login to cPanel
-2. Go to "Setup Python App" or "Python Selector"
-3. Verify Python 3.8 or higher is available
-
----
-
-## Step 1: Prepare Your Local Files
-
-### 1.1 Create Deployment Package Directory
-On your local machine, create a temporary folder:
-
-```bash
-# On Windows (in your project root D:\SwapSync)
-mkdir deploy_package
+### Repository Structure:
 ```
-
-### 1.2 Files to Include:
-- All backend files from `backend/` folder
-- Built frontend files (we'll create these next)
-- Configuration files
-
----
-
-## Step 2: Build Frontend for Production
-
-### 2.1 Open Terminal in Frontend Directory
-```bash
-cd D:\SwapSync\frontend
-```
-
-### 2.2 Install Dependencies (if not already done)
-```bash
-npm install
-```
-
-### 2.3 Build Frontend for Production
-```bash
-npm run build
-```
-
-This creates a `dist` folder with optimized static files.
-
-### 2.4 Copy Built Files to Deploy Package
-```bash
-# Copy the entire dist folder
-xcopy /E /I dist ..\deploy_package\frontend_dist
+SwapSync/
+├── backend/              ← FastAPI application (production-ready)
+│   ├── .htaccess         ← cPanel/Passenger configuration
+│   ├── passenger_wsgi.py ← WSGI entry point
+│   ├── app/              ← Core application code
+│   ├── main.py           ← FastAPI entry point
+│   ├── requirements.txt  ← Python dependencies
+│   └── env.template      ← Environment variables template
+│
+├── frontend/             ← React application
+│   ├── .htaccess         ← Static file serving configuration
+│   ├── src/              ← React source code
+│   ├── public/           ← Static assets
+│   └── package.json      ← Node dependencies
+│
+└── CPANEL_DEPLOYMENT_GUIDE.md ← This file
 ```
 
 ---
 
-## Step 3: Prepare Backend Files
+## Method 1: Git Deployment (Recommended)
 
-### 3.1 Create Application Entry Point
+### Step 1: Setup Git Repository in cPanel
 
-Create a new file called `passenger_wsgi.py` in your backend folder with this exact content:
+1. **Login to cPanel**
+2. **Find "Git™ Version Control"** icon and click it
+3. **Click "Create"** button
 
-```python
-import os
-import sys
+4. **Fill in Git Repository Configuration:**
+   - **Clone a Repository:** ✅ Enable this toggle
+   - **Clone URL:** `https://github.com/androidnega/SwapSync.git`
+   - **Repository Path:** `swapsync` (or `digitstec.store`)
+   - **Repository Name:** `SwapSync Production`
 
-# Add your application directory to the path
-sys.path.insert(0, os.path.dirname(__file__))
+5. **Click "Create"** - cPanel will clone your repository
 
-# Import your FastAPI application
-from main import app as application
-
-# For Passenger compatibility
-def application(environ, start_response):
-    return application(environ, start_response)
-```
-
-### 3.2 Update requirements.txt
-
-Create/update `backend/requirements.txt` with these dependencies:
-
-```
-fastapi==0.104.1
-uvicorn==0.24.0
-sqlalchemy==2.0.23
-python-multipart==0.0.6
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-pydantic==2.5.0
-pydantic-settings==2.1.0
-python-dotenv==1.0.0
-aiofiles==23.2.1
-httpx==0.25.1
-apscheduler==3.10.4
-websockets==12.0
-reportlab==4.0.7
-pytz==2023.3
-```
-
-### 3.3 Copy Backend Files to Deploy Package
-```bash
-cd D:\SwapSync
-xcopy /E /I backend deploy_package\backend
-```
-
-### 3.4 Create .htaccess File
-
-Create `deploy_package/.htaccess`:
-
-```apache
-PassengerEnabled On
-PassengerAppRoot /home/yourusername/digitstec.store
-PassengerAppType wsgi
-PassengerStartupFile passenger_wsgi.py
-PassengerPython /home/yourusername/virtualenv/digitstec.store/3.9/bin/python
-
-# Passenger performance settings
-PassengerMaxPoolSize 2
-PassengerMinInstances 1
-PassengerMaxRequestQueueSize 50
-
-# Static files handling
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ passenger_wsgi.py [QSA,L]
-
-# Security headers
-Header always set X-Frame-Options "SAMEORIGIN"
-Header always set X-Content-Type-Options "nosniff"
-Header always set X-XSS-Protection "1; mode=block"
-
-# CORS headers
-Header always set Access-Control-Allow-Origin "*"
-Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
-```
-
-**Note:** Replace `yourusername` with your actual cPanel username (you'll find this in cPanel).
-
-### 3.5 Create Environment File
-
-Create `deploy_package/.env`:
-
-```env
-# Database
-DATABASE_URL=sqlite:///./swapsync.db
-
-# Security
-SECRET_KEY=your-super-secret-key-change-this-in-production-min-32-chars
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Application
-APP_NAME=SwapSync
-DEBUG=False
-ALLOWED_ORIGINS=["https://digitstec.store", "https://www.digitstec.store"]
-
-# File Uploads
-UPLOAD_DIR=/home/yourusername/digitstec.store/uploads
-MAX_UPLOAD_SIZE=10485760
-
-# SMS Configuration (if using)
-SMS_ENABLED=False
-SMS_API_KEY=your_sms_api_key
-SMS_SENDER_ID=SwapSync
-
-# Backup
-BACKUP_DIR=/home/yourusername/digitstec.store/backups
-BACKUP_ENABLED=True
-BACKUP_SCHEDULE=0 2 * * *
-```
-
-**Important Changes Needed:**
-1. Replace `your-super-secret-key-change-this-in-production-min-32-chars` with a random 32+ character string
-2. Replace `yourusername` with your cPanel username
-3. Update SMS settings if you have an SMS provider
-
-### 3.6 Create Main WSGI File
-
-Create `deploy_package/passenger_wsgi.py`:
-
-```python
-import os
-import sys
-
-# Get the application directory
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, SCRIPT_DIR)
-sys.path.insert(0, os.path.join(SCRIPT_DIR, 'backend'))
-
-# Set environment
-os.environ['PRODUCTION'] = 'true'
-
-# Import FastAPI app
-try:
-    from backend.main import app
-    application = app
-except ImportError as e:
-    print(f"Error importing application: {e}")
-    import traceback
-    traceback.print_exc()
-    
-    # Create a simple WSGI application for error display
-    def application(environ, start_response):
-        status = '500 Internal Server Error'
-        output = f'Error importing application: {str(e)}'.encode('utf-8')
-        response_headers = [('Content-type', 'text/plain'),
-                          ('Content-Length', str(len(output)))]
-        start_response(status, response_headers)
-        return [output]
-```
-
----
-
-## Step 4: Upload Files to cPanel
-
-### 4.1 Access cPanel File Manager
-1. Login to your cPanel at: `https://digitstec.store:2083` or via your hosting provider's cPanel URL
-2. Navigate to **File Manager**
-3. Go to the **public_html** directory (or your domain's root directory)
-
-### 4.2 Create Application Directory
-
-**Option A - If digitstec.store is your main domain:**
-- Upload files directly to `/home/yourusername/public_html/`
-
-**Option B - If digitstec.store is an addon domain:**
-- Upload files to `/home/yourusername/digitstec.store/`
-
-### 4.3 Upload Files
-1. Click **Upload** button in File Manager
-2. Upload the entire contents of your `deploy_package` folder
-3. OR use FTP client (FileZilla):
-   - Host: `ftp.digitstec.store`
-   - Username: Your cPanel username
-   - Password: Your cPanel password
-   - Port: 21
-   - Upload all files from `deploy_package` to the appropriate directory
-
-### 4.4 Set Permissions
-After upload, set these permissions:
-- Folders: 755
-- Files: 644
-- `passenger_wsgi.py`: 755
-- `.env`: 600 (more secure)
-
-To set permissions in File Manager:
-1. Select file/folder
-2. Click **Permissions**
-3. Enter the numeric value
-
----
-
-## Step 5: Setup Python Application in cPanel
-
-### 5.1 Access Python App Setup
-1. In cPanel, find **"Setup Python App"** or **"Python Selector"**
-2. Click **"Create Application"**
-
-### 5.2 Fill in Python App Configuration
-
-Here are the EXACT values to enter in each field:
-
-#### Field: **Python Version**
-```
-Select: Python 3.9 or higher (choose the highest available)
-```
-
-#### Field: **Application Root**
-```
-digitstec.store
-```
-Or if main domain:
-```
-public_html
-```
-
-#### Field: **Application URL**
-```
-/
-```
-(Leave as root or choose a subdirectory if needed)
-
-#### Field: **Application Startup File**
-```
-passenger_wsgi.py
-```
-
-#### Field: **Application Entry Point**
-```
-application
-```
-
-#### Field: **Passenger Log File** (if asked)
-```
-/home/yourusername/logs/passenger.log
-```
-(Replace `yourusername` with your actual cPanel username)
-
-### 5.3 Click "Create" Button
-
-### 5.4 Note the Virtual Environment Path
-After creation, cPanel will show you the virtual environment path. It will look like:
-```
-source /home/yourusername/virtualenv/digitstec.store/3.9/bin/activate
-```
-**Save this path - you'll need it!**
-
----
-
-## Step 6: Configure Environment Variables
-
-### 6.1 Access Terminal/SSH
-You need to install Python packages. Two options:
+### Step 2: Access Terminal
 
 **Option A - cPanel Terminal:**
-1. In cPanel, find **"Terminal"** icon
-2. Click to open web-based terminal
+- In cPanel, click **"Terminal"** icon
 
-**Option B - SSH Client:**
+**Option B - SSH:**
 ```bash
-ssh yourusername@digitstec.store
-# Enter your cPanel password
+ssh manuelc8@digitstec.store
+# Enter your password
 ```
 
-### 6.2 Activate Virtual Environment
+### Step 3: Navigate to Repository
+
 ```bash
-# Navigate to your app directory
+# Navigate to your cloned repository
+cd ~/swapsync
+# OR if you used your domain name:
 cd ~/digitstec.store
-# OR if main domain: cd ~/public_html
-
-# Activate the virtual environment (use the path from Step 5.4)
-source /home/yourusername/virtualenv/digitstec.store/3.9/bin/activate
 ```
 
-### 6.3 Install Python Dependencies
+### Step 4: Setup Python Application
+
+1. **Go to cPanel → "Setup Python App"**
+2. **Click "Create Application"**
+3. **Fill in these EXACT values:**
+
+| Field | Value |
+|-------|-------|
+| **Python Version** | 3.9 or 3.11 (highest available) |
+| **Application Root** | `swapsync/backend` |
+| **Application URL** | `/` |
+| **Application Startup File** | `passenger_wsgi.py` |
+| **Application Entry Point** | `application` |
+
+4. **Click "Create"**
+5. **Copy the virtual environment path** (you'll need this)
+
+Example path:
 ```bash
+source /home3/manuelc8/virtualenv/swapsync/backend/3.9/bin/activate
+```
+
+### Step 5: Install Python Dependencies
+
+```bash
+# Navigate to backend directory
+cd ~/swapsync/backend
+
+# Activate virtual environment (use the path from Step 4)
+source /home3/manuelc8/virtualenv/swapsync/backend/3.9/bin/activate
+
+# Upgrade pip
 pip install --upgrade pip
-pip install -r backend/requirements.txt
+
+# Install all dependencies
+pip install -r requirements.txt
 ```
 
-This will take a few minutes. Wait for all packages to install.
+This will take 3-5 minutes. Wait for completion.
 
-### 6.4 Verify Installation
+### Step 6: Create Environment File
+
 ```bash
-pip list
-# Should show fastapi, uvicorn, sqlalchemy, etc.
+# Still in ~/swapsync/backend
+cp env.template .env
+nano .env
 ```
 
----
+**Update these critical values in `.env`:**
 
-## Step 7: Initialize Database
+```env
+# Generate a secure secret key
+SECRET_KEY=your-generated-secret-key-here
 
-### 7.1 Create Required Directories
-```bash
-# Still in your app directory with virtual environment activated
-mkdir -p uploads
-mkdir -p backups
-mkdir -p logs
+# Database (SQLite for now)
+DATABASE_URL=sqlite:///./swapsync.db
+
+# CORS Origins - Add your domain
+CORS_ORIGINS=https://digitstec.store,https://www.digitstec.store
+
+# Admin Credentials
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_EMAIL=admin@digitstec.store
+DEFAULT_ADMIN_PASSWORD=ChangeThisPassword123!
+
+# Environment
+ENVIRONMENT=production
+DEBUG=False
+PORT=8000
+
+# SMS Configuration (optional)
+ARKASEL_API_KEY=
+ARKASEL_SENDER_ID=SwapSync
 ```
 
-### 7.2 Set Directory Permissions
+**To generate SECRET_KEY:**
 ```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+**Save file:** Press `Ctrl+X`, then `Y`, then `Enter`
+
+### Step 7: Create Required Directories
+
+```bash
+# Still in ~/swapsync/backend
+mkdir -p uploads backups logs
 chmod 755 uploads backups logs
 ```
 
-### 7.3 Initialize Database
+### Step 8: Initialize Database
+
 ```bash
-# Run the FastAPI app once to create database tables
-cd backend
+# Activate virtual environment if not already active
+source /home3/manuelc8/virtualenv/swapsync/backend/3.9/bin/activate
+
+# Initialize database
 python -c "from app.core.database import init_db; init_db()"
 ```
 
-### 7.4 Create Default Admin User (Optional)
+### Step 9: Build Frontend
+
 ```bash
-# Create a default admin user
-python -c "
-from app.core.database import get_db
-from app.models.user import User
-from passlib.context import CryptContext
+# Navigate to frontend
+cd ~/swapsync/frontend
 
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-db = next(get_db())
+# Install Node dependencies
+npm install
 
-# Check if admin exists
-admin = db.query(User).filter(User.username == 'admin').first()
-if not admin:
-    admin_user = User(
-        username='admin',
-        email='admin@digitstec.store',
-        full_name='System Administrator',
-        hashed_password=pwd_context.hash('Admin@123'),
-        role='admin',
-        is_active=True
-    )
-    db.add(admin_user)
-    db.commit()
-    print('Admin user created successfully!')
-    print('Username: admin')
-    print('Password: Admin@123')
-    print('CHANGE THIS PASSWORD IMMEDIATELY AFTER FIRST LOGIN!')
-else:
-    print('Admin user already exists')
-"
+# Build for production
+npm run build
 ```
+
+The built files will be in `frontend/dist/` directory.
+
+### Step 10: Configure Frontend Serving
+
+**Option A - Serve from backend (recommended):**
+
+Backend is already configured to serve static files from `frontend/dist/`
+
+**Option B - Separate public directory:**
+
+```bash
+# Create public directory
+mkdir -p ~/public_html/app
+cp -r ~/swapsync/frontend/dist/* ~/public_html/app/
+```
+
+### Step 11: Restart Python Application
+
+1. **Go back to cPanel**
+2. **Navigate to "Setup Python App"**
+3. **Find your application**
+4. **Click "Restart"** button
 
 ---
 
-## Step 8: Final Testing
+## Method 2: Manual Upload
 
-### 8.1 Restart Python Application
-1. Go back to cPanel
-2. Navigate to **"Setup Python App"**
-3. Find your application
-4. Click **"Restart"** button
+If you prefer not to use Git:
 
-### 8.2 Test Your Application
+### Step 1: Build Frontend Locally
 
-#### Test Backend API:
-Open browser and visit:
+On your local machine:
+```bash
+cd D:\SwapSync\frontend
+npm install
+npm run build
 ```
-https://digitstec.store/docs
-```
-You should see the FastAPI Swagger documentation.
 
-#### Test API Health:
-```
-https://digitstec.store/api/health
-```
-Should return: `{"status": "healthy"}`
+### Step 2: Prepare Files for Upload
 
-#### Test Frontend:
+Create a zip file containing:
+- `backend/` folder (entire directory)
+- `frontend/dist/` folder (built frontend)
+
+### Step 3: Upload to cPanel
+
+1. **Login to cPanel**
+2. **Open File Manager**
+3. **Navigate to your home directory**
+4. **Upload the zip file**
+5. **Extract it**
+
+### Step 4: Follow Steps 4-11 from Method 1
+
+Continue with Python application setup, dependencies installation, etc.
+
+---
+
+## Post-Deployment Configuration
+
+### 1. Update .htaccess (if needed)
+
+Check `backend/.htaccess` line 4:
+
+```apache
+PassengerPython /home3/manuelc8/virtualenv/swapsync/backend/3.9/bin/python
+```
+
+Update `manuelc8` with your cPanel username and correct Python version.
+
+### 2. Set File Permissions
+
+```bash
+cd ~/swapsync/backend
+chmod 755 passenger_wsgi.py .htaccess
+chmod 600 .env
+chmod 664 swapsync.db
+```
+
+### 3. Configure SSL Certificate
+
+In cPanel:
+1. Go to **SSL/TLS Status**
+2. Check box next to `digitstec.store`
+3. Click **Run AutoSSL**
+
+---
+
+## Testing Your Deployment
+
+### Test Backend API
+
+Open these URLs in your browser:
+
+1. **API Documentation:**
+   ```
+   https://digitstec.store/docs
+   ```
+   Should show FastAPI Swagger UI
+
+2. **Health Check:**
+   ```
+   https://digitstec.store/api/health
+   ```
+   Should return: `{"status": "healthy"}`
+
+3. **Alternative API Docs:**
+   ```
+   https://digitstec.store/redoc
+   ```
+
+### Test Frontend
+
 ```
 https://digitstec.store
 ```
-Should load your SwapSync login page.
+Should load the SwapSync login page
 
-### 8.3 Test Login
-1. Go to: `https://digitstec.store`
-2. Login with:
+### Test Login
+
+1. Navigate to login page
+2. Use credentials from your `.env` file:
    - Username: `admin`
-   - Password: `Admin@123`
-3. You should be redirected to the dashboard
+   - Password: (the one you set in .env)
 
 ---
 
-## 📝 Important URLs & Credentials
+## Updating Your Deployment
 
-### Application URLs:
-- **Frontend:** https://digitstec.store
-- **API Docs:** https://digitstec.store/docs
-- **API Alternative Docs:** https://digitstec.store/redoc
-- **Health Check:** https://digitstec.store/api/health
+### When You Push Changes to GitHub:
 
-### Default Admin Credentials:
-```
-Username: admin
-Email: admin@digitstec.store
-Password: Admin@123
-```
-**⚠️ CHANGE THESE IMMEDIATELY AFTER FIRST LOGIN!**
+```bash
+# SSH into your server
+ssh manuelc8@digitstec.store
 
-### File Paths on Server:
+# Navigate to repository
+cd ~/swapsync
+
+# Pull latest changes
+git pull origin main
+
+# If backend changes, reinstall dependencies
+cd backend
+source /home3/manuelc8/virtualenv/swapsync/backend/3.9/bin/activate
+pip install -r requirements.txt --upgrade
+
+# If frontend changes, rebuild
+cd ../frontend
+npm install
+npm run build
+
+# Restart Python application in cPanel
+# Or via command:
+touch ~/swapsync/tmp/restart.txt
 ```
-Application Root: /home/yourusername/digitstec.store/
-Virtual Environment: /home/yourusername/virtualenv/digitstec.store/3.9/
-Database: /home/yourusername/digitstec.store/backend/swapsync.db
-Uploads: /home/yourusername/digitstec.store/uploads/
-Backups: /home/yourusername/digitstec.store/backups/
-Logs: /home/yourusername/digitstec.store/logs/
-```
+
+### Using cPanel Git Interface:
+
+1. **Go to Git™ Version Control**
+2. **Click "Manage"** on your repository
+3. **Click "Pull or Deploy"**
+4. **Click "Update from Remote"**
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Issue: 500 Internal Server Error
 
-**Solution 1 - Check Error Logs:**
+**Check Error Logs:**
 ```bash
-# Via terminal
-cd ~/digitstec.store
-tail -f logs/passenger.log
-# OR
-tail -f /home/yourusername/logs/passenger.log
+tail -f ~/logs/passenger.log
+# Or check in cPanel → Errors
 ```
 
-In cPanel File Manager:
-- Navigate to `logs` folder
-- View `passenger.log` or `error_log`
-
-**Solution 2 - Check Permissions:**
-```bash
-chmod 755 passenger_wsgi.py
-chmod -R 755 backend/
-```
-
-**Solution 3 - Verify Virtual Environment:**
-```bash
-source /home/yourusername/virtualenv/digitstec.store/3.9/bin/activate
-pip list | grep fastapi
-# Should show fastapi version
-```
-
-### Issue: Module Not Found Errors
+**Common causes:**
+- Virtual environment path incorrect in `.htaccess`
+- Missing Python dependencies
+- `.env` file not configured
+- Database not initialized
 
 **Solution:**
 ```bash
-# Activate virtual environment
-source /home/yourusername/virtualenv/digitstec.store/3.9/bin/activate
+# Verify virtual environment
+source /home3/manuelc8/virtualenv/swapsync/backend/3.9/bin/activate
+python --version  # Should show 3.9+
 
-# Reinstall requirements
-cd ~/digitstec.store
-pip install -r backend/requirements.txt --force-reinstall
+# Reinstall dependencies
+cd ~/swapsync/backend
+pip install -r requirements.txt --force-reinstall
+
+# Check .env exists
+ls -la .env
+
+# Re-initialize database if needed
+python -c "from app.core.database import init_db; init_db()"
 ```
 
-### Issue: Database Not Found
+### Issue: Module Not Found
 
 **Solution:**
 ```bash
-cd ~/digitstec.store/backend
-# Check if swapsync.db exists
-ls -la swapsync.db
+cd ~/swapsync/backend
+source /home3/manuelc8/virtualenv/swapsync/backend/3.9/bin/activate
+pip install -r requirements.txt
+```
 
-# If not, initialize it
-python -c "from app.core.database import Base, engine; Base.metadata.create_all(bind=engine)"
+### Issue: Permission Denied
+
+**Solution:**
+```bash
+cd ~/swapsync/backend
+chmod 755 passenger_wsgi.py .htaccess
+chmod -R 755 app/
+chmod 755 uploads backups logs
+```
+
+### Issue: Database Locked
+
+**Solution:**
+```bash
+cd ~/swapsync/backend
+# Stop any running processes
+pkill -f python
+
+# Reset database permissions
+chmod 664 swapsync.db
+chmod 755 .
+
+# Restart app in cPanel
 ```
 
 ### Issue: Static Files Not Loading
 
-**Solution 1 - Update .htaccess:**
-Add these rules to `.htaccess`:
-```apache
-# Serve static files directly
-RewriteCond %{REQUEST_FILENAME} -f
-RewriteRule .* - [L]
+**Solution:**
 
-# For frontend assets
-RewriteCond %{REQUEST_URI} ^/assets/
-RewriteRule .* - [L]
-```
+Check `frontend/.htaccess` exists and has proper rules.
 
-**Solution 2 - Check File Permissions:**
-```bash
-chmod -R 755 frontend_dist/
+Or update backend `main.py` to serve static files:
+
+```python
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/", StaticFiles(directory="../frontend/dist", html=True), name="static")
 ```
 
 ### Issue: CORS Errors
 
-**Solution - Update .env:**
+**Update `.env`:**
 ```env
-ALLOWED_ORIGINS=["https://digitstec.store", "https://www.digitstec.store", "http://digitstec.store", "http://www.digitstec.store"]
+CORS_ORIGINS=https://digitstec.store,https://www.digitstec.store,http://digitstec.store,http://www.digitstec.store
 ```
 
-Then restart the app in cPanel.
+Then restart the application.
 
 ### Issue: Application Won't Start
 
-**Solution 1 - Check Python Version:**
+**Check Python version:**
 ```bash
-python --version
-# Should be 3.8+
+python --version  # Should be 3.9+
 ```
 
-**Solution 2 - Validate passenger_wsgi.py:**
+**Validate passenger_wsgi.py:**
 ```bash
+cd ~/swapsync/backend
 python passenger_wsgi.py
 # Should show no syntax errors
 ```
 
-**Solution 3 - Check .htaccess:**
-Ensure the Python path in `.htaccess` matches your virtual environment path.
+**Check .htaccess path:**
+Ensure the Python path in `.htaccess` matches your actual virtual environment path.
 
 ---
 
-## 🔐 Security Checklist
+## Important URLs
+
+### Production URLs:
+- **Frontend:** https://digitstec.store
+- **API Docs:** https://digitstec.store/docs
+- **ReDoc:** https://digitstec.store/redoc
+- **Health Check:** https://digitstec.store/api/health
+
+### cPanel URLs:
+- **cPanel:** https://digitstec.store:2083
+- **Terminal:** cPanel → Terminal icon
+- **Python App:** cPanel → Setup Python App
+- **Git Control:** cPanel → Git™ Version Control
+
+### File Paths on Server:
+```
+Repository: /home3/manuelc8/swapsync/
+Backend: /home3/manuelc8/swapsync/backend/
+Frontend: /home3/manuelc8/swapsync/frontend/
+Virtual Env: /home3/manuelc8/virtualenv/swapsync/backend/3.9/
+Database: /home3/manuelc8/swapsync/backend/swapsync.db
+Uploads: /home3/manuelc8/swapsync/backend/uploads/
+Backups: /home3/manuelc8/swapsync/backend/backups/
+Logs: /home3/manuelc8/logs/
+```
+
+---
+
+## Security Checklist
 
 After deployment, ensure:
 
 - [ ] Changed default admin password
-- [ ] Updated SECRET_KEY in `.env` to a random 32+ character string
-- [ ] Set `.env` file permissions to 600: `chmod 600 .env`
-- [ ] Set DEBUG=False in `.env`
+- [ ] Updated `SECRET_KEY` in `.env` with random 32+ character string
+- [ ] Set `.env` file permissions to 600
+- [ ] Set `DEBUG=False` in `.env`
 - [ ] SSL certificate is active (HTTPS)
-- [ ] Added your domain to ALLOWED_ORIGINS in `.env`
-- [ ] Database file permissions are secure: `chmod 600 backend/swapsync.db`
+- [ ] Added your domain to `CORS_ORIGINS` in `.env`
+- [ ] Database file permissions are secure (chmod 664)
 - [ ] Removed any test/debug files
 - [ ] Configured regular backups
+- [ ] SMS credentials configured (if using SMS features)
 
 ---
 
-## 📈 Post-Deployment Tasks
+## Backup Strategy
 
-### 1. Setup Automated Backups
+### Automated Backups:
+
 ```bash
 # Add to crontab
 crontab -e
 
 # Add this line for daily backups at 2 AM
-0 2 * * * cd /home/yourusername/digitstec.store && /home/yourusername/virtualenv/digitstec.store/3.9/bin/python backend/app/core/backup.py
+0 2 * * * cd /home3/manuelc8/swapsync/backend && /home3/manuelc8/virtualenv/swapsync/backend/3.9/bin/python -c "from app.core.backup import create_backup; create_backup()"
 ```
 
-### 2. Monitor Logs
+### Manual Backup:
+
 ```bash
-# Check logs regularly
-tail -f ~/digitstec.store/logs/passenger.log
+cd ~/swapsync/backend
+cp swapsync.db backups/swapsync_$(date +%Y%m%d_%H%M%S).db
 ```
-
-### 3. Setup SSL Certificate
-In cPanel:
-1. Go to **SSL/TLS Status**
-2. Check the box next to digitstec.store
-3. Click **Run AutoSSL**
-
-### 4. Configure Email (if using email features)
-In cPanel:
-1. Go to **Email Accounts**
-2. Create email: `noreply@digitstec.store`
-3. Update `.env` with email settings
 
 ---
 
-## 📞 Support Information
+## Performance Optimization
 
-### Common Commands:
+### 1. Enable GZIP Compression
 
-**Restart Application:**
+Add to `backend/.htaccess`:
+```apache
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE application/json
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE application/javascript
+</IfModule>
+```
+
+### 2. Configure Passenger Settings
+
+In `backend/.htaccess`:
+```apache
+PassengerMaxPoolSize 2
+PassengerMinInstances 1
+PassengerMaxRequestQueueSize 50
+```
+
+### 3. Database Optimization
+
 ```bash
-# Via cPanel: Setup Python App > Restart
+# Vacuum database monthly
+cd ~/swapsync/backend
+sqlite3 swapsync.db "VACUUM;"
+```
+
+---
+
+## Common Commands Reference
+
+### Restart Application:
+```bash
+# Via cPanel: Setup Python App → Restart
 # Via terminal:
-cd ~/digitstec.store
+cd ~/swapsync
+mkdir -p tmp
 touch tmp/restart.txt
 ```
 
-**View Live Logs:**
+### View Live Logs:
 ```bash
 tail -f ~/logs/passenger.log
 ```
 
-**Backup Database:**
+### Check Disk Space:
 ```bash
-cd ~/digitstec.store/backend
-cp swapsync.db ~/backups/swapsync_$(date +%Y%m%d_%H%M%S).db
+df -h
 ```
 
-**Update Application:**
+### Check Python Packages:
 ```bash
-cd ~/digitstec.store
-source /home/yourusername/virtualenv/digitstec.store/3.9/bin/activate
-git pull  # If using git
+source /home3/manuelc8/virtualenv/swapsync/backend/3.9/bin/activate
+pip list
+```
+
+### Update Application:
+```bash
+cd ~/swapsync
+git pull origin main
 pip install -r backend/requirements.txt --upgrade
-touch tmp/restart.txt  # Restart app
+touch tmp/restart.txt
 ```
 
 ---
 
-## ✅ Deployment Checklist
+## Support & Resources
 
-Complete this checklist as you deploy:
+### Documentation:
+- Main README: `/README.md` in repository
+- API Documentation: https://digitstec.store/docs
+- FastAPI Docs: https://fastapi.tiangolo.com
+
+### GitHub Repository:
+- **URL:** https://github.com/androidnega/SwapSync
+- **Issues:** Use GitHub Issues for bug reports
+- **Pull Requests:** For contributions
+
+### Hosting Support:
+- Contact your hosting provider for cPanel-specific issues
+- Check Python/Passenger module availability
+- Verify resource limits (RAM, CPU, storage)
+
+---
+
+## Deployment Checklist
 
 ### Pre-Deployment:
-- [ ] Frontend built successfully (`npm run build`)
-- [ ] Backend files copied to deploy_package
-- [ ] `.env` file created with correct settings
-- [ ] `.htaccess` file created
-- [ ] `passenger_wsgi.py` file created
-- [ ] `requirements.txt` is up to date
+- [ ] Repository cloned to server
+- [ ] Python 3.9+ available in cPanel
+- [ ] Domain DNS configured
+- [ ] SSL certificate ready
 
-### cPanel Setup:
-- [ ] Files uploaded to cPanel
-- [ ] File permissions set correctly
+### Setup:
 - [ ] Python application created in cPanel
 - [ ] Virtual environment path noted
 - [ ] Dependencies installed via pip
+- [ ] `.env` file created and configured
+- [ ] Required directories created (uploads, backups, logs)
 - [ ] Database initialized
-- [ ] Admin user created
+- [ ] Frontend built
 
 ### Testing:
 - [ ] API docs accessible at /docs
@@ -709,53 +650,46 @@ Complete this checklist as you deploy:
 - [ ] Login works with admin credentials
 - [ ] Can access dashboard
 - [ ] Static files loading properly
+- [ ] Database operations work
 
 ### Security:
 - [ ] Admin password changed
-- [ ] SECRET_KEY updated
+- [ ] SECRET_KEY updated with secure random value
 - [ ] .env permissions set to 600
 - [ ] DEBUG=False
-- [ ] SSL certificate active
+- [ ] SSL certificate active and working
+- [ ] CORS configured properly
 
 ### Post-Deployment:
 - [ ] Backups configured
 - [ ] Logs monitored
+- [ ] Performance optimized
 - [ ] Documentation saved
 - [ ] Team notified
 
 ---
 
-## 🎉 Congratulations!
+## 🎉 Deployment Complete!
 
 If you've completed all steps, SwapSync should now be running live at **https://digitstec.store**!
 
 ### Next Steps:
 1. Login and change admin password
 2. Configure company settings
-3. Add users
-4. Test all features
-5. Set up regular backups
-6. Monitor application performance
+3. Add users and assign roles
+4. Test all features (sales, repairs, swaps)
+5. Set up SMS notifications (if needed)
+6. Configure automated backups
+7. Monitor application logs
 
 ---
 
-## 📧 Need Help?
-
-If you encounter issues:
-1. Check the Troubleshooting section above
-2. Review error logs in `~/digitstec.store/logs/`
-3. Verify all configuration files
-4. Ensure all dependencies are installed
-5. Contact your hosting provider for cPanel-specific issues
-
----
-
-**Document Version:** 1.0  
+**Document Version:** 2.0  
 **Last Updated:** October 10, 2025  
+**Repository:** https://github.com/androidnega/SwapSync  
 **Domain:** digitstec.store  
-**Application:** SwapSync  
-**Deployment Type:** cPanel Python Application
+**Deployment Method:** Git + cPanel Python App
 
 ---
 
-
+**Need Help?** Check the troubleshooting section above or review error logs in `~/logs/passenger.log`
