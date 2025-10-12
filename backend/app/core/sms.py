@@ -334,6 +334,26 @@ class SMSService:
         message += "- SwapSync"
         
         return self._send_sms(phone_number, message, company_name)
+    
+    def send_sms(
+        self,
+        phone_number: str,
+        message: str,
+        company_name: str = "SwapSync"
+    ) -> dict:
+        """
+        Public method to send SMS
+        This is the main entry point for sending any SMS
+        
+        Args:
+            phone_number: Recipient phone number
+            message: SMS message content
+            company_name: Company name for logging (default: SwapSync)
+        
+        Returns:
+            dict with success status and details
+        """
+        return self._send_sms(phone_number, message, company_name)
 
 
 # Global SMS service instance

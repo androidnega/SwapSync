@@ -163,21 +163,49 @@ async def request_otp(
         company_name = user.company_name or "SwapSync"
         message = f"Your {company_name} login code is: {otp_code}\n\nValid for 5 minutes.\n\nDo not share this code with anyone."
         
+        print(f"\n{'='*60}")
+        print(f"📱 OTP SMS SENDING")
+        print(f"{'='*60}")
+        print(f"User: {user.username} (ID: {user.id})")
+        print(f"Phone: {user.phone_number}")
+        print(f"Company: {company_name}")
+        print(f"OTP Code: {otp_code}")
+        print(f"SMS Service Enabled: {sms_service.enabled if sms_service else False}")
+        print(f"Arkasel Enabled: {sms_service.arkasel_enabled if sms_service else False}")
+        print(f"Hubtel Enabled: {sms_service.hubtel_enabled if sms_service else False}")
+        
         if sms_service and sms_service.enabled:
+            print(f"🚀 Attempting to send SMS...")
             sms_result = sms_service.send_sms(
                 phone_number=user.phone_number,
                 message=message,
                 company_name=company_name
             )
             
+            print(f"\n📊 SMS Result:")
+            print(f"   Success: {sms_result.get('success')}")
+            print(f"   Status: {sms_result.get('status')}")
+            print(f"   Provider: {sms_result.get('provider', 'N/A')}")
+            print(f"   Message ID: {sms_result.get('message_id', 'N/A')}")
+            
+            if sms_result.get('error'):
+                print(f"   ❌ Error: {sms_result.get('error')}")
+            
+            print(f"{'='*60}\n")
+            
             if not sms_result.get('success'):
-                raise Exception("SMS sending failed")
+                print(f"⚠️ WARNING: SMS failed but continuing with OTP session")
+                # Log to database or monitoring system here
         else:
             # For testing without SMS service
-            print(f"📱 OTP Code (Testing): {otp_code} for {user.phone_number}")
+            print(f"⚠️ SMS service not configured - OTP Code (Testing): {otp_code}")
+            print(f"{'='*60}\n")
     
     except Exception as e:
-        print(f"❌ SMS Error: {e}")
+        print(f"❌ SMS Exception: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        print(f"{'='*60}\n")
         # Don't fail the request, but log the error
         # In production, you might want to handle this differently
     
