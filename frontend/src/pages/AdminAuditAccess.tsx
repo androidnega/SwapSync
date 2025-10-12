@@ -58,8 +58,8 @@ const AdminAuditAccess: React.FC = () => {
 
       console.log('✅ Audit code validated:', validateResponse.data);
 
-      // Fetch Manager data using staff-management endpoint
-      const response = await api.get('/staff/manager-hierarchy');
+      // Fetch Manager data using staff admin/companies endpoint
+      const response = await api.get('/staff/admin/companies');
       
       // Find the manager's data
       const managerCompany = response.data.companies?.find((c: any) => c.manager.id === selectedManager.id);
@@ -79,11 +79,11 @@ const AdminAuditAccess: React.FC = () => {
           last_login: managerCompany.manager.last_login
         },
         business_stats: {
-          total_customers: managerCompany.total_customers || 0,
-          total_phones: 0,  // Not available in staff endpoint
-          total_swaps: 0,   // Not available in staff endpoint
-          total_sales: 0,   // Not available in staff endpoint
-          total_repairs: 0, // Not available in staff endpoint
+          total_customers: 0,  // Not available in staff endpoint
+          total_phones: 0,  
+          total_swaps: 0,   
+          total_sales: 0,   
+          total_repairs: 0, 
           sales_revenue: 0.0,
           repair_revenue: 0.0,
           total_revenue: 0.0
