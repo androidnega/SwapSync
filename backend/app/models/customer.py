@@ -21,6 +21,7 @@ class Customer(Base):
     phone_number = Column(String, unique=True, index=True)
     email = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=True)
+    created_by_user_id = Column(Integer, nullable=True)  # Who created this customer (for deletion code privacy)
     
     # Security: Dynamic deletion code
     deletion_code = Column(String(20), nullable=True)

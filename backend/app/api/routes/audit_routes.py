@@ -35,12 +35,12 @@ def get_my_audit_code(
     db: Session = Depends(get_db)
 ):
     """
-    CEO can view their own audit code
+    Manager/CEO can view their own audit code
     """
-    if current_user.role != UserRole.CEO:
+    if current_user.role not in [UserRole.CEO, UserRole.MANAGER]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only CEOs have audit codes"
+            detail="Only Managers have audit codes"
         )
     
     return {

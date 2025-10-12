@@ -36,6 +36,7 @@ def create_customer(
         )
     
     new_customer = Customer(**customer.model_dump())
+    new_customer.created_by_user_id = current_user.id  # Track who created this customer
     db.add(new_customer)
     db.flush()
     
@@ -57,21 +58,56 @@ def create_customer(
     return new_customer
 
 
-@router.get("/", response_model=List[CustomerResponse])
+@router.get("/")
 def list_customers(
     skip: int = 0, 
     limit: int = 100, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get all customers with pagination (Shop Keeper, CEO, Admin only)"""
+    """
+    Get all customers with pagination
+    Deletion code privacy:
+    - Managers: See ALL deletion codes
+    - Shopkeepers: See ONLY their own customer deletion codes
+    - Repairers: See ONLY their own customer deletion codes
+    """
     if not can_manage_customers(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view customers"
         )
+    
     customers = db.query(Customer).offset(skip).limit(limit).all()
-    return customers
+    
+    # Filter deletion codes based on who created the customer
+    result = []
+    for customer in customers:
+        customer_dict = {
+            "id": customer.id,
+            "unique_id": customer.unique_id,
+            "full_name": customer.full_name,
+            "phone_number": customer.phone_number,
+            "email": customer.email,
+            "created_at": customer.created_at.isoformat() if customer.created_at else None,
+            "deletion_code": None,  # Default: hide
+            "code_generated_at": None
+        }
+        
+        # Show deletion code based on role and creator
+        if current_user.is_manager:
+            # Managers see ALL deletion codes
+            customer_dict["deletion_code"] = customer.deletion_code
+            customer_dict["code_generated_at"] = customer.code_generated_at.isoformat() if customer.code_generated_at else None
+        elif hasattr(customer, 'created_by_user_id') and customer.created_by_user_id == current_user.id:
+            # Shopkeepers and Repairers ONLY see deletion codes for customers THEY created
+            customer_dict["deletion_code"] = customer.deletion_code
+            customer_dict["code_generated_at"] = customer.code_generated_at.isoformat() if customer.code_generated_at else None
+        # else: deletion_code remains None (hidden)
+        
+        result.append(customer_dict)
+    
+    return result
 
 
 @router.get("/{customer_id}", response_model=CustomerResponse)
