@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../services/api';
-import axios from 'axios';
-import { getToken } from '../services/authService';
+import api, { authAPI } from '../services/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash, faKey, faUserPlus, faUserShield, faUser } from '@fortawesome/free-solid-svg-icons';
 
@@ -90,10 +88,7 @@ const StaffManagement: React.FC = () => {
 
   const fetchCurrentUser = async () => {
     try {
-      const token = getToken();
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await authAPI.me();
       setCurrentUser(response.data);
     } catch (err) {
       console.error('Error fetching current user:', err);
@@ -102,28 +97,18 @@ const StaffManagement: React.FC = () => {
 
   const fetchStaff = async () => {
     try {
-      const token = getToken();
-      const response = await axios.get(`${API_URL}/staff/my-staff`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/staff/my-staff');
       setStaff(response.data);
       setLoading(false);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Failed to fetch staff');
-      } else {
-        setError('Failed to fetch staff');
-      }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to fetch staff');
       setLoading(false);
     }
   };
 
   const fetchCompanies = async () => {
     try {
-      const token = getToken();
-      const response = await axios.get(`${API_URL}/staff/admin/companies`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/staff/admin/companies');
       setCompanies(response.data.companies || []);
     } catch (err) {
       console.error('Error fetching companies:', err);
@@ -140,12 +125,7 @@ const StaffManagement: React.FC = () => {
     setSuccess(null);
 
     try {
-      const token = getToken();
-      await axios.post(
-        `${API_URL}/auth/register`,
-        formData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post('/auth/register', formData);
 
       setSuccess(`${isSystemAdmin() ? 'Manager' : 'Staff member'} ${formData.username} created successfully!`);
       setShowCreateForm(false);
@@ -159,12 +139,11 @@ const StaffManagement: React.FC = () => {
         role: isSystemAdmin() ? 'manager' : 'shop_keeper'
       });
       fetchStaff();
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Failed to create user');
-      } else {
-        setError('Failed to create user');
+      if (viewMode === 'companies') {
+        fetchCompanies();
       }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to create user');
     }
   };
 
@@ -176,23 +155,19 @@ const StaffManagement: React.FC = () => {
     setSuccess(null);
 
     try {
-      const token = getToken();
-      await axios.put(
-        `${API_URL}/staff/update/${selectedUser.id}`,
-        editData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.put(`/staff/update/${selectedUser.id}`, editData);
 
       setSuccess(`User ${selectedUser.username} updated successfully!`);
       setShowEditForm(false);
       setSelectedUser(null);
-      fetchStaff();
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Failed to update user');
-      } else {
-        setError('Failed to update user');
+      
+      // Refresh both staff list and companies view
+      await fetchStaff();
+      if (viewMode === 'companies') {
+        await fetchCompanies();
       }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to update user');
     }
   };
 
@@ -204,23 +179,16 @@ const StaffManagement: React.FC = () => {
     setSuccess(null);
 
     try {
-      const token = getToken();
-      await axios.post(
-        `${API_URL}/staff/reset-password/${selectedUser.id}`,
-        { new_password: newPassword },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post(`/staff/reset-password/${selectedUser.id}`, {
+        new_password: newPassword
+      });
 
       setSuccess(`Password for ${selectedUser.username} reset successfully!`);
       setShowResetPassword(false);
       setSelectedUser(null);
       setNewPassword('');
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Failed to reset password');
-      } else {
-        setError('Failed to reset password');
-      }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to reset password');
     }
   };
 
@@ -233,20 +201,15 @@ const StaffManagement: React.FC = () => {
     setSuccess(null);
 
     try {
-      const token = getToken();
-      await axios.delete(
-        `${API_URL}/staff/delete/${user.id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.delete(`/staff/delete/${user.id}`);
 
       setSuccess(`User ${user.username} deleted successfully!`);
       fetchStaff();
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Failed to delete user');
-      } else {
-        setError('Failed to delete user');
+      if (viewMode === 'companies') {
+        fetchCompanies();
       }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to delete user');
     }
   };
 
