@@ -164,6 +164,43 @@ export const productSaleAPI = {
   getByProduct: (productId: number) => api.get(`/product-sales/product/${productId}`),
 };
 
+// Brand API
+export const brandAPI = {
+  getAll: () => api.get('/brands/'),
+  getById: (id: number) => api.get(`/brands/${id}`),
+  create: (data: any) => api.post('/brands/', data),
+  update: (id: number, data: any) => api.put(`/brands/${id}`, data),
+  delete: (id: number) => api.delete(`/brands/${id}`),
+};
+
+// Category API
+export const categoryAPI = {
+  getAll: () => api.get('/categories/'),
+  getById: (id: number) => api.get(`/categories/${id}`),
+  create: (data: any) => api.post('/categories/', data),
+  update: (id: number, data: any) => api.put(`/categories/${id}`, data),
+  delete: (id: number) => api.delete(`/categories/${id}`),
+};
+
+// Auth API
+export const authAPI = {
+  me: () => api.get('/auth/me'),
+  login: (username: string, password: string) => api.post('/auth/login-json', { username, password }),
+  register: (userData: any) => api.post('/auth/register', userData),
+};
+
+// Bulk Upload API
+export const bulkUploadAPI = {
+  uploadPhones: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/bulk-upload/phones', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  getPhoneTemplate: () => `${API_BASE_URL}/bulk-upload/phones/template`,
+};
+
 // Export API_URL for direct fetch calls
 export { API_BASE_URL as API_URL };
 

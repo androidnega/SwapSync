@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../services/api';
-import axios from 'axios';
-import { getToken } from '../services/authService';
+import api, { phoneAPI, brandAPI, categoryAPI, authAPI, bulkUploadAPI } from '../services/api';
 
 interface Phone {
   id: number;
@@ -73,10 +71,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
 
   const fetchUserRole = async () => {
     try {
-      const token = getToken();
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await authAPI.me();
       setUserRole(response.data.role);
     } catch (error) {
       console.error('Failed to fetch user role:', error);
@@ -85,13 +80,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
 
   const fetchPhones = async () => {
     try {
-      const token = getToken();
-      const url = filterAvailable === 'available' 
-        ? `${API_URL}/phones/?available_only=true`
-        : `${API_URL}/phones/`;
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await phoneAPI.getAll(filterAvailable === 'available');
       setPhones(response.data);
     } catch (error) {
       console.error('Failed to fetch phones:', error);
@@ -102,10 +91,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
 
   const fetchCategories = async () => {
     try {
-      const token = getToken();
-      const response = await axios.get(`${API_URL}/categories/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await categoryAPI.getAll();
       setCategories(response.data);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -114,10 +100,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
 
   const fetchBrands = async () => {
     try {
-      const token = getToken();
-      const response = await axios.get(`${API_URL}/brands/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await brandAPI.getAll();
       setBrands(response.data);
     } catch (error) {
       console.error('Failed to fetch brands:', error);
@@ -193,17 +176,12 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
     console.log('Submitting phone data:', phoneData);
 
     try {
-      const token = getToken();
       if (editingId) {
-        const response = await axios.put(`${API_URL}/phones/${editingId}`, phoneData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await phoneAPI.update(editingId, phoneData);
         console.log('Update response:', response.data);
         setMessage('✅ Phone updated successfully!');
       } else {
-        const response = await axios.post(`${API_URL}/phones/`, phoneData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await phoneAPI.create(phoneData);
         console.log('Create response:', response.data);
         setMessage('✅ Phone added successfully!');
       }
@@ -253,10 +231,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
     if (!confirm('Are you sure you want to delete this phone?')) return;
 
     try {
-      const token = getToken();
-      await axios.delete(`${API_URL}/phones/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await phoneAPI.delete(id);
       setMessage('✅ Phone deleted successfully!');
       fetchPhones();
       if (onUpdate) onUpdate(); // Notify parent component
@@ -270,16 +245,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
 
     setUploading(true);
     try {
-      const token = getToken();
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-
-      const response = await axios.post(`${API_URL}/bulk-upload/phones`, formData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await bulkUploadAPI.uploadPhones(uploadFile);
 
       const result = response.data;
       if (result.success) {
@@ -1170,7 +1136,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
                 <h3 className="font-semibold text-blue-900 mb-2">📥 Step 1: Download Template</h3>
                 <p className="text-sm text-blue-800 mb-3">Download the Excel template, fill in your phone data, then upload it here.</p>
                 <a
-                  href="${API_URL}/bulk-upload/phones/template"
+                  href={bulkUploadAPI.getPhoneTemplate()}
                   download
                   className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
                 >
