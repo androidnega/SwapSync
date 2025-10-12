@@ -118,7 +118,11 @@ def list_pending_resales(
     
     # Filter by status if provided
     if status_filter == 'pending':
-        query = query.filter(PendingResale.incoming_phone_status == PhoneSaleStatus.AVAILABLE)
+        # Show all swaps with incoming phones that haven't been sold yet
+        query = query.filter(
+            PendingResale.incoming_phone_id.isnot(None),
+            PendingResale.incoming_phone_status != PhoneSaleStatus.SOLD
+        )
     elif status_filter == 'sold':
         query = query.filter(PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD)
     

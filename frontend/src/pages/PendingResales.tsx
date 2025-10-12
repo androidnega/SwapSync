@@ -278,7 +278,7 @@ const PendingResales: React.FC<PendingResalesProps> = ({ onUpdate }) => {
                         onClick={() => handleSellPhone(resale)}
                         className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition-colors"
                       >
-                        Sell Now
+                        Resell Now
                       </button>
                     )}
                   </div>
@@ -446,11 +446,11 @@ const PendingResales: React.FC<PendingResalesProps> = ({ onUpdate }) => {
           </div>
         )}
 
-        {/* Sell Modal */}
+        {/* Resell Modal */}
         {showSellModal && selectedResale && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Sell Incoming Phone</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Resell Trade-In Phone</h2>
               <p className="text-sm text-gray-600 mb-1">{selectedResale.incoming_phone_brand} {selectedResale.incoming_phone_model}</p>
               <p className="text-xs text-gray-500 mb-4">{selectedResale.unique_id}</p>
 
