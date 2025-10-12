@@ -31,10 +31,10 @@ import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
 import SMSBroadcast from './pages/SMSBroadcast';
 import FirstLoginPasswordChange from './components/FirstLoginPasswordChange';
-import OfflineIndicator from './components/OfflineIndicator';
+// import OfflineIndicator from './components/OfflineIndicator';
 import { getToken, removeToken, initializeSession, updateLastActivity } from './services/authService';
-import { offlineStorage } from './services/offlineStorage';
-import { syncManager } from './services/syncManager';
+// import { offlineStorage } from './services/offlineStorage';
+// import { syncManager } from './services/syncManager';
 import axios from 'axios';
 import './App.css';
 
@@ -54,8 +54,8 @@ function AppContent() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Initialize offline storage and sync
-    initializeOfflineSupport();
+    // Initialize offline storage and sync - DISABLED
+    // initializeOfflineSupport();
     
     // Initialize session (check if valid, start monitoring)
     const sessionValid = initializeSession();
@@ -88,24 +88,25 @@ function AppContent() {
     };
   }, []);
 
-  const initializeOfflineSupport = async () => {
-    try {
-      // Initialize IndexedDB
-      await offlineStorage.init();
-      console.log('✅ Offline storage initialized');
-      
-      // Start auto-sync (every 30 seconds)
-      syncManager.startAutoSync(30000);
-      console.log('✅ Auto-sync started');
-      
-      // Sync immediately if online
-      if (navigator.onLine) {
-        await syncManager.syncAll();
-      }
-    } catch (error) {
-      console.error('❌ Failed to initialize offline support:', error);
-    }
-  };
+  // Offline support disabled temporarily - needs proper build configuration
+  // const initializeOfflineSupport = async () => {
+  //   try {
+  //     // Initialize IndexedDB
+  //     await offlineStorage.init();
+  //     console.log('✅ Offline storage initialized');
+  //     
+  //     // Start auto-sync (every 30 seconds)
+  //     syncManager.startAutoSync(30000);
+  //     console.log('✅ Auto-sync started');
+  //     
+  //     // Sync immediately if online
+  //     if (navigator.onLine) {
+  //       await syncManager.syncAll();
+  //     }
+  //   } catch (error) {
+  //     console.error('❌ Failed to initialize offline support:', error);
+  //   }
+  // };
 
   const checkMaintenanceStatus = async () => {
     try {
@@ -193,8 +194,7 @@ function AppContent() {
       {/* Sidebar */}
       <Sidebar user={user} onLogout={handleLogout} />
 
-      {/* Offline Indicator */}
-      <OfflineIndicator />
+      {/* Offline Indicator - DISABLED (needs proper build configuration) */}
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
