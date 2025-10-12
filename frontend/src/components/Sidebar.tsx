@@ -86,7 +86,6 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Phone Brands', icon: faTags, route: '/brands' },
     { name: 'Product Categories', icon: faBox, route: '/categories' },
     { name: 'Audit Code', icon: faKey, route: '/audit-code' },
-    { name: 'Account Settings', icon: faCog, route: '/account-settings' },
     { name: 'Activity Logs', icon: faClipboardList, route: '/activity-logs' },
     { name: 'Customers', icon: faUserCircle, route: '/customers' },
     { name: 'Swapping Hub', icon: faExchangeAlt, route: '/swapping-hub' },
@@ -105,7 +104,6 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Phone Brands', icon: faTags, route: '/brands' },
     { name: 'Product Categories', icon: faShoppingCart, route: '/categories' },
     { name: 'Audit Code', icon: faKey, route: '/audit-code' },
-    { name: 'Account Settings', icon: faCog, route: '/account-settings' },
     { name: 'Activity Logs', icon: faClipboardList, route: '/activity-logs' },
     { name: 'Customers', icon: faUserCircle, route: '/customers' },
     { name: 'Phones', icon: faMobileAlt, route: '/phones' },
@@ -267,7 +265,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
       </div>
 
       {/* Menu Items */}
-      <nav className="flex-1 overflow-y-auto py-4">
+      <nav className="flex-1 overflow-y-auto py-4 scrollbar-hide">
         {menuItems.map((item) => (
           <Link
             key={item.route}

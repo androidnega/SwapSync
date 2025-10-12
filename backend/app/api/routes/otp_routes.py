@@ -106,8 +106,11 @@ async def request_otp(
             detail="OTP login is currently disabled. Please use password login."
         )
     
-    # Find user by username
-    user = db.query(User).filter(User.username == request_data.username).first()
+    # Find user by username OR unique_id
+    user = db.query(User).filter(
+        (User.username == request_data.username) | 
+        (User.unique_id == request_data.username)
+    ).first()
     
     if not user:
         # Don't reveal if user exists for security
@@ -196,8 +199,11 @@ async def verify_otp(
     Verify OTP code and login user
     Returns access token on success
     """
-    # Find user
-    user = db.query(User).filter(User.username == verify_data.username).first()
+    # Find user by username OR unique_id
+    user = db.query(User).filter(
+        (User.username == verify_data.username) |
+        (User.unique_id == verify_data.username)
+    ).first()
     
     if not user:
         raise HTTPException(

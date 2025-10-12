@@ -28,7 +28,6 @@ import PhoneBrands from './pages/PhoneBrands';
 import SwappingHub from './pages/SwappingHub';
 import ProductsHub from './pages/ProductsHub';
 import Profile from './pages/Profile';
-import AccountSettings from './pages/AccountSettings';
 import UserManagement from './pages/UserManagement';
 import FirstLoginPasswordChange from './components/FirstLoginPasswordChange';
 import { getToken, removeToken, initializeSession, updateLastActivity } from './services/authService';
@@ -294,13 +293,6 @@ function AppContent() {
           
           {/* Profile - All authenticated users */}
           <Route path="/profile" element={<Profile />} />
-          
-          {/* Account Settings - Manager Only */}
-          <Route path="/account-settings" element={
-            <ProtectedRoute allowedRoles={['manager', 'ceo']} userRole={user.role}>
-              <AccountSettings />
-            </ProtectedRoute>
-          } />
         </Routes>
       </div>
     </div>
