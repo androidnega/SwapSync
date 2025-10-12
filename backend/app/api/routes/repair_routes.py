@@ -364,6 +364,8 @@ def update_repair_status(
         )
     
     old_status = repair.status
+    status_changed = old_status != new_status
+    
     repair.status = new_status
     repair.updated_at = datetime.utcnow()
     
@@ -374,41 +376,65 @@ def update_repair_status(
     db.commit()
     db.refresh(repair)
     
-    # Schedule SMS notification in background if status changed to Completed
-    if old_status != new_status and new_status == "Completed":
+    # Log activity
+    log_activity(
+        db=db,
+        user=current_user,
+        action=f"updated repair status to {new_status}",
+        module="repairs",
+        target_id=repair.id,
+        details=f"{repair.phone_description} - Status: {new_status}"
+    )
+    
+    # Send SMS notification for ALL status changes (non-blocking)
+    if status_changed:
         customer = db.query(Customer).filter(Customer.id == repair.customer_id).first()
         if customer:
-            # Get manager for branding check
-            manager_id = None
-            company_name = "SwapSync"  # Default
-            
-            if repair.created_by_user_id:
-                created_by = db.query(User).filter(User.id == repair.created_by_user_id).first()
-                if created_by:
-                    # If created by shopkeeper/repairer, get their manager's company
-                    if created_by.parent_user_id:
-                        manager = db.query(User).filter(User.id == created_by.parent_user_id).first()
-                        if manager:
-                            manager_id = manager.id
-                            company_name = manager.company_name or "SwapSync"
-                    # If created by manager directly
-                    elif created_by.is_manager:
-                        manager_id = created_by.id
-                        company_name = created_by.company_name or "SwapSync"
-            
-            # Schedule SMS in background (non-blocking)
-            # Branding determined by manager's use_company_sms_branding setting
-            background_tasks.add_task(
-                send_repair_completion_sms_background,
-                customer_id=customer.id,
-                customer_phone=customer.phone_number,
-                customer_name=customer.full_name,
-                company_name=company_name,
-                repair_description=repair.phone_description,
-                cost=repair.cost,
-                invoice_number=None,  # TODO: Generate invoice
-                manager_id=manager_id  # For dynamic branding
-            )
+            try:
+                # For "Completed" status, use the detailed completion SMS
+                if new_status == "Completed":
+                    # Get manager for branding check
+                    manager_id = None
+                    company_name = "SwapSync"  # Default
+                    
+                    if repair.created_by_user_id:
+                        created_by = db.query(User).filter(User.id == repair.created_by_user_id).first()
+                        if created_by:
+                            # If created by shopkeeper/repairer, get their manager's company
+                            if created_by.parent_user_id:
+                                manager = db.query(User).filter(User.id == created_by.parent_user_id).first()
+                                if manager:
+                                    manager_id = manager.id
+                                    company_name = manager.company_name or "SwapSync"
+                            # If created by manager directly
+                            elif created_by.is_manager:
+                                manager_id = created_by.id
+                                company_name = created_by.company_name or "SwapSync"
+                    
+                    # Schedule detailed completion SMS in background
+                    background_tasks.add_task(
+                        send_repair_completion_sms_background,
+                        customer_id=customer.id,
+                        customer_phone=customer.phone_number,
+                        customer_name=customer.full_name,
+                        company_name=company_name,
+                        repair_description=repair.phone_description,
+                        cost=repair.cost,
+                        invoice_number=None,
+                        manager_id=manager_id
+                    )
+                    print(f"✅ Completion SMS scheduled for {customer.full_name}")
+                else:
+                    # For other status changes, send simple status update SMS
+                    send_repair_status_update_sms(
+                        customer_name=customer.full_name,
+                        phone_number=customer.phone_number,
+                        status=new_status,
+                        repair_id=repair.id
+                    )
+                    print(f"✅ Status update SMS sent to {customer.full_name} - Status: {new_status}")
+            except Exception as sms_error:
+                print(f"⚠️ SMS sending failed (non-critical): {sms_error}")
     
     return repair
 

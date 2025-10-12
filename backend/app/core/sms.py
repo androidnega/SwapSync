@@ -401,15 +401,62 @@ def configure_sms(
 
 # Legacy function wrappers for backward compatibility
 def send_repair_created_sms(customer_name: str, phone_number: str, repair_id: int, phone_description: str):
-    """Legacy wrapper - sends repair created SMS"""
-    logger.info(f"📱 Repair created SMS to {customer_name} ({phone_number})")
-    return {"success": True, "status": "sent"}
+    """Send repair booking confirmation SMS to customer"""
+    try:
+        logger.info(f"📱 Sending repair booking SMS to {customer_name} ({phone_number})")
+        
+        # Get SMS service
+        service = get_sms_service()
+        
+        # Build message
+        message = f"Hi {customer_name}, your phone repair booking for {phone_description} (ID: {repair_id}) has been confirmed. We'll keep you updated on the progress."
+        
+        # Send SMS
+        result = service.send_sms(
+            phone_number=phone_number,
+            message=message,
+            company_name="SwapSync"
+        )
+        
+        logger.info(f"✅ Repair booking SMS sent to {customer_name}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to send repair booking SMS: {str(e)}")
+        return {"success": False, "error": str(e)}
 
 
 def send_repair_status_update_sms(customer_name: str, phone_number: str, status: str, repair_id: int):
-    """Legacy wrapper - sends repair status update SMS"""
-    logger.info(f"📱 Repair status update SMS to {customer_name}: Status={status}")
-    return {"success": True, "status": "sent"}
+    """Send repair status update SMS to customer"""
+    try:
+        logger.info(f"📱 Sending repair status update SMS to {customer_name}: Status={status}")
+        
+        # Get SMS service
+        service = get_sms_service()
+        
+        # Build status-specific message
+        status_messages = {
+            "Pending": f"Hi {customer_name}, your phone repair request (ID: {repair_id}) has been received and is pending review.",
+            "In Progress": f"Hi {customer_name}, good news! Your phone repair (ID: {repair_id}) is now in progress. We'll notify you once it's completed.",
+            "Completed": f"Hi {customer_name}, your phone repair (ID: {repair_id}) is completed! You can pick it up at your convenience.",
+            "Delivered": f"Hi {customer_name}, your repaired phone (ID: {repair_id}) has been delivered. Thank you for your business!"
+        }
+        
+        message = status_messages.get(status, f"Hi {customer_name}, your repair status (ID: {repair_id}) has been updated to: {status}")
+        
+        # Send SMS
+        result = service.send_sms(
+            phone_number=phone_number,
+            message=message,
+            company_name="SwapSync"
+        )
+        
+        logger.info(f"✅ Status update SMS sent successfully to {customer_name}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to send status update SMS: {str(e)}")
+        return {"success": False, "error": str(e)}
 
 
 def send_swap_completion_sms(db, customer_name: str, phone_number: str, customer_id: int, phone_model: str, final_price: float, swap_id: int):
