@@ -696,3 +696,67 @@ def get_account_changes(
         } for log in changes]
     }
 
+
+@router.post("/admin/toggle-sms-branding/{manager_id}")
+def toggle_sms_branding(
+    manager_id: int,
+    enabled: bool,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Toggle SMS branding for a manager
+    - When enabled (True): SMS sent with manager's company name
+    - When disabled (False): SMS sent with "SwapSync" branding
+    - Only System Admin can toggle this
+    """
+    if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only System Administrators can toggle SMS branding"
+        )
+    
+    # Get the Manager
+    manager = db.query(User).filter(
+        User.id == manager_id, 
+        User.role.in_([UserRole.MANAGER, UserRole.CEO])
+    ).first()
+    
+    if not manager:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Manager not found"
+        )
+    
+    # Check if manager has company name
+    if enabled and not manager.company_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot enable company branding: Manager has no company name set"
+        )
+    
+    # Update SMS branding preference
+    old_value = bool(manager.use_company_sms_branding)
+    manager.use_company_sms_branding = 1 if enabled else 0
+    db.commit()
+    
+    # Log the activity
+    from app.core.activity_logger import log_activity
+    log_activity(
+        db=db,
+        user=current_user,
+        action=f"{'enabled' if enabled else 'disabled'} company SMS branding for {manager.username}",
+        module="users",
+        target_id=manager.id,
+        details=f"SMS will now be sent as: {'Company (' + manager.company_name + ')' if enabled else 'SwapSync'}"
+    )
+    
+    return {
+        "success": True,
+        "manager_id": manager_id,
+        "manager_username": manager.username,
+        "company_name": manager.company_name,
+        "use_company_sms_branding": bool(manager.use_company_sms_branding),
+        "message": f"SMS branding {'enabled' if enabled else 'disabled'} for {manager.company_name or manager.username}",
+        "sms_sender": manager.company_name if enabled else "SwapSync"
+    }

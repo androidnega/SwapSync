@@ -86,8 +86,7 @@ class SMSService:
         message = f"Hi {customer_name},\n\n"
         message += f"Your repair with {company_name} is ready for collection!\n\n"
         message += f"Phone: {repair_description}\n"
-        message += f"Visit {company_name} to collect your device.\n\n"
-        message += "- SwapSync"
+        message += f"Visit {company_name} to collect your device."
         
         return self._send_sms(phone_number, message, company_name)
     
@@ -108,8 +107,7 @@ class SMSService:
         if invoice_number:
             message += f"Invoice: #{invoice_number}\n"
         
-        message += f"\nCollect from {company_name}.\n\n"
-        message += "- SwapSync"
+        message += f"\nCollect from {company_name}."
         
         return message
     
@@ -307,8 +305,7 @@ class SMSService:
         if amount_paid:
             message += f"Amount Paid: GH₵{amount_paid:.2f}\n"
         
-        message += f"\nThank you for choosing {company_name}!\n\n"
-        message += "- SwapSync"
+        message += f"\nThank you for choosing {company_name}!"
         
         return self._send_sms(phone_number, message, company_name)
     
@@ -330,8 +327,7 @@ class SMSService:
         if invoice_number:
             message += f"Invoice: #{invoice_number}\n"
         
-        message += f"\n{company_name} appreciates your business!\n\n"
-        message += "- SwapSync"
+        message += f"\n{company_name} appreciates your business!"
         
         return self._send_sms(phone_number, message, company_name)
     
@@ -417,7 +413,7 @@ def send_repair_status_update_sms(customer_name: str, phone_number: str, status:
 
 
 def send_swap_completion_sms(db, customer_name: str, phone_number: str, customer_id: int, phone_model: str, final_price: float, swap_id: int):
-    """Send swap completion SMS with SwapSync branding"""
+    """Send swap completion SMS"""
     try:
         from app.models.user import User
         
@@ -435,8 +431,7 @@ def send_swap_completion_sms(db, customer_name: str, phone_number: str, customer
         message += f"New Phone: {phone_model}\n"
         message += f"Balance Paid: ₵{final_price:.2f}\n"
         message += f"Swap ID: SWAP-{str(swap_id).zfill(4)}\n\n"
-        message += f"Thank you for choosing {company_name}!\n\n"
-        message += "Powered by SwapSync"
+        message += f"Thank you for choosing {company_name}!"
         
         # Send SMS
         result = service._send_sms(

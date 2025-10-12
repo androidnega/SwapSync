@@ -34,6 +34,7 @@ class User(Base):
     display_name = Column(String(255), nullable=True)  # Customizable display name
     profile_picture = Column(String, nullable=True)  # Base64 or URL
     company_name = Column(String, nullable=True)  # Company name for Managers
+    use_company_sms_branding = Column(Integer, default=0)  # 1=use company name in SMS, 0=use SwapSync
     hashed_password = Column(String, nullable=False)
     role = Column(SQLEnum(UserRole), default=UserRole.SHOP_KEEPER, nullable=False)
     parent_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Who created this user

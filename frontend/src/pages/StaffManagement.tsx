@@ -33,7 +33,7 @@ interface Activity {
 }
 
 interface Company {
-  manager: StaffMember & { phone_number?: string };
+  manager: StaffMember & { phone_number?: string; use_company_sms_branding?: boolean };
   staff: StaffMember[];
   staff_count: number;
   recent_activities: Activity[];
@@ -189,6 +189,25 @@ const StaffManagement: React.FC = () => {
       setNewPassword('');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to reset password');
+    }
+  };
+
+  const handleToggleSMSBranding = async (managerId: number, currentlyEnabled: boolean, companyName: string) => {
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await api.post(`/staff/admin/toggle-sms-branding/${managerId}?enabled=${!currentlyEnabled}`);
+      
+      setSuccess(`SMS branding ${!currentlyEnabled ? 'enabled' : 'disabled'} for ${companyName}. SMS will now be sent as: ${response.data.sms_sender}`);
+      
+      // Refresh companies view
+      await fetchCompanies();
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to toggle SMS branding');
     }
   };
 
@@ -810,6 +829,38 @@ const StaffManagement: React.FC = () => {
                           </div>
                           <div className="text-xs md:text-sm text-gray-600 md:mt-2">
                             {company.staff_count} staff member{company.staff_count !== 1 ? 's' : ''}
+                          </div>
+                          
+                          {/* SMS Branding Toggle */}
+                          <div className="md:mt-3 w-full md:w-auto">
+                            <div className="bg-white border border-gray-200 rounded-lg p-2 md:p-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="text-xs">
+                                  <div className="font-semibold text-gray-700">SMS Branding</div>
+                                  <div className="text-gray-500">
+                                    {company.manager.use_company_sms_branding ? company.manager.company_name : 'SwapSync'}
+                                  </div>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={company.manager.use_company_sms_branding || false}
+                                    onChange={() => handleToggleSMSBranding(
+                                      company.manager.id,
+                                      company.manager.use_company_sms_branding || false,
+                                      company.manager.company_name || 'Company'
+                                    )}
+                                    className="sr-only peer"
+                                  />
+                                  <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {company.manager.use_company_sms_branding 
+                                  ? '📱 Using company name' 
+                                  : '📱 Using SwapSync'}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>

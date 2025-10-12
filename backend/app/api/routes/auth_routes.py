@@ -97,34 +97,67 @@ def register_user(
         details=f"Created {target_role.value} account"
     )
     
-    # Send welcome SMS with credentials - SIMPLIFIED!
+    # Send welcome SMS with credentials - Using database SMS config!
     try:
-        from app.core.simple_sms import send_welcome_sms
+        from app.core.sms import get_sms_service
         
         if new_user.phone_number:
             company_name = new_user.company_name or current_user.company_name or "SwapSync"
+            sms_service = get_sms_service()
             
-            print(f"[WELCOME_SMS] 📱 Sending SMS to {new_user.username}")
-            print(f"[WELCOME_SMS]    Phone: {new_user.phone_number}")
-            print(f"[WELCOME_SMS]    Company: {company_name}")
+            print(f"\n{'='*60}")
+            print(f"[WELCOME_SMS] 📱 Sending welcome SMS")
+            print(f"{'='*60}")
+            print(f"New User: {new_user.username}")
+            print(f"Role: {new_user.role.value}")
+            print(f"Phone: {new_user.phone_number}")
+            print(f"Company: {company_name}")
+            print(f"SMS Service Enabled: {sms_service.enabled if sms_service else False}")
             
-            result = send_welcome_sms(
-                username=new_user.username,
-                password=user_data.password,
-                phone_number=new_user.phone_number,
-                role=new_user.role,
-                company_name=company_name
-            )
-            
-            if result.get('success'):
-                print(f"[WELCOME_SMS] ✅ SMS sent successfully!")
+            if sms_service and sms_service.enabled:
+                # Create welcome message
+                role_name = new_user.role.value.replace('_', ' ').upper()
+                message = f"Welcome to {company_name}!\n\n"
+                message += f"{role_name} ACCOUNT CREATED\n"
+                message += f"Username: {new_user.username}\n"
+                message += f"Password: {user_data.password}\n\n"
+                message += f"Login: https://swapsync.digitstec.store\n\n"
+                
+                # Role-specific instructions
+                if new_user.role.value in ['manager', 'ceo']:
+                    message += "As a Manager, you can create staff and manage operations."
+                elif new_user.role.value == 'shop_keeper':
+                    message += "As a Shop Keeper, you can process swaps, sales, and repairs."
+                elif new_user.role.value == 'repairer':
+                    message += "As a Repairer, you can manage repair jobs and track progress."
+                
+                result = sms_service.send_sms(
+                    phone_number=new_user.phone_number,
+                    message=message,
+                    company_name=company_name
+                )
+                
+                print(f"\n📊 SMS Result:")
+                print(f"   Success: {result.get('success')}")
+                print(f"   Provider: {result.get('provider', 'N/A')}")
+                if result.get('error'):
+                    print(f"   Error: {result.get('error')}")
+                print(f"{'='*60}\n")
+                
+                if result.get('success'):
+                    print(f"[WELCOME_SMS] ✅ SMS sent successfully!")
+                else:
+                    print(f"[WELCOME_SMS] ❌ SMS failed: {result.get('error')}")
             else:
-                print(f"[WELCOME_SMS] ❌ SMS failed: {result.get('error')}")
+                print(f"[WELCOME_SMS] ⚠️ SMS service not configured")
+                print(f"{'='*60}\n")
         else:
             print(f"[WELCOME_SMS] ⚠️ No phone number provided, skipping SMS")
             
     except Exception as e:
         print(f"[WELCOME_SMS] ❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
         # Don't fail user creation if SMS fails
     
     return new_user
