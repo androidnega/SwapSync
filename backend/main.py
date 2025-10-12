@@ -188,6 +188,20 @@ async def root():
     }
 
 
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    """Handle OPTIONS requests for CORS preflight"""
+    return JSONResponse(
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+            "Access-Control-Allow-Credentials": "true",
+        }
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
