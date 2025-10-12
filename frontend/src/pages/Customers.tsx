@@ -237,13 +237,49 @@ const Customers: React.FC = () => {
           )}
         </div>
         
-        {/* Manager Restriction Notice */}
+        {/* Role-Based Permissions Guide */}
+        {userRole === 'repairer' && (
+          <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4">
+            <p className="text-sm text-blue-900 font-semibold mb-2 flex items-center gap-2">
+              <FontAwesomeIcon icon={faUser} /> Repairer Permissions
+            </p>
+            <ul className="text-xs text-blue-800 space-y-1 list-disc ml-4">
+              <li><strong>Create:</strong> You can create new customers</li>
+              <li><strong>View:</strong> You can view all customers (your own + shopkeepers')</li>
+              <li><strong>Edit:</strong> You can edit ONLY customers you created (🔒 others are read-only)</li>
+              <li><strong>Delete:</strong> You cannot delete. Share deletion code with Manager when needed</li>
+              <li><strong>Deletion Code:</strong> Visible ONLY for customers you created</li>
+            </ul>
+          </div>
+        )}
+        
+        {userRole === 'shop_keeper' && (
+          <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4">
+            <p className="text-sm text-green-900 font-semibold mb-2 flex items-center gap-2">
+              <FontAwesomeIcon icon={faUser} /> ShopKeeper Permissions
+            </p>
+            <ul className="text-xs text-green-800 space-y-1 list-disc ml-4">
+              <li><strong>Create:</strong> You can create new customers</li>
+              <li><strong>View:</strong> You can view all customers (your own + repairers')</li>
+              <li><strong>Edit:</strong> You can edit ONLY customers you created (🔒 others are read-only)</li>
+              <li><strong>Delete:</strong> You cannot delete. Share deletion code with Manager when needed</li>
+              <li><strong>Deletion Code:</strong> Visible ONLY for customers you created</li>
+            </ul>
+          </div>
+        )}
+        
         {(userRole === 'manager' || userRole === 'ceo') && (
           <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-4">
-            <p className="text-sm text-yellow-900 font-semibold mb-1">🔒 Manager View</p>
-            <p className="text-xs text-yellow-800">
-              Managers can view all customers but cannot create or edit customers. You can delete customers by requesting deletion codes from the users who created them.
+            <p className="text-sm text-yellow-900 font-semibold mb-2 flex items-center gap-2">
+              <FontAwesomeIcon icon={faKey} /> Manager Permissions
             </p>
+            <ul className="text-xs text-yellow-800 space-y-1 list-disc ml-4">
+              <li><strong>Create:</strong> You cannot create customers</li>
+              <li><strong>View:</strong> You can view all customers (full details, no deletion codes)</li>
+              <li><strong>Edit:</strong> You cannot edit customers</li>
+              <li><strong>Delete:</strong> You can delete by requesting deletion code from the creator</li>
+              <li><strong>Deletion Code:</strong> Never visible - request from Repairer/ShopKeeper who created the customer</li>
+            </ul>
           </div>
         )}
 
@@ -498,7 +534,7 @@ const Customers: React.FC = () => {
         {showViewModal && selectedCustomer && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowViewModal(false)}>
             <div className="bg-white rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">Customer Details</h2>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded">
@@ -506,6 +542,27 @@ const Customers: React.FC = () => {
                   </span>
                   <FontAwesomeIcon icon={faEye} className="text-gray-400" />
                 </div>
+              </div>
+              
+              {/* Access Level Indicator */}
+              <div className="mb-4">
+                {selectedCustomer.is_editable ? (
+                  <div className="bg-green-50 border border-green-300 rounded-lg p-3 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faUser} className="text-green-600" />
+                    <div className="text-xs">
+                      <p className="font-semibold text-green-900">✓ Your Customer (Full Access)</p>
+                      <p className="text-green-700">You created this customer - deletion code visible below</p>
+                    </div>
+                  </div>
+                ) : selectedCustomer.created_by_username ? (
+                  <div className="bg-blue-50 border border-blue-300 rounded-lg p-3 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faLock} className="text-blue-600" />
+                    <div className="text-xs">
+                      <p className="font-semibold text-blue-900">🔒 Read-Only View</p>
+                      <p className="text-blue-700">Created by <strong>{selectedCustomer.created_by_username}</strong> ({selectedCustomer.created_by_role})</p>
+                    </div>
+                  </div>
+                ) : null}
               </div>
               
               <div className="space-y-4">
