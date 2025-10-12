@@ -7,7 +7,7 @@ from typing import List
 from datetime import datetime
 from app.core.database import get_db
 from app.core.auth import get_current_user
-from app.core.permissions import can_manage_swaps
+from app.core.permissions import can_manage_swaps, can_view_swaps
 from app.core.invoice_generator import create_swap_invoice
 from app.core.activity_logger import log_activity
 from app.core.sms import send_swap_completion_sms
@@ -181,8 +181,8 @@ def list_swaps(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get all swaps with pagination (Shop Keeper, CEO, Admin only)"""
-    if not can_manage_swaps(current_user):
+    """Get all swaps with pagination (Managers can VIEW, Shopkeepers can VIEW and CREATE)"""
+    if not can_view_swaps(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view swap transactions"
@@ -197,10 +197,10 @@ def get_pending_resales(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get all swaps with trade-in phones pending resale (Shop Keeper, CEO, Admin only)
+    Get all swaps with trade-in phones pending resale (Managers can view, Shopkeepers can manage)
     These are phones the shop received but hasn't sold yet
     """
-    if not can_manage_swaps(current_user):
+    if not can_view_swaps(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view swap transactions"

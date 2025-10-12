@@ -22,10 +22,21 @@ def check_roles(allowed_roles: List[UserRole], current_user: User):
 
 # Role-based access control helpers
 def can_manage_swaps(user: User) -> bool:
-    """Check if user can manage swaps (Shopkeeper ONLY - Managers can view but not create)"""
+    """Check if user can CREATE swaps (Shopkeeper ONLY - Managers can view but not create)"""
     return user.role in [
         UserRole.SHOP_KEEPER,  # Only shopkeepers can record swaps
         UserRole.ADMIN,  # Admin can manage all
+        UserRole.SUPER_ADMIN
+    ]
+
+
+def can_view_swaps(user: User) -> bool:
+    """Check if user can VIEW swaps (Managers can view, shopkeepers can view)"""
+    return user.role in [
+        UserRole.SHOP_KEEPER,
+        UserRole.MANAGER,
+        UserRole.CEO,
+        UserRole.ADMIN,
         UserRole.SUPER_ADMIN
     ]
 
