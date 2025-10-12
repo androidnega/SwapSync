@@ -161,6 +161,15 @@ def create_swap(
         # Determine condition from description or default
         incoming_condition = parts[1].strip() if len(parts) > 1 else "Used"
         
+        # Build specs JSON for incoming phone
+        specs = {}
+        if swap.given_phone_color:
+            specs['color'] = swap.given_phone_color
+        if swap.given_phone_storage:
+            specs['storage'] = swap.given_phone_storage
+        if swap.given_phone_ram:
+            specs['ram'] = swap.given_phone_ram
+        
         # Create phone record for incoming phone
         incoming_phone = Phone(
             brand=incoming_brand,
@@ -173,6 +182,7 @@ def create_swap(
             swapped_from_id=new_swap.id,
             created_by_user_id=current_user.id,
             current_owner_type="shop",
+            specs=specs if specs else None,  # Store specs
             created_at=datetime.utcnow()
         )
         

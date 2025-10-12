@@ -12,6 +12,9 @@ class SwapCreate(BaseModel):
     given_phone_description: str = Field(..., min_length=1, max_length=200)
     given_phone_value: float = Field(..., ge=0)
     given_phone_imei: Optional[str] = Field(None, max_length=50)  # IMEI for tracking
+    given_phone_color: Optional[str] = Field(None, max_length=50)
+    given_phone_storage: Optional[str] = Field(None, max_length=50)
+    given_phone_ram: Optional[str] = Field(None, max_length=50)
     new_phone_id: int = Field(..., gt=0)
     balance_paid: float = Field(..., ge=0)
     discount_amount: float = Field(default=0.0, ge=0)  # Discount applied

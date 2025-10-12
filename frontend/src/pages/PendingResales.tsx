@@ -327,35 +327,57 @@ const PendingResales: React.FC<PendingResalesProps> = ({ onUpdate }) => {
                   </div>
                 </div>
 
-                {/* Incoming Phone */}
+                {/* Incoming Phone (Trade-In) */}
                 {selectedResale.incoming_phone_id && (
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Incoming Phone</h3>
+                  <div className="p-4 bg-yellow-50 rounded-lg border-2 border-yellow-400">
+                    <h3 className="text-sm font-semibold text-yellow-900 mb-3 uppercase flex items-center gap-2">
+                      📲 Trade-In Phone Details
+                    </h3>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Brand:</span>
-                        <span className="text-sm font-medium text-gray-900">{selectedResale.incoming_phone_brand}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Model:</span>
-                        <span className="text-sm font-medium text-gray-900">{selectedResale.incoming_phone_model}</span>
+                        <span className="text-xs text-gray-600">Phone Description:</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {selectedResale.incoming_phone_brand} {selectedResale.incoming_phone_model}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-xs text-gray-600">Condition:</span>
                         <span className="text-sm text-gray-900">{selectedResale.incoming_phone_condition}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Value:</span>
-                        <span className="text-sm font-bold text-gray-900">₵{selectedResale.incoming_phone_value?.toFixed(2)}</span>
+                        <span className="text-xs text-gray-600">Trade-In Value (₵):</span>
+                        <span className="text-sm font-bold text-yellow-900">₵{selectedResale.incoming_phone_value?.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Status:</span>
-                        <span className="text-sm capitalize text-gray-900">{selectedResale.incoming_phone_status}</span>
+                      
+                      {/* Phone Specs Section */}
+                      <div className="pt-2 mt-2 border-t border-yellow-300">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Additional Details:</p>
+                        
+                        {/* Note: These come from the incoming phone's specs */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">IMEI:</span>
+                            <span className="text-gray-900 font-mono text-xs">
+                              {selectedResale.incoming_phone_id ? 'See phone ID ' + selectedResale.incoming_phone_id : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Status:</span>
+                            <span className="text-sm capitalize text-gray-900">{selectedResale.incoming_phone_status}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white bg-opacity-70 rounded p-2 mt-2">
+                          <p className="text-xs text-gray-700">
+                            💡 Full specs (Color, Storage, RAM) are stored with the incoming phone record (ID: {selectedResale.incoming_phone_id})
+                          </p>
+                        </div>
                       </div>
+                      
                       {selectedResale.incoming_phone_status === 'sold' && (
-                        <div className="flex justify-between">
+                        <div className="flex justify-between pt-2 border-t border-yellow-300">
                           <span className="text-xs text-gray-600">Resale Value:</span>
-                          <span className="text-sm font-bold text-gray-900">₵{selectedResale.resale_value.toFixed(2)}</span>
+                          <span className="text-sm font-bold text-green-700">₵{selectedResale.resale_value.toFixed(2)}</span>
                         </div>
                       )}
                     </div>
