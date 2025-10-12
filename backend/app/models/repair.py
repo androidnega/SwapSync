@@ -16,6 +16,7 @@ class Repair(Base):
     __tablename__ = "repairs"
 
     id = Column(Integer, primary_key=True, index=True)
+    unique_id = Column(String(20), unique=True, nullable=True, index=True)  # REP-0001, REP-0002, etc.
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
     customer_name = Column(String, nullable=True)  # For quick booking without customer record
     phone_id = Column(Integer, ForeignKey("phones.id"), nullable=True)  # Link to phone if in inventory
@@ -58,7 +59,16 @@ class Repair(Base):
         random_str = ''.join([str(random.randint(0, 9)) for _ in range(4)])
         self.tracking_code = f"REP-{date_str}-{random_str}"
         return self.tracking_code
+    
+    def generate_unique_id(self, db_session):
+        """Generate unique repair ID (REP-0001, REP-0002, etc.)"""
+        from sqlalchemy import func
+        
+        # Count existing repairs
+        count = db_session.query(func.count(Repair.id)).scalar() or 0
+        self.unique_id = f"REP-{str(count + 1).zfill(4)}"
+        return self.unique_id
 
     def __repr__(self):
-        return f"<Repair(id={self.id}, tracking={self.tracking_code}, status={self.status}, cost={self.cost})>"
+        return f"<Repair(id={self.id}, unique_id={self.unique_id or 'N/A'}, tracking={self.tracking_code}, status={self.status}, cost={self.cost})>"
 

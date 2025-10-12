@@ -27,6 +27,7 @@ class RepairUpdate(BaseModel):
 class RepairResponse(BaseModel):
     """Schema for repair response"""
     id: int
+    unique_id: Optional[str] = None  # REP-0001, REP-0002, etc.
     customer_id: int
     phone_id: Optional[int] = None
     phone_description: str

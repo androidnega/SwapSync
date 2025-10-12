@@ -113,7 +113,8 @@ def create_repair(
     db.add(new_repair)
     db.flush()
     
-    # Generate tracking code for easy customer reference
+    # Generate unique ID and tracking code
+    new_repair.generate_unique_id(db)
     new_repair.generate_tracking_code()
     db.commit()
     db.refresh(new_repair)
