@@ -248,7 +248,18 @@ const Repairs: React.FC = () => {
 
   const filteredRepairs = filterStatus === 'all'
     ? repairs
-    : repairs.filter(r => r.status.toLowerCase() === filterStatus.toLowerCase());
+    : repairs.filter(r => 
+        r.status.toLowerCase().replace(/\s+/g, '_') === filterStatus.toLowerCase()
+      );
+  
+  // Count repairs by status for tab badges
+  const repairCounts = {
+    all: repairs.length,
+    pending: repairs.filter(r => r.status.toLowerCase().replace(/\s+/g, '_') === 'pending').length,
+    in_progress: repairs.filter(r => r.status.toLowerCase().replace(/\s+/g, '_') === 'in_progress').length,
+    completed: repairs.filter(r => r.status.toLowerCase().replace(/\s+/g, '_') === 'completed').length,
+    delivered: repairs.filter(r => r.status.toLowerCase().replace(/\s+/g, '_') === 'delivered').length,
+  };
 
   if (loading) {
     return (
@@ -296,53 +307,76 @@ const Repairs: React.FC = () => {
       <div className="flex gap-2 border-b border-gray-200">
         <button
           onClick={() => setFilterStatus('all')}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium flex items-center gap-2 ${
             filterStatus === 'all'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           All Repairs
+          <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700">
+            {repairCounts.all}
+          </span>
         </button>
         <button
           onClick={() => setFilterStatus('pending')}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium flex items-center gap-2 ${
             filterStatus === 'pending'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           Pending
+          <span className={`px-2 py-0.5 text-xs rounded-full ${
+            repairCounts.pending > 0 ? 'bg-yellow-200 text-yellow-800' : 'bg-gray-200 text-gray-500'
+          }`}>
+            {repairCounts.pending}
+          </span>
         </button>
         <button
           onClick={() => setFilterStatus('in_progress')}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium flex items-center gap-2 ${
             filterStatus === 'in_progress'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           In Progress
+          <span className={`px-2 py-0.5 text-xs rounded-full ${
+            repairCounts.in_progress > 0 ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-500'
+          }`}>
+            {repairCounts.in_progress}
+          </span>
         </button>
         <button
           onClick={() => setFilterStatus('completed')}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium flex items-center gap-2 ${
             filterStatus === 'completed'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           Completed
+          <span className={`px-2 py-0.5 text-xs rounded-full ${
+            repairCounts.completed > 0 ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-500'
+          }`}>
+            {repairCounts.completed}
+          </span>
         </button>
         <button
           onClick={() => setFilterStatus('delivered')}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium flex items-center gap-2 ${
             filterStatus === 'delivered'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           Delivered
+          <span className={`px-2 py-0.5 text-xs rounded-full ${
+            repairCounts.delivered > 0 ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-500'
+          }`}>
+            {repairCounts.delivered}
+          </span>
         </button>
       </div>
 
@@ -374,8 +408,22 @@ const Repairs: React.FC = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredRepairs.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                  No repairs found. Click "New Repair" to add one!
+                <td colSpan={6} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center justify-center text-gray-500">
+                    <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <p className="text-lg font-medium mb-1">
+                      {filterStatus === 'all' 
+                        ? 'No repairs yet' 
+                        : `No ${filterStatus.replace('_', ' ')} repairs`}
+                    </p>
+                    <p className="text-sm">
+                      {filterStatus === 'all' 
+                        ? 'Create your first repair booking!' 
+                        : 'Try a different filter or create a new repair'}
+                    </p>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -448,8 +496,22 @@ const Repairs: React.FC = () => {
       {/* Mobile Card View - Shown on Mobile */}
       <div className="md:hidden space-y-4">
         {filteredRepairs.length === 0 ? (
-          <div className="bg-white rounded-xl shadow p-6 text-center text-gray-500">
-            No repairs found. Click "New Repair" to add one!
+          <div className="bg-white rounded-xl shadow p-8 text-center">
+            <div className="flex flex-col items-center justify-center text-gray-500">
+              <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p className="text-lg font-medium mb-1">
+                {filterStatus === 'all' 
+                  ? 'No repairs yet' 
+                  : `No ${filterStatus.replace('_', ' ')} repairs`}
+              </p>
+              <p className="text-sm">
+                {filterStatus === 'all' 
+                  ? 'Create your first repair booking!' 
+                  : 'Try a different filter or create a new repair'}
+              </p>
+            </div>
           </div>
         ) : (
           filteredRepairs.map((repair) => (
