@@ -387,9 +387,9 @@ const SMSBroadcast: React.FC = () => {
             SMS Branding Rules:
           </h4>
           <ul className="text-sm text-yellow-800 space-y-1 ml-6 list-disc">
-            <li>System messages (like this broadcast) always use "SwapSync" branding</li>
+            <li>System messages (like this broadcast) always use &quot;SwapSync&quot; branding</li>
             <li>Transaction SMS (swaps, sales, repairs) use company name if branding is enabled</li>
-            <li>Enable company branding in Staff Management > All Companies tab</li>
+            <li>Enable company branding in Staff Management &gt; All Companies tab</li>
             <li>Monthly wishes and holiday greetings automatically sent by system</li>
           </ul>
         </div>
