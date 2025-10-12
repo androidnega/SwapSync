@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../services/api';
+import { brandAPI } from '../services/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrash, faMobileAlt, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
@@ -28,8 +28,7 @@ const PhoneBrands: React.FC = () => {
 
   const fetchBrands = async () => {
     try {
-      console.log('🔍 Fetching brands from:', api.defaults.baseURL);
-      const response = await api.get('/brands');
+      const response = await brandAPI.getAll();
       setBrands(response.data);
       setLoading(false);
     } catch (error) {
@@ -50,14 +49,14 @@ const PhoneBrands: React.FC = () => {
     try {
       if (editingId) {
         // Update existing brand
-        await api.put(`/brands/${editingId}`, {
+        await brandAPI.update(editingId, {
           name: name.trim(),
           description: description.trim() || undefined
         });
         setMessage('✅ Brand updated successfully!');
       } else {
         // Create new brand
-        await api.post('/brands', {
+        await brandAPI.create({
           name: name.trim(),
           description: description.trim() || undefined
         });
@@ -90,7 +89,7 @@ const PhoneBrands: React.FC = () => {
     }
 
     try {
-      await api.delete(`/brands/${id}`);
+      await brandAPI.delete(id);
       setMessage('✅ Brand deleted successfully!');
       fetchBrands();
       setTimeout(() => setMessage(''), 3000);

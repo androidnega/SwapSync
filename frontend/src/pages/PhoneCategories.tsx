@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../services/api';
+import { categoryAPI } from '../services/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrash, faMobileAlt, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
@@ -27,8 +27,7 @@ const PhoneCategories: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      console.log('🔍 Fetching categories from:', api.defaults.baseURL);
-      const response = await api.get('/categories');
+      const response = await categoryAPI.getAll();
       setCategories(response.data);
       setLoading(false);
     } catch (error) {
@@ -49,14 +48,14 @@ const PhoneCategories: React.FC = () => {
     try {
       if (editingId) {
         // Update existing category
-        await api.put(`/categories/${editingId}`, {
+        await categoryAPI.update(editingId, {
           name: name.trim(),
           description: description.trim() || undefined
         });
         setMessage('✅ Category updated successfully!');
       } else {
         // Create new category
-        await api.post('/categories', {
+        await categoryAPI.create({
           name: name.trim(),
           description: description.trim() || undefined
         });
@@ -89,7 +88,7 @@ const PhoneCategories: React.FC = () => {
     }
 
     try {
-      await api.delete(`/categories/${id}`);
+      await categoryAPI.delete(id);
       setMessage('✅ Category deleted successfully!');
       fetchCategories();
       setTimeout(() => setMessage(''), 3000);
