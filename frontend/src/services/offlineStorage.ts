@@ -173,10 +173,24 @@ class OfflineStorageManager {
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([storeName], 'readonly');
       const store = transaction.objectStore(storeName);
-      const index = store.index('synced');
-      const request = index.getAll(false);
+      
+      // Use cursor instead of index.getAll() to avoid key validation issues
+      const request = store.openCursor();
+      const results: any[] = [];
 
-      request.onsuccess = () => resolve(request.result || []);
+      request.onsuccess = (event: any) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          const value = cursor.value;
+          if (value.synced === false) {
+            results.push(value);
+          }
+          cursor.continue();
+        } else {
+          resolve(results);
+        }
+      };
+      
       request.onerror = () => reject(request.error);
     });
   }

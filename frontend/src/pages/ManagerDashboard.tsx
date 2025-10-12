@@ -58,8 +58,9 @@ const ManagerDashboard: React.FC = () => {
     try {
       const token = getToken();
       const [pendingResponse, phonesResponse] = await Promise.all([
-        axios.get(`${API_URL}/swaps/pending-resales`, {
-          headers: { Authorization: `Bearer ${token}` }
+        axios.get(`${API_URL}/pending-resales/`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { status_filter: 'pending' }
         }),
         axios.get(`${API_URL}/phones/`, {
           headers: { Authorization: `Bearer ${token}` }
