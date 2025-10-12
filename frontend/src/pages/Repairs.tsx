@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../services/api';
-import axios from 'axios';
+import api, { API_URL, repairAPI } from '../services/api';
 import { getToken } from '../services/authService';
 
 interface Repair {
@@ -69,9 +68,7 @@ const Repairs: React.FC = () => {
 
   const fetchUserRole = async () => {
     try {
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      const response = await api.get('/auth/me');
       setUserRole(response.data.role);
     } catch (error) {
       console.error('Failed to fetch user role:', error);
@@ -80,9 +77,7 @@ const Repairs: React.FC = () => {
 
   const fetchRepairs = async () => {
     try {
-      const response = await axios.get(`${API_URL}/repairs/`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      const response = await api.get('/repairs/');
       setRepairs(response.data);
     } catch (error) {
       console.error('Failed to fetch repairs:', error);
@@ -93,9 +88,7 @@ const Repairs: React.FC = () => {
 
   const fetchCustomers = async () => {
     try {
-      const response = await axios.get(`${API_URL}/customers/`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      const response = await api.get('/customers/');
       setCustomers(response.data);
     } catch (error) {
       console.error('Failed to fetch customers:', error);
@@ -148,13 +141,15 @@ const Repairs: React.FC = () => {
       repairData.due_date = formData.due_date;
     }
 
+    console.log('Submitting repair data:', repairData);
+    
     try {
       if (editingId) {
-        const response = await axios.put(`${API_URL}/repairs/${editingId}`, repairData);
+        const response = await api.put(`/repairs/${editingId}`, repairData);
         console.log('Update response:', response.data);
         setMessage('✅ Repair updated successfully!');
       } else {
-        const response = await axios.post(`${API_URL}/repairs/`, repairData);
+        const response = await api.post('/repairs/', repairData);
         console.log('Create response:', response.data);
         setMessage('✅ Repair created successfully! SMS notification sent.');
       }
@@ -182,7 +177,7 @@ const Repairs: React.FC = () => {
 
   const handleStatusUpdate = async (id: number, newStatus: string) => {
     try {
-      await axios.put(`${API_URL}/repairs/${id}/status`, { status: newStatus });
+      await api.put(`/repairs/${id}/status`, { status: newStatus });
       setMessage(`✅ Status updated to ${newStatus}! SMS notification sent.`);
       fetchRepairs();
     } catch (error: any) {
@@ -210,7 +205,7 @@ const Repairs: React.FC = () => {
     if (!confirm('Are you sure you want to delete this repair?')) return;
 
     try {
-      await axios.delete(`${API_URL}/repairs/${id}`);
+      await api.delete(`/repairs/${id}`);
       setMessage('✅ Repair deleted successfully!');
       fetchRepairs();
     } catch (error: any) {
