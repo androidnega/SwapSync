@@ -160,7 +160,16 @@ async def request_otp(
     
     # Send SMS
     try:
-        company_name = user.company_name or "SwapSync"
+        from app.core.sms import get_sms_sender_name
+        
+        # Determine manager for branding
+        manager_id = None
+        if user.is_manager:
+            manager_id = user.id
+        elif user.parent_user_id:
+            manager_id = user.parent_user_id
+        
+        company_name = get_sms_sender_name(manager_id, "SwapSync")
         message = f"Your {company_name} login code is: {otp_code}\n\nValid for 5 minutes.\n\nDo not share this code with anyone."
         
         print(f"\n{'='*60}")

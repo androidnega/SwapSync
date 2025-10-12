@@ -31,27 +31,12 @@ def send_repair_completion_sms_background(
 ):
     """Background task to send repair completion SMS with dynamic branding"""
     try:
-        from app.core.database import SessionLocal
+        from app.core.sms import get_sms_sender_name
         
-        # Determine SMS sender based on manager's branding preference
-        db = SessionLocal()
-        sms_sender = company_name  # Default
+        # Determine SMS sender using helper function
+        sms_sender = get_sms_sender_name(manager_id, company_name)
         
-        if manager_id:
-            manager = db.query(User).filter(User.id == manager_id).first()
-            if manager and hasattr(manager, 'use_company_sms_branding'):
-                if manager.use_company_sms_branding == 1 and manager.company_name:
-                    sms_sender = manager.company_name
-                    print(f"📱 Using company branding: {manager.company_name}")
-                else:
-                    sms_sender = "SwapSync"
-                    print(f"📱 Using SwapSync branding (company toggle off)")
-            else:
-                sms_sender = "SwapSync"
-        else:
-            sms_sender = "SwapSync"
-        
-        db.close()
+        print(f"📱 Repair completion SMS - Sender: {sms_sender} (Manager ID: {manager_id})")
         
         sms_service = get_sms_service()
         sms_result = sms_service.send_repair_completion_sms(

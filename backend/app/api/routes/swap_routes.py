@@ -26,9 +26,10 @@ def send_swap_sms_background(
     customer_id: int,
     phone_model: str,
     final_price: float,
-    swap_id: int
+    swap_id: int,
+    manager_id: int = None
 ):
-    """Background task to send swap completion SMS"""
+    """Background task to send swap completion SMS with dynamic branding"""
     try:
         from app.core.database import SessionLocal
         db = SessionLocal()
@@ -40,7 +41,8 @@ def send_swap_sms_background(
                 customer_id=customer_id,
                 phone_model=phone_model,
                 final_price=final_price,
-                swap_id=swap_id
+                swap_id=swap_id,
+                manager_id=manager_id
             )
         finally:
             db.close()
@@ -159,6 +161,13 @@ def create_swap(
     db.commit()
     db.refresh(new_swap)
     
+    # Determine manager for SMS branding
+    manager_id = None
+    if current_user.parent_user_id:
+        manager_id = current_user.parent_user_id
+    elif current_user.is_manager:
+        manager_id = current_user.id
+    
     # Schedule SMS notification in background (non-blocking)
     phone_model = f"{new_phone.brand} {new_phone.model}"
     background_tasks.add_task(
@@ -168,9 +177,11 @@ def create_swap(
         customer_id=customer.id,
         phone_model=phone_model,
         final_price=final_price,
-        swap_id=new_swap.id
+        swap_id=new_swap.id,
+        manager_id=manager_id
     )
     
+    print(f"✅ Swap created - SMS scheduled with manager_id: {manager_id}")
     return new_swap
 
 

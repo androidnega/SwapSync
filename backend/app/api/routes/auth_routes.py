@@ -99,10 +99,19 @@ def register_user(
     
     # Send welcome SMS with credentials - Using database SMS config!
     try:
-        from app.core.sms import get_sms_service
+        from app.core.sms import get_sms_service, get_sms_sender_name
         
         if new_user.phone_number:
-            company_name = new_user.company_name or current_user.company_name or "SwapSync"
+            # Determine sender based on current user (creator)
+            manager_id = None
+            if current_user.is_manager:
+                manager_id = current_user.id
+            elif current_user.parent_user_id:
+                # If current user is staff, use their manager
+                manager_id = current_user.parent_user_id
+            
+            # Get dynamic sender name
+            company_name = get_sms_sender_name(manager_id, "SwapSync")
             sms_service = get_sms_service()
             
             print(f"\n{'='*60}")

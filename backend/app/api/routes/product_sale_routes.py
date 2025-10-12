@@ -52,8 +52,7 @@ def send_product_sale_sms_background(
             message += f"Discount: -GHS{discount_amount:.2f}\n"
         
         message += f"Total: GHS{total_amount:.2f}\n\n"
-        message += f"{company_name} appreciates your business!\n\n"
-        message += "Powered by SwapSync"
+        message += f"{company_name} appreciates your business!"
         
         # Send SMS using the internal method
         result = sms_service._send_sms(
@@ -174,16 +173,16 @@ def create_product_sale(
     db.commit()
     db.refresh(db_sale)
     
-    # Get company name from the shopkeeper's manager
-    company_name = "SwapSync"  # Default fallback
+    # Get company name using dynamic branding helper
+    from app.core.sms import get_sms_sender_name
+    
+    manager_id = None
     if current_user.parent_user_id:
-        # Shopkeeper - get manager's company name
-        manager = db.query(User).filter(User.id == current_user.parent_user_id).first()
-        if manager and manager.company_name:
-            company_name = manager.company_name
-    elif current_user.is_manager and current_user.company_name:
-        # Manager recording sale directly
-        company_name = current_user.company_name
+        manager_id = current_user.parent_user_id
+    elif current_user.is_manager:
+        manager_id = current_user.id
+    
+    company_name = get_sms_sender_name(manager_id, "SwapSync")
     
     # Get customer name
     customer_name = customer.full_name if customer else "Customer"

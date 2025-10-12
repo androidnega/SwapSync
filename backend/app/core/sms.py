@@ -399,33 +399,60 @@ def configure_sms(
         logger.warning("⚠️ SMS service initialized but no providers configured")
 
 
+def get_sms_sender_name(manager_id: int = None, default_company: str = "SwapSync") -> str:
+    """
+    Determine SMS sender name based on manager's branding settings
+    Returns manager's company name if branding enabled, else "SwapSync"
+    """
+    if not manager_id:
+        logger.info(f"⚠️ No manager_id provided, using: {default_company}")
+        return default_company
+    
+    try:
+        from app.models.user import User
+        from app.core.database import SessionLocal
+        db = SessionLocal()
+        try:
+            manager = db.query(User).filter(User.id == manager_id).first()
+            if not manager:
+                logger.warning(f"⚠️ Manager ID {manager_id} not found, using: {default_company}")
+                return default_company
+            
+            logger.info(f"📋 Manager: {manager.username} (ID: {manager.id})")
+            logger.info(f"   Company: {manager.company_name or 'Not set'}")
+            logger.info(f"   Branding: {manager.use_company_sms_branding}")
+            
+            # Check if branding is enabled (INTEGER: 1 = enabled, 0 or NULL = disabled)
+            branding_enabled = (
+                hasattr(manager, 'use_company_sms_branding') and 
+                manager.use_company_sms_branding == 1
+            )
+            
+            if branding_enabled and manager.company_name:
+                logger.info(f"✅ Using company branding: {manager.company_name}")
+                return manager.company_name
+            else:
+                logger.info(f"✅ Branding disabled or no company name, using: {default_company}")
+                return default_company
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning(f"⚠️ Error determining branding, using default: {e}")
+        return default_company
+
+
 # Legacy function wrappers for backward compatibility
 def send_repair_created_sms(customer_name: str, phone_number: str, repair_id: int, phone_description: str, manager_id: int = None, company_name: str = "SwapSync"):
     """Send repair booking confirmation SMS to customer with dynamic branding"""
     try:
         logger.info(f"📱 Sending repair booking SMS to {customer_name} ({phone_number})")
+        logger.info(f"   Manager ID: {manager_id}, Default Company: {company_name}")
         
         # Get SMS service
         service = get_sms_service()
         
-        # Determine sender name based on manager's branding settings
-        sms_sender = "SwapSync"  # Default
-        if manager_id:
-            try:
-                from app.models.user import User
-                from app.core.database import SessionLocal
-                db = SessionLocal()
-                try:
-                    manager = db.query(User).filter(User.id == manager_id).first()
-                    if manager and hasattr(manager, 'use_company_sms_branding') and manager.use_company_sms_branding:
-                        sms_sender = manager.company_name or company_name or "SwapSync"
-                        logger.info(f"✅ Using company branding: {sms_sender}")
-                    else:
-                        logger.info(f"✅ Company branding disabled, using: SwapSync")
-                finally:
-                    db.close()
-            except Exception as e:
-                logger.warning(f"⚠️ Could not determine branding, using default: {e}")
+        # Determine sender name using helper function
+        sms_sender = get_sms_sender_name(manager_id, company_name)
         
         # Build message
         message = f"Hi {customer_name}, your phone repair booking for {phone_description} (ID: {repair_id}) has been confirmed. We'll keep you updated on the progress."
@@ -449,28 +476,13 @@ def send_repair_status_update_sms(customer_name: str, phone_number: str, status:
     """Send repair status update SMS to customer with dynamic branding"""
     try:
         logger.info(f"📱 Sending repair status update SMS to {customer_name}: Status={status}")
+        logger.info(f"   Manager ID: {manager_id}, Default Company: {company_name}")
         
         # Get SMS service
         service = get_sms_service()
         
-        # Determine sender name based on manager's branding settings
-        sms_sender = "SwapSync"  # Default
-        if manager_id:
-            try:
-                from app.models.user import User
-                from app.core.database import SessionLocal
-                db = SessionLocal()
-                try:
-                    manager = db.query(User).filter(User.id == manager_id).first()
-                    if manager and hasattr(manager, 'use_company_sms_branding') and manager.use_company_sms_branding:
-                        sms_sender = manager.company_name or company_name or "SwapSync"
-                        logger.info(f"✅ Using company branding: {sms_sender}")
-                    else:
-                        logger.info(f"✅ Company branding disabled, using: SwapSync")
-                finally:
-                    db.close()
-            except Exception as e:
-                logger.warning(f"⚠️ Could not determine branding, using default: {e}")
+        # Determine sender name using helper function
+        sms_sender = get_sms_sender_name(manager_id, company_name)
         
         # Build status-specific message
         status_messages = {
@@ -497,21 +509,20 @@ def send_repair_status_update_sms(customer_name: str, phone_number: str, status:
         return {"success": False, "error": str(e)}
 
 
-def send_swap_completion_sms(db, customer_name: str, phone_number: str, customer_id: int, phone_model: str, final_price: float, swap_id: int):
-    """Send swap completion SMS"""
+def send_swap_completion_sms(db, customer_name: str, phone_number: str, customer_id: int, phone_model: str, final_price: float, swap_id: int, manager_id: int = None):
+    """Send swap completion SMS with dynamic branding"""
     try:
-        from app.models.user import User
-        
         # Get SMS service
         service = get_sms_service()
         
-        # Get company name from the user's manager/company
-        # For now, default to generic company name
-        company_name = "Your Shop"
+        # Determine sender name using helper function
+        company_name = get_sms_sender_name(manager_id, "SwapSync")
+        
+        logger.info(f"📱 Sending swap completion SMS to {customer_name} from {company_name}")
         
         # Build message
         message = f"Hi {customer_name},\n\n"
-        message += f"Your phone swap with {company_name} is complete!\n\n"
+        message += f"Your phone swap is complete!\n\n"
         message += f"📱 Swap Receipt\n"
         message += f"New Phone: {phone_model}\n"
         message += f"Balance Paid: ₵{final_price:.2f}\n"
@@ -519,13 +530,13 @@ def send_swap_completion_sms(db, customer_name: str, phone_number: str, customer
         message += f"Thank you for choosing {company_name}!"
         
         # Send SMS
-        result = service._send_sms(
+        result = service.send_sms(
             phone_number=phone_number,
             message=message,
             company_name=company_name
         )
         
-        logger.info(f"📱 Swap SMS sent to {customer_name}: {result.get('status', 'unknown')}")
+        logger.info(f"✅ Swap SMS sent to {customer_name} from {company_name}: {result.get('status', 'success')}")
         return result
     except Exception as e:
         logger.error(f"❌ Failed to send swap SMS: {e}")
