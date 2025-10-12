@@ -48,6 +48,7 @@ const SwapManager = () => {
   const [showPhoneDropdown, setShowPhoneDropdown] = useState(false);
   const [companyName, setCompanyName] = useState<string>('SwapSync Shop');
   const [userRole, setUserRole] = useState<string>('');
+  const [totalProfit, setTotalProfit] = useState<number>(0);
   
   const [form, setForm] = useState({
     customer_id: '',
@@ -127,6 +128,18 @@ const SwapManager = () => {
       setCustomers(customersRes.data);
       setPhones(phonesRes.data);
       setRecentSwaps(swapsRes.data);
+      
+      // Fetch profit for managers
+      if (userRole === 'manager' || userRole === 'ceo') {
+        try {
+          const profitRes = await axios.get(`${API_URL}/pending-resales/statistics`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
+          });
+          setTotalProfit(profitRes.data.net_profit || 0);
+        } catch (error) {
+          console.error('Failed to fetch profit:', error);
+        }
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
     }
@@ -239,7 +252,7 @@ const SwapManager = () => {
         </div>
 
         {/* Stats Cards - At Top */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className={`grid grid-cols-2 ${isManager ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-3 sm:gap-4`}>
           <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 md:p-5 border-l-4 border-green-500">
             <p className="text-xs font-medium text-gray-600 uppercase mb-1">Available Phones</p>
             <p className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600">{availablePhones.length}</p>
@@ -255,6 +268,15 @@ const SwapManager = () => {
             <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">{customers.length}</p>
             <p className="text-xs text-gray-500 mt-1">Registered</p>
           </div>
+          {isManager && (
+            <div className={`bg-white rounded-xl shadow-sm p-3 sm:p-4 md:p-5 border-l-4 ${totalProfit >= 0 ? 'border-green-500' : 'border-red-500'}`}>
+              <p className="text-xs font-medium text-gray-600 uppercase mb-1">💰 Swap Profit</p>
+              <p className={`text-xl sm:text-2xl md:text-3xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                ₵{totalProfit.toFixed(2)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">From completed swaps</p>
+            </div>
+          )}
         </div>
 
         {/* Manager Restriction Notice */}

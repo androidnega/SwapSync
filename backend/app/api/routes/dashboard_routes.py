@@ -13,7 +13,8 @@ from app.models.swap import Swap, ResaleStatus
 from app.models.sale import Sale
 from app.models.repair import Repair
 from app.models.customer import Customer
-from app.models.phone import Phone
+from app.models.phone import Phone, PhoneStatus
+from app.models.pending_resale import PendingResale, PhoneSaleStatus
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
@@ -98,9 +99,10 @@ def get_dashboard_cards(
             "visible_to": ["shop_keeper", "ceo"]
         })
         
-        # Pending Resales Card
-        pending_resales = db.query(func.count(Swap.id)).filter(
-            Swap.resale_status == ResaleStatus.PENDING
+        # Pending Resales Card - Use PendingResale table
+        pending_resales = db.query(func.count(PendingResale.id)).filter(
+            PendingResale.incoming_phone_id.isnot(None),
+            PendingResale.incoming_phone_status != PhoneSaleStatus.SOLD
         ).scalar()
         
         cards.append({
@@ -112,9 +114,9 @@ def get_dashboard_cards(
             "visible_to": ["shop_keeper", "ceo"]
         })
         
-        # Completed Swaps Card
-        completed_swaps = db.query(func.count(Swap.id)).filter(
-            Swap.resale_status == ResaleStatus.SOLD
+        # Completed Swaps Card - Use PendingResale table
+        completed_swaps = db.query(func.count(PendingResale.id)).filter(
+            PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD
         ).scalar()
         
         cards.append({
@@ -142,9 +144,10 @@ def get_dashboard_cards(
             "visible_to": ["shop_keeper", "ceo"]
         })
         
-        # Available Phones
+        # Available Phones - Exclude trade-ins waiting for resale
         available_phones = db.query(func.count(Phone.id)).filter(
-            Phone.is_available == True
+            Phone.is_available == True,
+            Phone.status != PhoneStatus.SWAPPED  # Exclude trade-ins
         ).scalar()
         
         cards.append({
@@ -196,11 +199,11 @@ def get_dashboard_cards(
             "visible_to": ["repairer"]
         })
     
-    # CEO ONLY - Profit/Stats cards
-    if current_user.role == UserRole.CEO:
-        # Total Profit from Swaps
-        total_profit = db.query(func.sum(Swap.profit_or_loss)).filter(
-            Swap.resale_status == ResaleStatus.SOLD
+    # CEO & MANAGER - Profit/Stats cards
+    if current_user.role in [UserRole.CEO, UserRole.MANAGER]:
+        # Total Profit from Swaps - Use PendingResale table
+        total_profit = db.query(func.sum(PendingResale.profit_amount)).filter(
+            PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD
         ).scalar() or 0.0
         
         cards.append({
@@ -209,7 +212,7 @@ def get_dashboard_cards(
             "value": f"₵{total_profit:.2f}",
             "icon": "faMoneyBillWave",
             "color": "green" if total_profit >= 0 else "red",
-            "visible_to": ["ceo"]
+            "visible_to": ["ceo", "manager"]
         })
         
         # Total Sales Revenue

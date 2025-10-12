@@ -60,11 +60,27 @@ const CompletedSwaps = () => {
   const fetchSwaps = async () => {
     try {
       const token = getToken();
-      const response = await axios.get(`${API_URL}/swaps/`, {
+      // Fetch from pending-resales endpoint for accurate status
+      const response = await axios.get(`${API_URL}/pending-resales/`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { limit: 500 }
+        params: { status_filter: 'all' }  // Get all to calculate stats
       });
-      setSwaps(response.data);
+      
+      // Map pending resales to swap-like format
+      const mappedSwaps = response.data.map((pr: any) => ({
+        id: pr.swap_id || pr.id,
+        given_phone_description: `${pr.incoming_phone_brand || ''} ${pr.incoming_phone_model || ''}`.trim(),
+        given_phone_value: pr.incoming_phone_value || 0,
+        given_phone_imei: null,
+        final_price: pr.final_price,
+        resale_value: pr.resale_value || 0,
+        profit_or_loss: pr.profit_amount || 0,
+        invoice_number: pr.unique_id,
+        created_at: pr.transaction_date,
+        resale_status: pr.incoming_phone_status === 'sold' ? 'sold' : 'pending',
+      }));
+      
+      setSwaps(mappedSwaps);
     } catch (error) {
       console.error('Failed to fetch swaps:', error);
     } finally {
@@ -95,10 +111,10 @@ const CompletedSwaps = () => {
   });
 
   const totalProfit = swaps
-    .filter(s => s.resale_status !== 'pending')
+    .filter(s => s.resale_status === 'sold')
     .reduce((sum, s) => sum + s.profit_or_loss, 0);
 
-  const completedCount = swaps.filter(s => s.resale_status !== 'pending').length;
+  const completedCount = swaps.filter(s => s.resale_status === 'sold').length;
   const pendingCount = swaps.filter(s => s.resale_status === 'pending').length;
 
   return (
