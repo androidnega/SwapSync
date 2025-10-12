@@ -149,7 +149,7 @@ const SMSBroadcast: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <Breadcrumb customItems={[{ label: 'Dashboard', path: '/' }, { label: 'SMS Broadcast' }]} />
       
-      <div className="px-4 md:px-6 py-6 max-w-7xl mx-auto">
+      <div className="px-4 md:px-6 py-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">

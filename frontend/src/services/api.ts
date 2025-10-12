@@ -1,73 +1,24 @@
 /**
- * API Service Layer - V4.0 EMERGENCY CACHE BUST
+ * API Service Layer
  * Handles all backend API calls
  */
 import axios from 'axios';
 
-// EMERGENCY: Force immediate cache bust
-console.log('🚨 EMERGENCY CACHE BUST v4.1 - FORCE VERCEL DEPLOY');
-console.log('🚨 VERIFICATION: This is the latest code - v4.1');
-
-// API Base URL Configuration - ALWAYS HTTPS in production
+// API Base URL Configuration
 const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_BASE_URL = isDevelopment 
   ? 'http://localhost:8000/api'
   : 'https://api.digitstec.store/api';
-
-// EMERGENCY DEBUG - V4.0 FORCE DEPLOY
-console.log('🚨 EMERGENCY API Configuration (v4.0 - FORCE DEPLOY):', {
-  hostname: window.location.hostname,
-  isDevelopment,
-  apiUrl: API_BASE_URL,
-  timestamp: new Date().toISOString(),
-  protocol: window.location.protocol,
-  buildVersion: '4.0-EMERGENCY-FORCE-DEPLOY',
-  emergencyId: 'FORCE-' + Date.now(),
-  forceDeploy: true
-});
-
-// EMERGENCY: Force immediate HTTPS validation
-console.log('🚨 EMERGENCY: Checking API URL:', API_BASE_URL);
-console.log('🚨 EMERGENCY: Is HTTPS?', API_BASE_URL.startsWith('https://'));
-
-// Force HTTPS in production - double check
-if (!isDevelopment && API_BASE_URL.startsWith('http://')) {
-  console.error('🚨 CRITICAL: Using HTTP in production! This should never happen!');
-  throw new Error('HTTP detected in production - security violation');
-}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  // Force HTTPS and prevent caching issues
   timeout: 10000,
-  // Force HTTPS protocol
-  httpsAgent: undefined,
-  // Prevent protocol downgrade
-  maxRedirects: 0,
 });
 
-// Override axios defaults to force HTTPS
-api.defaults.baseURL = API_BASE_URL;
-api.defaults.timeout = 10000;
-
-// Add request interceptor to force HTTPS
-api.interceptors.request.use((config) => {
-  // Force HTTPS in production
-  if (config.url && config.url.startsWith('http://api.digitstec.store')) {
-    config.url = config.url.replace('http://', 'https://');
-    console.log('🔧 FORCED HTTPS:', config.url);
-  }
-  if (config.baseURL && config.baseURL.startsWith('http://api.digitstec.store')) {
-    config.baseURL = config.baseURL.replace('http://', 'https://');
-    console.log('🔧 FORCED HTTPS baseURL:', config.baseURL);
-  }
-  return config;
-});
-
-// Add auth token to all requests (second interceptor)
+// Add auth token to all requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
