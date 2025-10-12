@@ -69,8 +69,40 @@ def can_manage_repairs(user: User) -> bool:
     ]
 
 
+def can_create_customers(user: User) -> bool:
+    """Check if user can CREATE customers (Repairer YES, ShopKeeper YES, Manager NO)"""
+    return user.role in [
+        UserRole.SHOP_KEEPER,
+        UserRole.REPAIRER,
+        UserRole.ADMIN,  # Admins can do everything
+        UserRole.SUPER_ADMIN
+    ]
+
+
+def can_view_customers(user: User) -> bool:
+    """Check if user can VIEW customers (Everyone can view)"""
+    return user.role in [
+        UserRole.SHOP_KEEPER,
+        UserRole.REPAIRER,
+        UserRole.MANAGER,
+        UserRole.CEO, 
+        UserRole.ADMIN, 
+        UserRole.SUPER_ADMIN
+    ]
+
+
+def can_delete_customers(user: User) -> bool:
+    """Check if user can DELETE customers (Manager only with deletion code)"""
+    return user.role in [
+        UserRole.MANAGER,
+        UserRole.CEO,
+        UserRole.ADMIN,  # Admins can delete without code
+        UserRole.SUPER_ADMIN
+    ]
+
+
 def can_manage_customers(user: User) -> bool:
-    """Check if user can manage customers (Repairers can create and view, but limited delete)"""
+    """Check if user can manage customers (Legacy - use specific functions above)"""
     return user.role in [
         UserRole.SHOP_KEEPER,
         UserRole.REPAIRER,  # Repairers can now access customers
