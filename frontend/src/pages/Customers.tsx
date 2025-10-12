@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { getToken } from '../services/authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faPhone, faEnvelope, faCalendar, faKey, faEye, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faPhone, faEnvelope, faCalendar, faKey, faEye, faPlus, faSearch, faEdit, faTrash, faLock } from '@fortawesome/free-solid-svg-icons';
 
 import { API_URL } from '../services/api';
 
@@ -13,6 +13,10 @@ interface Customer {
   phone_number: string;
   email?: string;
   created_at: string;
+  created_by_user_id?: number;
+  created_by_username?: string;
+  created_by_role?: string;
+  is_editable: boolean;  // Can current user edit this customer?
   deletion_code?: string;
   code_generated_at?: string;
 }
@@ -46,53 +50,17 @@ const Customers: React.FC = () => {
 
   const fetchUserRole = async () => {
     try {
-      const token = getToken();
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/auth/me');
       setUserRole(response.data.role);
     } catch (error) {
       console.error('Failed to fetch user role:', error);
     }
   };
 
-  const generateDeletionCode = (customerId: number): {code: string, timestamp: number} => {
-    const existing = deletionCodes.get(customerId);
-    const now = Date.now();
-    
-    // If code exists and is less than 5 minutes old, reuse it
-    if (existing && (now - existing.timestamp < 5 * 60 * 1000)) {
-      return existing;
-    }
-    
-    // Generate simple code based only on customer ID (no timestamp in code itself)
-    const code = `DEL${String(customerId).padStart(6, '0')}`;
-    const newCode = { code, timestamp: now };
-    
-    // Store in map
-    const newMap = new Map(deletionCodes);
-    newMap.set(customerId, newCode);
-    setDeletionCodes(newMap);
-    
-    return newCode;
-  };
-
   const fetchCustomers = async () => {
     try {
-      const token = getToken();
-      const response = await axios.get(`${API_URL}/customers/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      // Add deletion codes to customers
-      const customersWithCodes = response.data.map((customer: Customer) => {
-        const codeData = generateDeletionCode(customer.id);
-        return {
-          ...customer,
-          deletion_code: codeData.code,
-          code_generated_at: new Date(codeData.timestamp).toISOString()
-        };
-      });
-      setCustomers(customersWithCodes);
+      const response = await api.get('/customers/');
+      setCustomers(response.data);
     } catch (error) {
       console.error('Failed to fetch customers:', error);
     } finally {
@@ -111,16 +79,11 @@ const Customers: React.FC = () => {
     };
 
     try {
-      const token = getToken();
       if (editingId) {
-        await axios.put(`${API_URL}/customers/${editingId}`, customerData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.put(`/customers/${editingId}`, customerData);
         setMessage('✅ Customer updated successfully!');
       } else {
-        await axios.post(`${API_URL}/customers/`, customerData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.post('/customers/', customerData);
         setMessage('✅ Customer created successfully!');
       }
       
@@ -181,38 +144,16 @@ const Customers: React.FC = () => {
   const handleDelete = async () => {
     if (!selectedCustomer) return;
 
-    // Get the current valid code from the map (with timer)
-    const codeData = deletionCodes.get(selectedCustomer.id);
+    const enteredCode = deletionCode.trim();
     
-    if (!codeData) {
-      setMessage('❌ No deletion code found! Please view customer details first.');
-      return;
-    }
-    
-    // Check if code has expired (5 minutes)
-    const ageInMs = Date.now() - codeData.timestamp;
-    if (ageInMs > 5 * 60 * 1000) {
-      setMessage('❌ Deletion code has expired! Please view customer details to get a new code.');
-      return;
-    }
-    
-    const expectedCode = codeData.code;
-    const enteredCode = deletionCode.trim().toUpperCase();
-    const expectedCodeUpper = expectedCode.toUpperCase();
-    
-    console.log('Entered code:', enteredCode);
-    console.log('Expected code:', expectedCodeUpper);
-    console.log('Code age (seconds):', Math.floor(ageInMs / 1000));
-    
-    if (enteredCode !== expectedCodeUpper) {
-      setMessage(`❌ Invalid deletion code! Expected: ${expectedCode}`);
+    if (!enteredCode) {
+      setMessage('❌ Please enter the deletion code from the customer creator.');
       return;
     }
 
     try {
-      const token = getToken();
-      await axios.delete(`${API_URL}/customers/${selectedCustomer.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      await api.delete(`/customers/${selectedCustomer.id}`, {
+        params: { deletion_code: enteredCode }
       });
       setMessage('✅ Customer deleted successfully!');
       setShowDeleteModal(false);
@@ -220,7 +161,9 @@ const Customers: React.FC = () => {
       setDeletionCode('');
       fetchCustomers();
     } catch (error: any) {
-      setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
+      console.error('Delete error:', error);
+      const errorDetail = error.response?.data?.detail || error.message;
+      setMessage(`❌ ${errorDetail}`);
     }
   };
 
@@ -282,14 +225,27 @@ const Customers: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Customers</h1>
             <p className="text-sm text-gray-600 mt-1">Manage your customer database</p>
           </div>
-        <button
-          onClick={openNewModal}
-            className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
-        >
-            <FontAwesomeIcon icon={faPlus} />
-            <span>Add Customer</span>
-        </button>
-      </div>
+          {/* Add Customer Button - Only for Repairer and ShopKeeper */}
+          {(userRole === 'repairer' || userRole === 'shop_keeper') && (
+            <button
+              onClick={openNewModal}
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+            >
+              <FontAwesomeIcon icon={faPlus} />
+              <span>Add Customer</span>
+            </button>
+          )}
+        </div>
+        
+        {/* Manager Restriction Notice */}
+        {(userRole === 'manager' || userRole === 'ceo') && (
+          <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-4">
+            <p className="text-sm text-yellow-900 font-semibold mb-1">🔒 Manager View</p>
+            <p className="text-xs text-yellow-800">
+              Managers can view all customers but cannot create or edit customers. You can delete customers by requesting deletion codes from the users who created them.
+            </p>
+          </div>
+        )}
 
       {message && (
           <div className={`p-4 rounded-lg ${message.includes('✅') ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
@@ -364,34 +320,43 @@ const Customers: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{customer.phone_number}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{customer.email || '—'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(customer.created_at)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                        <button
-                          onClick={() => handleView(customer)}
-                          className="text-green-600 hover:text-green-900 transition-colors"
-                        >
-                          View
-                        </button>
-                        {userRole === 'shop_keeper' && (
-                          <span className="text-gray-400" title="Shop keepers cannot edit customers">
-                            Edit
-                          </span>
-                        )}
-                        {(userRole === 'manager' || userRole === 'ceo' || userRole === 'admin') && (
-                    <button
-                      onClick={() => handleEdit(customer)}
-                            className="text-blue-600 hover:text-blue-900 transition-colors"
-                    >
-                      Edit
-                    </button>
-                        )}
-                        {(userRole === 'manager' || userRole === 'ceo') && (
-                    <button
-                            onClick={() => handleDeleteRequest(customer)}
-                            className="text-red-600 hover:text-red-900 transition-colors"
-                    >
-                      Delete
-                    </button>
-                        )}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center gap-3">
+                          {/* View Button - Everyone can view */}
+                          <button
+                            onClick={() => handleView(customer)}
+                            className="text-green-600 hover:text-green-900 transition-colors"
+                            title="View customer details"
+                          >
+                            <FontAwesomeIcon icon={faEye} />
+                          </button>
+                          
+                          {/* Edit Button - Only creator can edit (or admin) */}
+                          {customer.is_editable ? (
+                            <button
+                              onClick={() => handleEdit(customer)}
+                              className="text-blue-600 hover:text-blue-900 transition-colors"
+                              title="Edit customer (you created this)"
+                            >
+                              <FontAwesomeIcon icon={faEdit} />
+                            </button>
+                          ) : (
+                            <span className="text-gray-300" title={`Read-only (created by ${customer.created_by_username || 'someone else'})`}>
+                              <FontAwesomeIcon icon={faLock} />
+                            </span>
+                          )}
+                          
+                          {/* Delete Button - Only Manager (with creator's code) */}
+                          {(userRole === 'manager' || userRole === 'ceo') && (
+                            <button
+                              onClick={() => handleDeleteRequest(customer)}
+                              className="text-red-600 hover:text-red-900 transition-colors"
+                              title={`Delete (requires ${customer.created_by_username}'s code)`}
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          )}
+                        </div>
                   </td>
                 </tr>
               ))
@@ -436,29 +401,53 @@ const Customers: React.FC = () => {
                     <FontAwesomeIcon icon={faCalendar} className="text-gray-400" />
                     <span>{formatDate(customer.created_at)}</span>
                   </div>
-                  <div className="flex gap-2 pt-2 border-t border-gray-200">
-                    <button
-                      onClick={() => handleView(customer)}
-                      className="flex-1 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
-                    >
-                      View
-                    </button>
-                    {(userRole === 'manager' || userRole === 'ceo' || userRole === 'admin') && (
-                      <button
-                        onClick={() => handleEdit(customer)}
-                        className="flex-1 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-                      >
-                        Edit
-                      </button>
+                  <div className="space-y-2 pt-2 border-t border-gray-200">
+                    {/* Creator Badge */}
+                    {customer.created_by_username && (
+                      <div className="text-xs text-gray-500 flex items-center gap-1">
+                        <FontAwesomeIcon icon={faUser} className="text-gray-400" />
+                        Created by: <span className="font-medium">{customer.created_by_username}</span>
+                        {customer.created_by_role && <span className="text-gray-400">({customer.created_by_role})</span>}
+                      </div>
                     )}
-                    {(userRole === 'manager' || userRole === 'ceo') && (
+                    
+                    <div className="flex gap-2">
+                      {/* View Button - Everyone */}
                       <button
-                        onClick={() => handleDeleteRequest(customer)}
-                        className="flex-1 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                        onClick={() => handleView(customer)}
+                        className="flex-1 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
                       >
-                        Delete
+                        View
                       </button>
-                    )}
+                      
+                      {/* Edit Button - Only creator or admin */}
+                      {customer.is_editable ? (
+                        <button
+                          onClick={() => handleEdit(customer)}
+                          className="flex-1 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                        >
+                          Edit
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="flex-1 px-3 py-2 bg-gray-50 text-gray-400 rounded-lg cursor-not-allowed text-sm font-medium"
+                          title={`Read-only (created by ${customer.created_by_username || 'another user'})`}
+                        >
+                          <FontAwesomeIcon icon={faLock} /> Locked
+                        </button>
+                      )}
+                      
+                      {/* Delete Button - Manager only */}
+                      {(userRole === 'manager' || userRole === 'ceo') && (
+                        <button
+                          onClick={() => handleDeleteRequest(customer)}
+                          className="flex-1 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -554,28 +543,44 @@ const Customers: React.FC = () => {
                   <p className="text-lg font-semibold text-gray-900">{formatDate(selectedCustomer.created_at)}</p>
                 </div>
 
-                {/* Deletion Code - Only visible to Shop Keeper and Repairer, NOT Manager or Admin */}
-                {(userRole === 'shop_keeper' || userRole === 'repairer') && (
+                {/* Deletion Code - ONLY visible to the creator (not all staff) */}
+                {selectedCustomer.deletion_code && selectedCustomer.is_editable && (userRole === 'shop_keeper' || userRole === 'repairer') && (
                   <div className="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-300">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <FontAwesomeIcon icon={faKey} className="text-yellow-600" />
-                        <span className="text-sm text-yellow-700 font-semibold">Deletion Code</span>
+                        <span className="text-sm text-yellow-700 font-semibold">Deletion Code (You Created This)</span>
                       </div>
-                      {codeTimer > 0 && (
-                        <div className="bg-yellow-200 px-3 py-1.5 rounded-lg text-sm font-bold text-yellow-900">
-                          ⏱️ {Math.floor(codeTimer / 60)}:{String(codeTimer % 60).padStart(2, '0')}
-                        </div>
-                      )}
                     </div>
-                    <p className="text-3xl font-bold text-yellow-900 tracking-wider mb-3">{selectedCustomer.deletion_code}</p>
-                    <div className="bg-yellow-100 rounded p-2 mb-2">
-                      <p className="text-xs text-yellow-800 font-medium">
-                        ⏱️ Valid for: <span className="font-bold">{Math.floor(codeTimer / 60)} minutes {codeTimer % 60} seconds</span>
+                    <p className="text-3xl font-bold text-yellow-900 tracking-wider mb-3 font-mono">{selectedCustomer.deletion_code}</p>
+                    <div className="bg-yellow-100 rounded p-3 mb-2">
+                      <p className="text-xs text-yellow-900 font-semibold mb-2">
+                        🔒 Secure Deletion System:
                       </p>
+                      <ul className="text-xs text-yellow-800 space-y-1 list-disc ml-4">
+                        <li>Only YOU can see this deletion code</li>
+                        <li>Manager needs this code to delete this customer</li>
+                        <li>Share it only when deletion is necessary</li>
+                        <li>Your code cannot delete other users' customers</li>
+                      </ul>
                     </div>
-                    <p className="text-xs text-yellow-700">
-                      ⚠️ Share this code with Manager to delete this customer
+                    <p className="text-xs text-yellow-700 flex items-center gap-1">
+                      <FontAwesomeIcon icon={faKey} />
+                      Share this code with Manager when they need to delete this customer
+                    </p>
+                  </div>
+                )}
+                
+                {/* Read-only indicator for customers created by others */}
+                {!selectedCustomer.is_editable && (userRole === 'shop_keeper' || userRole === 'repairer') && (
+                  <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FontAwesomeIcon icon={faLock} className="text-blue-600" />
+                      <span className="text-sm text-blue-700 font-semibold">Read-Only Customer</span>
+                    </div>
+                    <p className="text-xs text-blue-800">
+                      This customer was created by <strong>{selectedCustomer.created_by_username || 'another user'}</strong>. 
+                      You can view but cannot edit or see the deletion code.
                     </p>
                   </div>
                 )}
@@ -602,25 +607,36 @@ const Customers: React.FC = () => {
                   <strong>⚠️ Warning:</strong> You are about to delete:
                 </p>
                 <p className="text-lg font-semibold text-red-900">{selectedCustomer.full_name}</p>
+                {selectedCustomer.created_by_username && (
+                  <p className="text-sm text-red-700 mt-2">
+                    Created by: <strong>{selectedCustomer.created_by_username}</strong> ({selectedCustomer.created_by_role})
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-4">
+                <p className="text-sm font-semibold text-yellow-900 mb-2">🔒 Deletion Code Required</p>
+                <p className="text-xs text-yellow-800">
+                  To delete this customer, you must obtain the deletion code from <strong>{selectedCustomer.created_by_username || 'the user who created this customer'}</strong>.
+                </p>
+                <p className="text-xs text-yellow-800 mt-2">
+                  📋 The creator can see the deletion code when viewing this customer's details.
+                </p>
               </div>
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Enter Deletion Code (Get from Staff)
+                  Enter Deletion Code from {selectedCustomer.created_by_username || 'Creator'}
                 </label>
                 <input
                   type="text"
                   value={deletionCode}
-                  onChange={(e) => setDeletionCode(e.target.value.toUpperCase())}
-                  placeholder="e.g., DEL000123"
-                  className="w-full px-4 py-2 border-2 border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 font-mono text-lg uppercase"
-                  maxLength={10}
+                  onChange={(e) => setDeletionCode(e.target.value)}
+                  placeholder="Enter deletion code..."
+                  className="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 font-mono text-lg"
                 />
                 <p className="text-xs text-gray-600 mt-2">
-                  💡 Shopkeeper/Repairer can see this code in the customer's "View" details
-                </p>
-                <p className="text-xs text-yellow-700 mt-1">
-                  ⏱️ Code is valid for 5 minutes from generation
+                  💡 Ask {selectedCustomer.created_by_username || 'the creator'} to view this customer and share the deletion code with you
                 </p>
               </div>
 
