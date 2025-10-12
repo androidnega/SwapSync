@@ -1,0 +1,44 @@
+{
+  "name": "SwapSync - Phone Shop Management",
+  "short_name": "SwapSync",
+  "description": "Complete Phone Shop Management System with Offline Support",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Phone Inventory",
+      "short_name": "Phones",
+      "description": "View phone inventory",
+      "url": "/",
+      "icons": []
+    },
+    {
+      "name": "Repairs",
+      "short_name": "Repairs",
+      "description": "Manage repairs",
+      "url": "/",
+      "icons": []
+    }
+  ],
+  "prefer_related_applications": false
+}
+
