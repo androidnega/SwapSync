@@ -36,6 +36,7 @@ class Phone(Base):
     specs = Column(JSON, nullable=True)  # JSON: {"cpu": "...", "ram": "...", "storage": "...", "battery": "...", "color": "..."}
     status = Column(SQLEnum(PhoneStatus), default=PhoneStatus.AVAILABLE, nullable=False)
     is_available = Column(Boolean, default=True)  # Legacy field, kept for compatibility
+    is_swappable = Column(Boolean, default=True, nullable=False)  # Can this phone be used in swaps?
     swapped_from_id = Column(Integer, ForeignKey("swaps.id"), nullable=True)
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Who added this phone
     created_at = Column(DateTime, default=datetime.utcnow)

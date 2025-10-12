@@ -17,6 +17,7 @@ class PhoneCreate(BaseModel):
     category_id: Optional[int] = None
     brand_id: Optional[int] = None
     specs: Optional[Dict[str, Any]] = None
+    is_swappable: bool = True
 
 
 class PhoneUpdate(BaseModel):
@@ -31,6 +32,7 @@ class PhoneUpdate(BaseModel):
     brand_id: Optional[int] = None
     specs: Optional[Dict[str, Any]] = None
     is_available: Optional[bool] = None
+    is_swappable: Optional[bool] = None
     status: Optional[str] = None  # PhoneStatus enum value
 
 
@@ -49,6 +51,7 @@ class PhoneResponse(BaseModel):
     specs: Optional[Dict[str, Any]] = None
     status: str  # PhoneStatus enum value
     is_available: bool
+    is_swappable: bool
     swapped_from_id: Optional[int] = None
     created_by_user_id: Optional[int] = None
     created_at: Optional[datetime] = None

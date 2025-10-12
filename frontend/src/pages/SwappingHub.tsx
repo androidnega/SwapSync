@@ -4,11 +4,12 @@ import SwapManager from './SwapManager';
 import PendingResales from './PendingResales';
 import CompletedSwaps from './CompletedSwaps';
 import Phones from './Phones';
+import SoldPhones from './SoldPhones';
 import Breadcrumb from '../components/Breadcrumb';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 
-type TabType = 'swaps' | 'pending-resales' | 'completed-swaps' | 'phones';
+type TabType = 'swaps' | 'pending-resales' | 'completed-swaps' | 'phones' | 'sold-phones';
 
 const SwappingHub: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('phones');
@@ -42,6 +43,7 @@ const SwappingHub: React.FC = () => {
     { id: 'phones' as TabType, label: 'Phone Inventory', icon: '📱', count: phoneCount },
     { id: 'swaps' as TabType, label: 'Phone Swaps', icon: '🔄', count: null },
     { id: 'pending-resales' as TabType, label: 'Pending Resales', icon: '⏳', count: pendingCount },
+    { id: 'sold-phones' as TabType, label: 'Sold Phones', icon: '✅', count: null },
     { id: 'completed-swaps' as TabType, label: 'Completed Swaps', icon: '📊', count: null },
   ];
 
@@ -51,6 +53,8 @@ const SwappingHub: React.FC = () => {
         return <SwapManager />;
       case 'pending-resales':
         return <PendingResales onUpdate={fetchCounts} />;
+      case 'sold-phones':
+        return <SoldPhones />;
       case 'completed-swaps':
         return <CompletedSwaps />;
       case 'phones':

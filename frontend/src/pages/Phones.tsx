@@ -10,6 +10,7 @@ interface Phone {
   value: number;
   cost_price?: number;
   is_available: boolean;
+  is_swappable?: boolean;
   status?: string;
   imei?: string;
   specs?: {
@@ -52,6 +53,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
     value: '',
     category_id: '',
     cost_price: '',
+    is_swappable: true,
     cpu: '',
     ram: '',
     storage: '',
@@ -160,6 +162,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
       model: formData.model.trim(),
       condition: formData.condition,
       value: valueNum,
+      is_swappable: formData.is_swappable,
     };
 
     // Add optional fields
@@ -217,6 +220,15 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
       model: phone.model,
       condition: phone.condition,
       value: phone.value.toString(),
+      category_id: phone.category_id?.toString() || '',
+      cost_price: phone.cost_price?.toString() || '',
+      is_swappable: phone.is_swappable !== undefined ? phone.is_swappable : true,
+      cpu: phone.specs?.cpu || '',
+      ram: phone.specs?.ram || '',
+      storage: phone.specs?.storage || '',
+      battery: phone.specs?.battery || '',
+      battery_health: phone.specs?.battery_health || '',
+      color: phone.specs?.color || ''
     });
     setEditingId(phone.id);
     setShowModal(true);
@@ -854,6 +866,26 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
                     placeholder="e.g., 4000"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+
+                {/* Swap Availability Toggle */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-50 rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={formData.is_swappable}
+                      onChange={(e) => setFormData({ ...formData, is_swappable: e.target.checked })}
+                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-gray-900">Available for Swapping</span>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        {formData.is_swappable 
+                          ? 'Phone can be used in swap transactions' 
+                          : 'Direct sale only - swap form will be disabled'}
+                      </p>
+                    </div>
+                  </label>
                 </div>
 
                 <div>

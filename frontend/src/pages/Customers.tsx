@@ -565,40 +565,44 @@ const Customers: React.FC = () => {
                 ) : null}
               </div>
               
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FontAwesomeIcon icon={faUser} className="text-gray-600" />
-                    <span className="text-sm text-gray-600">Full Name</span>
-                  </div>
-                  <p className="text-lg font-semibold text-gray-900">{selectedCustomer.full_name}</p>
-                </div>
-
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FontAwesomeIcon icon={faPhone} className="text-gray-600" />
-                    <span className="text-sm text-gray-600">Phone Number</span>
-                  </div>
-                  <p className="text-lg font-semibold text-gray-900">{selectedCustomer.phone_number}</p>
-                </div>
-
-                {selectedCustomer.email && (
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FontAwesomeIcon icon={faEnvelope} className="text-gray-600" />
-                      <span className="text-sm text-gray-600">Email</span>
+              {/* Customer Info - Compact 2-Column Grid */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <FontAwesomeIcon icon={faUser} className="text-gray-500 text-sm" />
+                      <span className="text-xs text-gray-600">Full Name</span>
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">{selectedCustomer.email}</p>
+                    <p className="font-semibold text-gray-900">{selectedCustomer.full_name}</p>
                   </div>
-                )}
 
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FontAwesomeIcon icon={faCalendar} className="text-gray-600" />
-                    <span className="text-sm text-gray-600">Created Date</span>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <FontAwesomeIcon icon={faPhone} className="text-gray-500 text-sm" />
+                      <span className="text-xs text-gray-600">Phone Number</span>
+                    </div>
+                    <p className="font-semibold text-gray-900">{selectedCustomer.phone_number}</p>
                   </div>
-                  <p className="text-lg font-semibold text-gray-900">{formatDate(selectedCustomer.created_at)}</p>
+
+                  {selectedCustomer.email && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <FontAwesomeIcon icon={faEnvelope} className="text-gray-500 text-sm" />
+                        <span className="text-xs text-gray-600">Email</span>
+                      </div>
+                      <p className="font-semibold text-gray-900">{selectedCustomer.email}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <FontAwesomeIcon icon={faCalendar} className="text-gray-500 text-sm" />
+                      <span className="text-xs text-gray-600">Created Date</span>
+                    </div>
+                    <p className="font-semibold text-gray-900">{formatDate(selectedCustomer.created_at)}</p>
+                  </div>
                 </div>
+              </div>
 
                 {/* Deletion Code - ONLY visible to the creator (not all staff) */}
                 {selectedCustomer.deletion_code && selectedCustomer.is_editable && (userRole === 'shop_keeper' || userRole === 'repairer') && (

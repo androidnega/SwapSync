@@ -62,10 +62,10 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
       {/* Hidden Receipt for Printing */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
         <div ref={receiptRef} style={{
-          width: '58mm',
+          width: '80mm',
           padding: '5mm',
           fontFamily: 'monospace',
-          fontSize: '11px',
+          fontSize: '12px',
           lineHeight: '1.4',
           backgroundColor: '#fff',
           color: '#000'

@@ -219,14 +219,20 @@ const SwapManager = () => {
   });
   
   const selectedPhone = phones.find(p => p.id === parseInt(form.new_phone_id));
+  const isSwappable = selectedPhone?.is_swappable !== false; // Default true if undefined
+  const isDirectSaleMode = form.new_phone_id && !isSwappable;
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
       <div className="space-y-4 md:space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Swap Management</h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">Record phone swap transactions</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+            {isDirectSaleMode ? 'Direct Sale' : 'Swap Management'}
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
+            {isDirectSaleMode ? 'Record direct phone sale' : 'Record phone swap transactions'}
+          </p>
         </div>
 
         {/* Stats Cards - At Top */}
@@ -287,7 +293,18 @@ const SwapManager = () => {
                 </select>
               </div>
 
-              {/* Trade-In Phone Section */}
+              {/* Direct Sale Mode Notice */}
+              {isDirectSaleMode && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900 font-semibold">💰 Direct Sale Mode</p>
+                  <p className="text-xs text-blue-800 mt-1">
+                    This phone is not available for swapping. Recording as direct sale only.
+                  </p>
+                </div>
+              )}
+
+              {/* Trade-In Phone Section - Disabled if Direct Sale */}
+              {!isDirectSaleMode && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-4">
                 <h3 className="font-semibold text-orange-900 text-sm flex items-center gap-2">
                   📲 Trade-In Phone Details
@@ -305,7 +322,7 @@ const SwapManager = () => {
                     onChange={handleChange}
                     placeholder="e.g., iPhone 11, Samsung Galaxy S21"
                     className="w-full border border-gray-300 rounded-lg p-2.5 md:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    required
+                    required={!isDirectSaleMode}
                   />
                 </div>
 
@@ -323,7 +340,7 @@ const SwapManager = () => {
                       onChange={handleChange}
                       placeholder="0.00"
                       className="w-full border border-gray-300 rounded-lg p-2.5 md:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      required
+                      required={!isDirectSaleMode}
                     />
                   </div>
                   <div>
@@ -402,6 +419,7 @@ const SwapManager = () => {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* New Phone Selection with Search */}
               <div className="relative">
