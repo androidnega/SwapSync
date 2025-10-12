@@ -96,22 +96,38 @@ def create_repair(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new repair record (Repairer ONLY, Shopkeeper for walk-ins)"""
-    from app.core.permissions import require_repairer
+    """Create a new repair record (Repairer AND Shopkeeper can book repairs)"""
+    from app.core.permissions import can_book_repairs
     
     # Enforce repairer/shopkeeper-only permission (Manager CANNOT book repairs)
-    require_repairer(current_user)
+    if not can_book_repairs(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Only repairers and shopkeepers can book repairs. Your role: {current_user.role.value}"
+        )
+    
+    print(f"\n🔧 Creating repair - User: {current_user.username} (Role: {current_user.role.value})")
+    print(f"   Customer ID: {repair.customer_id}")
+    print(f"   Phone: {repair.phone_description}")
+    print(f"   Cost: {repair.cost}")
+    
     # Verify customer exists
     customer = db.query(Customer).filter(Customer.id == repair.customer_id).first()
     if not customer:
+        print(f"❌ Customer not found: ID {repair.customer_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Customer not found"
         )
     
+    print(f"✅ Customer found: {customer.full_name}")
+    
     new_repair = Repair(**repair.model_dump(), created_at=datetime.utcnow())
+    new_repair.created_by_user_id = current_user.id  # Track who created this repair
     db.add(new_repair)
     db.flush()
+    
+    print(f"✅ Repair record created in database")
     
     # Generate unique ID and tracking code
     new_repair.generate_unique_id(db)

@@ -72,22 +72,29 @@ async def get_current_user(
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Not authenticated",
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    token_data = verify_token(token, credentials_exception)
+    try:
+        token_data = verify_token(token, credentials_exception)
+    except HTTPException as e:
+        print(f"❌ Token verification failed: {e.detail}")
+        raise credentials_exception
     
     user = db.query(User).filter(User.username == token_data.username).first()
     if user is None:
+        print(f"❌ User not found: {token_data.username}")
         raise credentials_exception
     
     if not user.is_active:
+        print(f"❌ User inactive: {user.username}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"
         )
     
+    print(f"✅ Authenticated: {user.username} (Role: {user.role.value})")
     return user
 
 
