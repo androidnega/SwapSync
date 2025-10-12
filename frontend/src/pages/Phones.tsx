@@ -308,9 +308,9 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
 
   // Apply availability filter
   let filteredPhones = filterAvailable === 'available'
-    ? phones.filter(p => p.is_available)
+    ? phones.filter(p => p.is_available && p.status !== 'SWAPPED')  // Exclude trade-ins waiting for resale
     : filterAvailable === 'sold'
-    ? phones.filter(p => !p.is_available)
+    ? phones.filter(p => !p.is_available || p.status === 'SWAPPED' || p.status === 'SOLD')  // Include swapped/sold
     : phones;
 
   // Apply search filter
@@ -551,31 +551,38 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
                     ₵{phone.value.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        phone.status === 'SWAPPED'
-                          ? 'bg-yellow-100 text-yellow-800'
+                    <div className="flex flex-col gap-1">
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          phone.status === 'SWAPPED'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : phone.status === 'AVAILABLE'
+                            ? 'bg-green-100 text-green-800'
+                            : phone.status === 'SOLD'
+                            ? 'bg-red-100 text-red-800'
+                            : phone.status === 'UNDER_REPAIR'
+                            ? 'bg-blue-100 text-blue-800'
+                            : phone.is_available
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {phone.status === 'SWAPPED' 
+                          ? 'Swapped'
                           : phone.status === 'AVAILABLE'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'Available'
                           : phone.status === 'SOLD'
-                          ? 'bg-red-100 text-red-800'
+                          ? 'Sold'
                           : phone.status === 'UNDER_REPAIR'
-                          ? 'bg-blue-100 text-blue-800'
-                          : phone.is_available
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {phone.status === 'SWAPPED' 
-                        ? 'Swapped'
-                        : phone.status === 'AVAILABLE'
-                        ? 'Available'
-                        : phone.status === 'SOLD'
-                        ? 'Sold'
-                        : phone.status === 'UNDER_REPAIR'
-                        ? 'Under Repair'
-                        : phone.is_available ? 'Available' : 'Sold/Swapped'}
-                    </span>
+                          ? 'Under Repair'
+                          : phone.is_available ? 'Available' : 'Sold/Swapped'}
+                      </span>
+                      {phone.status === 'SWAPPED' && phone.is_available && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                          📋 Pending Resale
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
@@ -629,6 +636,11 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
                   <h3 className="font-semibold text-gray-900 text-base leading-tight">{phone.brand} {phone.model}</h3>
                   <p className="text-sm text-gray-500 mt-0.5">{phone.condition}</p>
                   <p className="text-xs text-gray-400 mt-0.5">ID: {phone.unique_id || `PHON-${String(phone.id).padStart(4, '0')}`}</p>
+                  {phone.status === 'SWAPPED' && phone.is_available && (
+                    <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                      📋 Pending Resale
+                    </span>
+                  )}
                 </div>
                 <span
                   className={`px-2.5 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
