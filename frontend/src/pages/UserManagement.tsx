@@ -25,6 +25,7 @@ interface User {
   company_name: string;
   is_active: boolean;
   created_at: string;
+  parent_user_id?: number;
 }
 
 const UserManagement: React.FC = () => {
@@ -35,6 +36,7 @@ const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [companyFilter, setCompanyFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'list' | 'hierarchy'>('list');
   
   // Edit user state
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -104,6 +106,17 @@ const UserManagement: React.FC = () => {
   const getUniqueCompanies = (): string[] => {
     const companies = users.map(user => user.company_name).filter(Boolean);
     return Array.from(new Set(companies)).sort();
+  };
+
+  const getUserHierarchy = () => {
+    // Organize users into hierarchy: Managers -> their staff
+    const managers = users.filter(u => u.role === 'manager' || u.role === 'ceo' || u.role === 'admin' || u.role === 'super_admin');
+    const staff = users.filter(u => u.role === 'shop_keeper' || u.role === 'repairer');
+    
+    return managers.map(manager => ({
+      manager,
+      staff: staff.filter(s => s.parent_user_id === manager.id)
+    }));
   };
 
   const handleEditClick = (user: User) => {
@@ -222,6 +235,30 @@ const UserManagement: React.FC = () => {
         </div>
       )}
 
+      {/* View Mode Toggle */}
+      <div className="mb-4 flex gap-2">
+        <button
+          onClick={() => setViewMode('list')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            viewMode === 'list'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          List View
+        </button>
+        <button
+          onClick={() => setViewMode('hierarchy')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            viewMode === 'hierarchy'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Hierarchy View
+        </button>
+      </div>
+
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-4 md:mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -284,10 +321,11 @@ const UserManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+      {/* List View - Users Table */}
+      {viewMode === 'list' && (
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
@@ -367,6 +405,136 @@ const UserManagement: React.FC = () => {
           </div>
         )}
       </div>
+    )}
+
+      {/* Hierarchy View - Company Structure */}
+      {viewMode === 'hierarchy' && (
+        <div className="space-y-6">
+          {getUserHierarchy().map(({ manager, staff }) => (
+            <div key={manager.id} className="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-purple-500">
+              {/* Manager Card */}
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 md:p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-2xl">👑</span>
+                      <div>
+                        <h3 className="text-xl font-bold text-purple-900">
+                          {manager.company_name || manager.full_name}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {manager.role.toUpperCase()} - {manager.username}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm mt-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">Email:</span>
+                        <span className="font-medium">{manager.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">Phone:</span>
+                        <span className="font-medium">{manager.phone_number}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                      manager.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {manager.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditClick(manager)}
+                        className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                        title="Edit"
+                      >
+                        <FontAwesomeIcon icon={faEdit} />
+                      </button>
+                      <button
+                        onClick={() => handleChangePasswordClick(manager)}
+                        className="p-2 bg-green-100 text-green-600 rounded hover:bg-green-200"
+                        title="Change Password"
+                      >
+                        <FontAwesomeIcon icon={faKey} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Staff Members Under This Manager */}
+              {staff.length > 0 ? (
+                <div className="p-4 md:p-6 bg-gray-50">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <span>👥</span> Staff Members ({staff.length})
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {staff.map(member => (
+                      <div key={member.id} className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="font-semibold text-gray-900">{member.full_name}</div>
+                            <div className="text-xs text-gray-500">@{member.username}</div>
+                          </div>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(member.role)}`}>
+                            {member.role === 'shop_keeper' ? 'SHOPKEEPER' : member.role.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-xs text-gray-600 mb-3">
+                          <div className="truncate">{member.email}</div>
+                          <div>{member.phone_number}</div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                            member.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {member.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleEditClick(member)}
+                              className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+                              title="Edit"
+                            >
+                              <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                            </button>
+                            <button
+                              onClick={() => handleChangePasswordClick(member)}
+                              className="p-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100"
+                              title="Change Password"
+                            >
+                              <FontAwesomeIcon icon={faKey} className="text-xs" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(member)}
+                              className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100"
+                              title="Delete"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="text-xs" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 text-center text-gray-500 bg-gray-50">
+                  No staff members yet
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {getUserHierarchy().length === 0 && (
+            <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
+              No companies or managers found
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Edit User Modal */}
       {editingUser && (

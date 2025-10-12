@@ -14,8 +14,16 @@ interface Repair {
   updated_at: string;
 }
 
+interface Customer {
+  id: number;
+  full_name: string;
+  phone_number: string;
+  email?: string;
+}
+
 const Repairs: React.FC = () => {
   const [repairs, setRepairs] = useState<Repair[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -30,10 +38,14 @@ const Repairs: React.FC = () => {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [message, setMessage] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
   useEffect(() => {
     fetchRepairs();
     fetchUserRole();
+    fetchCustomers();
   }, []);
 
   const fetchUserRole = async () => {
@@ -59,6 +71,33 @@ const Repairs: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const fetchCustomers = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/customers/`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      setCustomers(response.data);
+    } catch (error) {
+      console.error('Failed to fetch customers:', error);
+    }
+  };
+
+  const handleCustomerSelect = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setCustomerSearch(customer.full_name);
+    setFormData({
+      ...formData,
+      customer_name: customer.full_name,
+      customer_phone: customer.phone_number
+    });
+    setShowCustomerDropdown(false);
+  };
+
+  const filteredCustomers = customers.filter(c =>
+    c.full_name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.phone_number.includes(customerSearch)
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -480,18 +519,64 @@ const Repairs: React.FC = () => {
                     />
                     <p className="text-xs text-gray-500 mt-1">SMS notifications will be sent to this number</p>
                   </div>
-                  <div>
+                  <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Customer Name (Optional)
+                      Select Customer
                     </label>
                     <input
                       type="text"
-                      value={formData.customer_name}
-                      onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                      placeholder="e.g., John Doe"
+                      value={customerSearch}
+                      onChange={(e) => {
+                        setCustomerSearch(e.target.value);
+                        setShowCustomerDropdown(true);
+                      }}
+                      onFocus={() => setShowCustomerDropdown(true)}
+                      placeholder="Search by name or phone..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Optional: Customer's full name for better record keeping</p>
+                    
+                    {/* Searchable Dropdown */}
+                    {showCustomerDropdown && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {filteredCustomers.length > 0 ? (
+                          filteredCustomers.map(customer => (
+                            <div
+                              key={customer.id}
+                              onClick={() => handleCustomerSelect(customer)}
+                              className="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="font-medium text-gray-900">{customer.full_name}</div>
+                              <div className="text-xs text-gray-600">{customer.phone_number}</div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-gray-500 text-sm">
+                            No customers found. Type to search...
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {selectedCustomer && (
+                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center">
+                        <div>
+                          <div className="text-sm font-medium text-green-900">{selectedCustomer.full_name}</div>
+                          <div className="text-xs text-green-700">{selectedCustomer.phone_number}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCustomer(null);
+                            setCustomerSearch('');
+                            setFormData({ ...formData, customer_name: '', customer_phone: '' });
+                          }}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">Search and select an existing customer or enter manually below</p>
                   </div>
                 </>
               )}

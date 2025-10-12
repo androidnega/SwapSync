@@ -133,18 +133,22 @@ function AppContent() {
     );
   }
 
-  // Show maintenance page if maintenance mode is ON (except for admins)
-  if (maintenanceMode && user?.role !== 'admin' && user?.role !== 'super_admin' && location.pathname !== '/maintenance' && location.pathname !== '/login') {
-    return <Maintenance reason={maintenanceMode ? "System maintenance in progress" : undefined} />;
-  }
-
   // Show login page if not authenticated
   if (isLoginPage) {
+    // Show maintenance mode on login page BEFORE allowing login
+    if (maintenanceMode) {
+      return <Maintenance reason="System maintenance in progress" />;
+    }
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
       </Routes>
     );
+  }
+
+  // Show maintenance page if maintenance mode is ON AFTER login (except for admins)
+  if (maintenanceMode && user?.role !== 'admin' && user?.role !== 'super_admin' && location.pathname !== '/maintenance') {
+    return <Maintenance reason={maintenanceMode ? "System maintenance in progress" : undefined} />;
   }
 
   // Show loading while fetching user
