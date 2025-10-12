@@ -14,7 +14,7 @@ from app.models.repair import Repair
 from app.models.customer import Customer
 from app.models.phone import Phone, PhoneStatus, PhoneOwnershipHistory
 from app.schemas.repair import RepairCreate, RepairUpdate, RepairResponse
-from app.core.sms import get_sms_service
+from app.core.sms import get_sms_service, send_repair_created_sms, send_repair_status_update_sms
 
 router = APIRouter(prefix="/repairs", tags=["Repairs"])
 
@@ -170,13 +170,20 @@ def create_repair(
         details=f"{new_repair.phone_description} - Cost: GHS {new_repair.cost}"
     )
     
-    # Send SMS notification
-    send_repair_created_sms(
-        customer_name=customer.full_name,
-        phone_number=customer.phone_number,
-        repair_id=new_repair.id
-    )
+    # Send SMS notification (non-blocking, don't fail if SMS fails)
+    try:
+        send_repair_created_sms(
+            customer_name=customer.full_name,
+            phone_number=customer.phone_number,
+            repair_id=new_repair.id,
+            phone_description=new_repair.phone_description
+        )
+        print(f"✅ SMS notification sent to {customer.full_name}")
+    except Exception as sms_error:
+        # Log SMS error but don't fail the repair creation
+        print(f"⚠️ SMS sending failed (non-critical): {sms_error}")
     
+    print(f"✅ Repair creation completed successfully")
     return new_repair
 
 
@@ -293,16 +300,20 @@ def update_repair(
         details=f"{repair.phone_description} - Status: {repair.status}"
     )
     
-    # Send SMS if status changed
+    # Send SMS if status changed (non-blocking)
     if status_changed:
         customer = db.query(Customer).filter(Customer.id == repair.customer_id).first()
         if customer:
-            send_repair_status_update_sms(
-                customer_name=customer.full_name,
-                phone_number=customer.phone_number,
-                status=repair.status,
-                repair_id=repair.id
-            )
+            try:
+                send_repair_status_update_sms(
+                    customer_name=customer.full_name,
+                    phone_number=customer.phone_number,
+                    status=repair.status,
+                    repair_id=repair.id
+                )
+                print(f"✅ Status update SMS sent to {customer.full_name}")
+            except Exception as sms_error:
+                print(f"⚠️ SMS sending failed (non-critical): {sms_error}")
     
     return repair
 
