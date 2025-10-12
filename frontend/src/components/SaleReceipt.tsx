@@ -44,6 +44,10 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
     });
   };
 
+  const subtotal = saleData.quantity * saleData.unit_price;
+  const tax = 0; // Add tax calculation if needed
+  const grandTotal = saleData.total_amount;
+
   return (
     <>
       {/* Print Button */}
@@ -62,90 +66,174 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
           padding: '5mm',
           fontFamily: 'monospace',
           fontSize: '11px',
-          lineHeight: '1.3',
-          backgroundColor: '#fff'
+          lineHeight: '1.4',
+          backgroundColor: '#fff',
+          color: '#000'
         }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '8px', borderBottom: '2px dashed #000', paddingBottom: '8px' }}>
-            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{companyName}</h2>
-            {companyAddress && <p style={{ margin: '2px 0', fontSize: '9px' }}>{companyAddress}</p>}
-            {companyPhone && <p style={{ margin: '2px 0', fontSize: '9px' }}>Tel: {companyPhone}</p>}
-            <p style={{ margin: '4px 0 0 0', fontSize: '8px', fontStyle: 'italic' }}>Powered by SwapSync</p>
+          {/* Header - Centered */}
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '3px' }}>
+              {companyName}
+            </div>
+            {companyAddress && (
+              <div style={{ fontSize: '9px', marginBottom: '2px' }}>
+                {companyAddress}
+              </div>
+            )}
+            {companyPhone && (
+              <div style={{ fontSize: '9px', marginBottom: '2px' }}>
+                Tel: {companyPhone}
+              </div>
+            )}
           </div>
 
-          {/* Receipt Info */}
-          <div style={{ marginBottom: '8px', fontSize: '9px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-              <span>Receipt:</span>
-              <span style={{ fontWeight: 'bold' }}>SALE-{String(saleData.id).padStart(4, '0')}</span>
-            </div>
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
+          {/* Receipt Info - Date and Receipt Number */}
+          <div style={{ fontSize: '9px', marginBottom: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
               <span>Date:</span>
               <span>{formatDate(saleData.created_at)}</span>
             </div>
-            {saleData.customer_name && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+              <span>Receipt #:</span>
+              <span style={{ fontWeight: 'bold' }}>SALE-{String(saleData.id).padStart(4, '0')}</span>
+            </div>
+            {saleData.served_by && (
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                <span>Customer:</span>
-                <span>{saleData.customer_name}</span>
+                <span>Cashier:</span>
+                <span>{saleData.served_by}</span>
               </div>
             )}
-            {saleData.customer_phone && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                <span>Phone:</span>
-                <span>{saleData.customer_phone}</span>
-              </div>
+            {saleData.customer_name && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span>Customer:</span>
+                  <span>{saleData.customer_name}</span>
+                </div>
+                {saleData.customer_phone && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Phone:</span>
+                    <span>{saleData.customer_phone}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
-          {/* Items */}
-          <div style={{ borderTop: '2px dashed #000', borderBottom: '2px dashed #000', padding: '8px 0' }}>
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '11px', fontWeight: 'bold' }}>ITEMS</h3>
-            
-            <div>
-              <div style={{ fontWeight: 'bold', marginBottom: '2px', fontSize: '11px' }}>
-                {saleData.product_name}
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
+          {/* Items Table Header */}
+          <div style={{ marginBottom: '6px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '50% 15% 17% 18%',
+              fontSize: '9px',
+              fontWeight: 'bold',
+              marginBottom: '4px'
+            }}>
+              <div style={{ textAlign: 'left' }}>ITEM</div>
+              <div style={{ textAlign: 'center' }}>QTY</div>
+              <div style={{ textAlign: 'right' }}>PRICE</div>
+              <div style={{ textAlign: 'right' }}>TOTAL</div>
+            </div>
+
+            {/* Item Row */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '50% 15% 17% 18%',
+              fontSize: '10px',
+              marginBottom: '2px',
+              alignItems: 'start'
+            }}>
+              <div style={{ textAlign: 'left', lineHeight: '1.3' }}>
+                <div style={{ fontWeight: 'bold' }}>{saleData.product_name}</div>
+                {saleData.product_brand && (
+                  <div style={{ fontSize: '8px', color: '#555' }}>
+                    {saleData.product_brand}
+                  </div>
+                )}
               </div>
-              <div style={{ fontSize: '9px', color: '#666', marginBottom: '3px' }}>
-                Product ID: PROD-{String(saleData.id).padStart(4, '0')}
-              </div>
-              {saleData.product_brand && (
-                <div style={{ fontSize: '9px', color: '#666', marginBottom: '3px' }}>
-                  Brand: {saleData.product_brand}
-                </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '5px' }}>
-                <span>{saleData.quantity} x ₵{saleData.unit_price.toFixed(2)}</span>
-                <span style={{ fontWeight: 'bold' }}>₵{(saleData.quantity * saleData.unit_price).toFixed(2)}</span>
+              <div style={{ textAlign: 'center' }}>{saleData.quantity}</div>
+              <div style={{ textAlign: 'right' }}>₵{saleData.unit_price.toFixed(2)}</div>
+              <div style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                ₵{(saleData.quantity * saleData.unit_price).toFixed(2)}
               </div>
             </div>
           </div>
 
-          {/* Totals */}
-          <div style={{ marginTop: '8px', fontSize: '10px' }}>
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
+          {/* Subtotal, Discount, Tax, Total */}
+          <div style={{ fontSize: '10px', marginBottom: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
               <span>Subtotal:</span>
-              <span>₵{(saleData.quantity * saleData.unit_price).toFixed(2)}</span>
+              <span>₵{subtotal.toFixed(2)}</span>
             </div>
             {saleData.discount_amount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px', color: '#d32f2f' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
                 <span>Discount:</span>
                 <span>-₵{saleData.discount_amount.toFixed(2)}</span>
               </div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', paddingTop: '6px', borderTop: '2px solid #000', fontSize: '12px', fontWeight: 'bold' }}>
-              <span>TOTAL:</span>
-              <span>₵{saleData.total_amount.toFixed(2)}</span>
+            {tax > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                <span>Tax:</span>
+                <span>₵{tax.toFixed(2)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
+          {/* Grand Total - Bold and Right Aligned */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            marginBottom: '10px',
+            paddingTop: '4px'
+          }}>
+            <span>TOTAL:</span>
+            <span>₵{grandTotal.toFixed(2)}</span>
+          </div>
+
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
+          {/* Footer - Centered */}
+          <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '9px' }}>
+            <div style={{ fontWeight: 'bold', fontSize: '10px', marginBottom: '4px' }}>
+              Thank you for your purchase!
+            </div>
+            <div style={{ marginBottom: '3px', fontSize: '8px' }}>
+              Please keep this receipt for your records
+            </div>
+            <div style={{ fontSize: '8px', fontStyle: 'italic' }}>
+              Goods sold are not returnable
             </div>
           </div>
 
-          {/* Footer */}
-          <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '9px', borderTop: '2px dashed #000', paddingTop: '8px' }}>
-            <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', fontSize: '10px' }}>Thank you for your purchase!</p>
-            <p style={{ margin: '0 0 6px 0', fontSize: '8px' }}>Please keep this receipt for your records</p>
-            <p style={{ margin: '0', fontSize: '8px', fontStyle: 'italic' }}>
-              Goods sold are not returnable
-            </p>
-          </div>
         </div>
       </div>
     </>
@@ -153,4 +241,3 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
 };
 
 export default SaleReceipt;
-

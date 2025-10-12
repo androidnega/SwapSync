@@ -41,6 +41,9 @@ const Repairs: React.FC = () => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchRepairs();
@@ -251,11 +254,34 @@ const Repairs: React.FC = () => {
     }
   };
 
-  const filteredRepairs = filterStatus === 'all'
+  // Filter repairs by status
+  const statusFilteredRepairs = filterStatus === 'all'
     ? repairs
     : repairs.filter(r => 
         r.status.toLowerCase().replace(/\s+/g, '_') === filterStatus.toLowerCase()
       );
+  
+  // Further filter by search query
+  const filteredRepairs = statusFilteredRepairs.filter(r => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      r.phone_description.toLowerCase().includes(query) ||
+      r.issue.toLowerCase().includes(query) ||
+      r.id.toString().includes(query)
+    );
+  });
+  
+  // Pagination
+  const totalPages = Math.ceil(filteredRepairs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRepairs = filteredRepairs.slice(startIndex, endIndex);
+  
+  // Reset to page 1 when filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, searchQuery]);
   
   // Count repairs by status for tab badges
   const repairCounts = {
@@ -350,6 +376,22 @@ const Repairs: React.FC = () => {
           {message}
         </div>
       )}
+
+      {/* Search Bar */}
+      <div className="bg-white rounded-xl shadow-sm p-4">
+        <input
+          type="text"
+          placeholder="Search by phone, issue, or repair ID..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        {searchQuery && (
+          <p className="text-sm text-gray-600 mt-2">
+            Found {filteredRepairs.length} result{filteredRepairs.length !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
 
       {/* Filter Tabs */}
       <div className="flex gap-2 border-b border-gray-200">
@@ -454,7 +496,7 @@ const Repairs: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredRepairs.length === 0 ? (
+            {paginatedRepairs.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center text-gray-500">
@@ -475,7 +517,7 @@ const Repairs: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              filteredRepairs.map((repair) => (
+              paginatedRepairs.map((repair) => (
                 <tr key={repair.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
                     {repair.phone_description}
@@ -566,6 +608,46 @@ const Repairs: React.FC = () => {
         </table>
       </div>
 
+      {/* Pagination Controls - Desktop */}
+      {totalPages > 1 && (
+        <div className="hidden md:flex items-center justify-between bg-white rounded-xl shadow-sm px-6 py-4">
+          <div className="text-sm text-gray-700">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredRepairs.length)} of {filteredRepairs.length} results
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <div className="flex gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 rounded-lg ${
+                    currentPage === page
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Card View - Shown on Mobile */}
       <div className="md:hidden space-y-4">
         {filteredRepairs.length === 0 ? (
@@ -587,7 +669,7 @@ const Repairs: React.FC = () => {
             </div>
           </div>
         ) : (
-          filteredRepairs.map((repair) => (
+          paginatedRepairs.map((repair) => (
             <div key={repair.id} className="bg-white rounded-xl shadow p-4">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
@@ -682,6 +764,31 @@ const Repairs: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Pagination Controls - Mobile */}
+      {totalPages > 1 && (
+        <div className="md:hidden flex flex-col gap-3 bg-white rounded-xl shadow-sm p-4">
+          <div className="text-sm text-gray-700 text-center">
+            Page {currentPage} of {totalPages} ({filteredRepairs.length} total results)
+          </div>
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              ← Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (

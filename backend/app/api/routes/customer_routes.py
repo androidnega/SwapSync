@@ -42,6 +42,10 @@ def create_customer(
     
     # Generate unique ID
     new_customer.generate_unique_id(db)
+    
+    # Generate deletion code automatically
+    new_customer.generate_deletion_code()
+    
     db.commit()
     db.refresh(new_customer)
     
@@ -131,7 +135,7 @@ def list_customers(
     return result
 
 
-@router.get("/{customer_id}", response_model=CustomerResponse)
+@router.get("/{customer_id}")
 def get_customer(
     customer_id: int, 
     generate_code: bool = False,
@@ -139,10 +143,13 @@ def get_customer(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get a specific customer by ID (Shop Keeper, CEO, Admin only)
-    If generate_code=True, generates a new deletion code (security feature)
+    Get a specific customer by ID with proper deletion code visibility
+    
+    Deletion code visibility:
+    - Managers: NEVER see codes (they need to request from creator)
+    - Repairer/ShopKeeper: ONLY see codes for customers THEY created
     """
-    if not can_manage_customers(current_user):
+    if not can_view_customers(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view customers"
@@ -160,7 +167,45 @@ def get_customer(
         db.commit()
         db.refresh(customer)
     
-    return customer
+    # Determine if current user created this customer
+    is_creator = (
+        hasattr(customer, 'created_by_user_id') and 
+        customer.created_by_user_id == current_user.id
+    )
+    
+    # Get creator info
+    creator_username = None
+    creator_role = None
+    if hasattr(customer, 'created_by_user_id') and customer.created_by_user_id:
+        creator = db.query(User).filter(User.id == customer.created_by_user_id).first()
+        if creator:
+            creator_username = creator.username
+            creator_role = creator.role.value
+    
+    # Build response with proper permissions
+    customer_dict = {
+        "id": customer.id,
+        "unique_id": customer.unique_id,
+        "full_name": customer.full_name,
+        "phone_number": customer.phone_number,
+        "email": customer.email,
+        "created_at": customer.created_at.isoformat() if customer.created_at else None,
+        "created_by_user_id": customer.created_by_user_id if hasattr(customer, 'created_by_user_id') else None,
+        "created_by_username": creator_username,
+        "created_by_role": creator_role,
+        "is_editable": is_creator,  # Only creator can edit
+        "deletion_code": None,  # Default: hide
+        "code_generated_at": None
+    }
+    
+    # Deletion code visibility:
+    # - Managers: NEVER see codes (they request from creator)
+    # - Repairer/ShopKeeper: ONLY see codes for customers THEY created
+    if not current_user.is_manager and is_creator:
+        customer_dict["deletion_code"] = customer.deletion_code
+        customer_dict["code_generated_at"] = customer.code_generated_at.isoformat() if customer.code_generated_at else None
+    
+    return customer_dict
 
 
 @router.put("/{customer_id}", response_model=CustomerResponse)

@@ -64,119 +64,184 @@ const SwapReceipt: React.FC<SwapReceiptProps> = ({
           padding: '5mm',
           fontFamily: 'monospace',
           fontSize: '11px',
-          lineHeight: '1.3',
-          backgroundColor: '#fff'
+          lineHeight: '1.4',
+          backgroundColor: '#fff',
+          color: '#000'
         }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '8px', borderBottom: '2px dashed #000', paddingBottom: '6px' }}>
-            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{companyName}</h2>
-            {companyAddress && <p style={{ margin: '2px 0', fontSize: '9px' }}>{companyAddress}</p>}
-            {companyPhone && <p style={{ margin: '2px 0', fontSize: '9px' }}>Tel: {companyPhone}</p>}
-            <p style={{ margin: '4px 0 0 0', fontSize: '8px', fontStyle: 'italic' }}>Powered by SwapSync</p>
+          {/* Header - Centered */}
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '3px' }}>
+              {companyName}
+            </div>
+            {companyAddress && (
+              <div style={{ fontSize: '9px', marginBottom: '2px' }}>
+                {companyAddress}
+              </div>
+            )}
+            {companyPhone && (
+              <div style={{ fontSize: '9px', marginBottom: '2px' }}>
+                Tel: {companyPhone}
+              </div>
+            )}
           </div>
 
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
           {/* Receipt Type */}
-          <div style={{ textAlign: 'center', marginBottom: '10px', fontSize: '14px', fontWeight: 'bold', backgroundColor: '#f0f0f0', padding: '5px', borderRadius: '3px' }}>
+          <div style={{ 
+            textAlign: 'center', 
+            fontSize: '11px', 
+            fontWeight: 'bold', 
+            marginBottom: '8px' 
+          }}>
             PHONE SWAP RECEIPT
           </div>
 
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
           {/* Receipt Info */}
-          <div style={{ marginBottom: '10px', fontSize: '11px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-              <span>Swap #:</span>
-              <span style={{ fontWeight: 'bold' }}>SWAP-{String(swapData.id).padStart(4, '0')}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+          <div style={{ fontSize: '9px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
               <span>Date:</span>
               <span>{formatDate(swapData.created_at)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+              <span>Swap #:</span>
+              <span style={{ fontWeight: 'bold' }}>SWAP-{String(swapData.id).padStart(4, '0')}</span>
+            </div>
+            {swapData.served_by && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                <span>Cashier:</span>
+                <span>{swapData.served_by}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
               <span>Customer:</span>
               <span>{swapData.customer_name}</span>
             </div>
             {swapData.customer_phone && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>Phone:</span>
                 <span>{swapData.customer_phone}</span>
               </div>
             )}
-            {swapData.served_by && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                <span>Served By:</span>
-                <span>{swapData.served_by}</span>
-              </div>
-            )}
           </div>
+
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
 
           {/* Trade-In Phone */}
-          <div style={{ borderTop: '2px dashed #000', padding: '8px 0', marginBottom: '8px' }}>
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>
-              📲 Trade-In Phone
-            </h3>
-            <div style={{ fontSize: '11px' }}>
-              <div style={{ marginBottom: '3px' }}>
-                <span style={{ fontWeight: 'bold' }}>{swapData.given_phone_description}</span>
+          <div style={{ marginBottom: '8px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>
+              TRADE-IN PHONE
+            </div>
+            <div style={{ fontSize: '10px', marginBottom: '3px' }}>
+              {swapData.given_phone_description}
+            </div>
+            {swapData.given_phone_imei && (
+              <div style={{ fontSize: '8px', color: '#555', marginBottom: '3px' }}>
+                IMEI: {swapData.given_phone_imei}
               </div>
-              {swapData.given_phone_imei && (
-                <div style={{ fontSize: '10px', color: '#666', marginBottom: '3px' }}>
-                  IMEI: {swapData.given_phone_imei}
-                </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
-                <span>Trade-In Value:</span>
-                <span style={{ fontWeight: 'bold' }}>₵{swapData.given_phone_value.toFixed(2)}</span>
-              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '4px' }}>
+              <span>Trade-In Credit:</span>
+              <span style={{ fontWeight: 'bold' }}>₵{swapData.given_phone_value.toFixed(2)}</span>
             </div>
           </div>
+
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
 
           {/* New Phone */}
-          <div style={{ borderTop: '2px dashed #000', padding: '8px 0', marginBottom: '8px' }}>
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>
-              📱 New Phone Received
-            </h3>
-            <div style={{ fontSize: '11px' }}>
-              <div style={{ marginBottom: '3px' }}>
-                <span style={{ fontWeight: 'bold' }}>{swapData.new_phone_description}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
-                <span>Phone Value:</span>
-                <span style={{ fontWeight: 'bold' }}>₵{swapData.new_phone_value.toFixed(2)}</span>
-              </div>
+          <div style={{ marginBottom: '8px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>
+              NEW PHONE RECEIVED
+            </div>
+            <div style={{ fontSize: '10px', marginBottom: '3px' }}>
+              {swapData.new_phone_description}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '4px' }}>
+              <span>Phone Value:</span>
+              <span style={{ fontWeight: 'bold' }}>₵{swapData.new_phone_value.toFixed(2)}</span>
             </div>
           </div>
 
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
           {/* Payment Summary */}
-          <div style={{ borderTop: '2px solid #000', paddingTop: '10px', fontSize: '11px' }}>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 'bold' }}>PAYMENT SUMMARY</h3>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <div style={{ fontSize: '10px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
               <span>New Phone Value:</span>
               <span>₵{swapData.new_phone_value.toFixed(2)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: '#2e7d32' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
               <span>Trade-In Credit:</span>
               <span>-₵{swapData.given_phone_value.toFixed(2)}</span>
             </div>
             {swapData.discount_amount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: '#d32f2f' }}>
-                <span>Additional Discount:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                <span>Discount:</span>
                 <span>-₵{swapData.discount_amount.toFixed(2)}</span>
               </div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', paddingTop: '8px', borderTop: '2px solid #000', fontSize: '13px', fontWeight: 'bold' }}>
-              <span>BALANCE PAID:</span>
-              <span>₵{swapData.balance_paid.toFixed(2)}</span>
+          </div>
+
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
+          {/* Balance Paid - Bold and Right Aligned */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            marginBottom: '10px',
+            paddingTop: '4px'
+          }}>
+            <span>BALANCE PAID:</span>
+            <span>₵{swapData.balance_paid.toFixed(2)}</span>
+          </div>
+
+          {/* Separator Line */}
+          <div style={{ 
+            borderTop: '1px solid #000', 
+            margin: '8px 0' 
+          }} />
+
+          {/* Footer - Centered */}
+          <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '9px' }}>
+            <div style={{ fontWeight: 'bold', fontSize: '10px', marginBottom: '4px' }}>
+              Thank you for your purchase!
+            </div>
+            <div style={{ marginBottom: '3px', fontSize: '8px' }}>
+              Please keep this receipt for your records
+            </div>
+            <div style={{ fontSize: '8px', fontStyle: 'italic' }}>
+              Trade-in phones cannot be returned
             </div>
           </div>
 
-          {/* Footer */}
-          <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '11px', borderTop: '2px dashed #000', paddingTop: '10px' }}>
-            <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>Thank you for your swap!</p>
-            <p style={{ margin: '0', fontSize: '10px' }}>Please keep this receipt for your records</p>
-            <p style={{ margin: '8px 0 0 0', fontSize: '10px', fontStyle: 'italic' }}>
-              Trade-in phones cannot be returned
-            </p>
-          </div>
         </div>
       </div>
     </>
@@ -184,4 +249,3 @@ const SwapReceipt: React.FC<SwapReceiptProps> = ({
 };
 
 export default SwapReceipt;
-
