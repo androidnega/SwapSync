@@ -29,6 +29,7 @@ import SwappingHub from './pages/SwappingHub';
 import ProductsHub from './pages/ProductsHub';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
+import SMSBroadcast from './pages/SMSBroadcast';
 import FirstLoginPasswordChange from './components/FirstLoginPasswordChange';
 import { getToken, removeToken, initializeSession, updateLastActivity } from './services/authService';
 import axios from 'axios';
@@ -196,6 +197,11 @@ function AppContent() {
           <Route path="/users" element={
             <ProtectedRoute allowedRoles={['admin', 'super_admin']} userRole={user.role}>
               <UserManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/sms-broadcast" element={
+            <ProtectedRoute allowedRoles={['admin', 'super_admin']} userRole={user.role}>
+              <SMSBroadcast />
             </ProtectedRoute>
           } />
           

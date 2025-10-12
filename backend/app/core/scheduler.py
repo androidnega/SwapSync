@@ -1,13 +1,14 @@
 """
-Background Scheduler - Checks for upcoming repair due dates and sends notifications
+Background Scheduler - Automated tasks for repairs, monthly wishes, and holiday greetings
 """
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.repair import Repair
-from app.models.user import User
+from app.models.user import User, UserRole
 import logging
 import asyncio
 
@@ -15,6 +16,17 @@ logger = logging.getLogger(__name__)
 
 # Global scheduler instance
 scheduler = None
+
+# Ghana Public Holidays (Month, Day)
+GHANA_HOLIDAYS = [
+    (1, 1, "New Year's Day"),
+    (3, 6, "Independence Day"),
+    (5, 1, "Workers' Day"),
+    (8, 4, "Founders' Day"),
+    (9, 21, "Kwame Nkrumah Memorial Day"),
+    (12, 25, "Christmas Day"),
+    (12, 26, "Boxing Day"),
+]
 
 
 def check_repair_due_dates():
@@ -107,6 +119,136 @@ def check_repair_due_dates():
         db.close()
 
 
+def send_monthly_wishes_job():
+    """
+    Send new month wishes to all active managers
+    Runs automatically on 1st of every month at 8:00 AM
+    """
+    db: Session = SessionLocal()
+    
+    try:
+        from app.core.sms import get_sms_service
+        
+        month_name = datetime.now().strftime("%B %Y")
+        logger.info(f"🎉 Sending New Month wishes for {month_name}")
+        
+        # Get all active managers with phone numbers
+        managers = db.query(User).filter(
+            User.role.in_([UserRole.MANAGER, UserRole.CEO]),
+            User.phone_number.isnot(None),
+            User.phone_number != '',
+            User.is_active == 1
+        ).all()
+        
+        if not managers:
+            logger.info("No managers found for monthly wishes")
+            return
+        
+        sms_service = get_sms_service()
+        if not sms_service or not sms_service.enabled:
+            logger.warning("SMS service not configured - skipping monthly wishes")
+            return
+        
+        successful = 0
+        for manager in managers:
+            try:
+                message = f"Happy New Month, {manager.full_name}!\n\n"
+                message += f"🎉 Welcome to {month_name}!\n\n"
+                message += f"Wishing you and {manager.company_name or 'your business'} a successful and prosperous month ahead.\n\n"
+                message += f"May this month bring growth, success, and great opportunities!\n\n"
+                message += "Best wishes,\nSwapSync Team"
+                
+                result = sms_service.send_sms(
+                    phone_number=manager.phone_number,
+                    message=message,
+                    company_name="SwapSync"
+                )
+                
+                if result.get('success'):
+                    successful += 1
+            except Exception as e:
+                logger.error(f"Failed to send monthly wish to {manager.username}: {e}")
+        
+        logger.info(f"✅ Monthly wishes sent to {successful}/{len(managers)} managers")
+        
+    except Exception as e:
+        logger.error(f"❌ Error sending monthly wishes: {e}")
+    finally:
+        db.close()
+
+
+def send_holiday_wishes_job():
+    """
+    Check if today is a Ghana public holiday and send wishes
+    Runs daily at 8:00 AM
+    """
+    db: Session = SessionLocal()
+    
+    try:
+        from app.core.sms import get_sms_service
+        
+        today = datetime.now()
+        current_month = today.month
+        current_day = today.day
+        
+        # Check if today is a holiday
+        holiday_name = None
+        for month, day, name in GHANA_HOLIDAYS:
+            if month == current_month and day == current_day:
+                holiday_name = name
+                break
+        
+        if not holiday_name:
+            logger.debug("Today is not a public holiday")
+            return
+        
+        logger.info(f"🎊 Today is {holiday_name}! Sending wishes...")
+        
+        # Get all active managers with phone numbers
+        managers = db.query(User).filter(
+            User.role.in_([UserRole.MANAGER, UserRole.CEO]),
+            User.phone_number.isnot(None),
+            User.phone_number != '',
+            User.is_active == 1
+        ).all()
+        
+        if not managers:
+            logger.info("No managers found for holiday wishes")
+            return
+        
+        sms_service = get_sms_service()
+        if not sms_service or not sms_service.enabled:
+            logger.warning("SMS service not configured - skipping holiday wishes")
+            return
+        
+        successful = 0
+        for manager in managers:
+            try:
+                message = f"Happy {holiday_name}!\n\n"
+                message += f"Dear {manager.full_name},\n\n"
+                message += f"On behalf of the SwapSync Team, we wish you and {manager.company_name or 'your business'} a wonderful {holiday_name}!\n\n"
+                message += f"May this special day bring joy, peace, and prosperity to you and your loved ones.\n\n"
+                message += "Best wishes,\nSwapSync Team"
+                
+                result = sms_service.send_sms(
+                    phone_number=manager.phone_number,
+                    message=message,
+                    company_name="SwapSync"
+                )
+                
+                if result.get('success'):
+                    successful += 1
+            except Exception as e:
+                logger.error(f"Failed to send holiday wish to {manager.username}: {e}")
+        
+        logger.info(f"✅ {holiday_name} wishes sent to {successful}/{len(managers)} managers")
+        
+    except Exception as e:
+        logger.error(f"❌ Error sending holiday wishes: {e}")
+    finally:
+        db.close()
+
+
 def start_scheduler():
     """
     Initialize and start the background scheduler
@@ -119,17 +261,38 @@ def start_scheduler():
     
     scheduler = BackgroundScheduler()
     
-    # Add job: check repairs every minute
+    # Job 1: Check repairs every minute
     scheduler.add_job(
         func=check_repair_due_dates,
-        trigger=IntervalTrigger(minutes=1),  # Check every 1 minute (configurable)
+        trigger=IntervalTrigger(minutes=1),
         id='check_repair_due_dates',
         name='Check repair due dates and notify',
         replace_existing=True
     )
     
+    # Job 2: Send monthly wishes on 1st of every month at 8:00 AM
+    scheduler.add_job(
+        func=send_monthly_wishes_job,
+        trigger=CronTrigger(day=1, hour=8, minute=0),
+        id='monthly_wishes',
+        name='Send new month wishes to managers',
+        replace_existing=True
+    )
+    
+    # Job 3: Check for holidays daily at 8:00 AM
+    scheduler.add_job(
+        func=send_holiday_wishes_job,
+        trigger=CronTrigger(hour=8, minute=0),
+        id='holiday_wishes',
+        name='Send holiday wishes on public holidays',
+        replace_existing=True
+    )
+    
     scheduler.start()
-    logger.info("✅ Background scheduler started - checking repairs every 1 minute")
+    logger.info("✅ Background scheduler started:")
+    logger.info("   - Checking repairs every 1 minute")
+    logger.info("   - Sending monthly wishes on 1st of month at 8:00 AM")
+    logger.info("   - Checking for holidays daily at 8:00 AM")
 
 
 def stop_scheduler():

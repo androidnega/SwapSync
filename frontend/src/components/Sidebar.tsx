@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faChartLine,
   faUserShield,
-  faSms,
   faCog,
   faUsers,
   faExchangeAlt,
@@ -29,7 +28,9 @@ import {
   faEye,
   faTags,
   faBox,
-  faUser
+  faUser,
+  faSms,
+  faComment
 } from '@fortawesome/free-solid-svg-icons';
 
 interface SidebarItem {
@@ -59,6 +60,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Dashboard', icon: faChartLine, route: '/' },
     { name: 'User Management', icon: faUsers, route: '/users' },
     { name: 'Manager Management', icon: faUserShield, route: '/staff-management' },
+    { name: 'SMS Broadcast', icon: faSms, route: '/sms-broadcast' },
     { name: 'Audit Access', icon: faEye, route: '/audit-access' },
     { name: 'System Logs', icon: faServer, route: '/activity-logs' },
     { name: 'Database', icon: faDatabase, route: '/database' },
@@ -70,6 +72,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Dashboard', icon: faChartLine, route: '/' },
     { name: 'User Management', icon: faUsers, route: '/users' },
     { name: 'Manager Management', icon: faUserShield, route: '/staff-management' },
+    { name: 'SMS Broadcast', icon: faSms, route: '/sms-broadcast' },
     { name: 'Audit Access', icon: faEye, route: '/audit-access' },
     { name: 'System Logs', icon: faServer, route: '/activity-logs' },
     { name: 'Database', icon: faDatabase, route: '/database' },

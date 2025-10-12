@@ -45,6 +45,7 @@ class UserResponse(BaseModel):
     display_name: Optional[str] = None
     profile_picture: Optional[str] = None
     company_name: Optional[str] = None  # For CEOs
+    use_company_sms_branding: Optional[int] = None  # SMS branding toggle
     role: str
     is_active: int
     must_change_password: Optional[int] = None  # For first-login password change
