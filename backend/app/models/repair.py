@@ -16,7 +16,7 @@ class Repair(Base):
     __tablename__ = "repairs"
 
     id = Column(Integer, primary_key=True, index=True)
-    unique_id = Column(String(20), unique=True, nullable=True, index=True)  # REP-0001, REP-0002, etc.
+    unique_id = Column(String(20), unique=True, nullable=True, index=True, server_default=None)  # REP-0001, REP-0002, etc.
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
     customer_name = Column(String, nullable=True)  # For quick booking without customer record
     phone_id = Column(Integer, ForeignKey("phones.id"), nullable=True)  # Link to phone if in inventory
