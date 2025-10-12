@@ -48,6 +48,24 @@ const Repairs: React.FC = () => {
     fetchCustomers();
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.customer-dropdown-container')) {
+        setShowCustomerDropdown(false);
+      }
+    };
+
+    if (showCustomerDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCustomerDropdown]);
+
   const fetchUserRole = async () => {
     try {
       const response = await axios.get(`${API_URL}/auth/me`, {
@@ -519,7 +537,7 @@ const Repairs: React.FC = () => {
                     />
                     <p className="text-xs text-gray-500 mt-1">SMS notifications will be sent to this number</p>
                   </div>
-                  <div className="relative">
+                  <div className="relative customer-dropdown-container">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Select Customer
                     </label>
@@ -551,7 +569,7 @@ const Repairs: React.FC = () => {
                           ))
                         ) : (
                           <div className="px-3 py-2 text-gray-500 text-sm">
-                            No customers found. Type to search...
+                            {customerSearch ? 'No customers found. Type to search...' : 'Start typing to search customers...'}
                           </div>
                         )}
                       </div>

@@ -181,14 +181,14 @@ const SMSBroadcast: React.FC = () => {
           <button
             onClick={handleSendMonthlyWishes}
             disabled={loading}
-            className="p-6 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-6 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FontAwesomeIcon icon={faCalendar} className="text-3xl mb-2" />
             <h3 className="text-lg font-bold">Send Monthly Wishes</h3>
             <p className="text-sm opacity-90">Send new month greeting to all managers</p>
           </button>
           
-          <div className="p-6 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg shadow-lg">
+          <div className="p-6 bg-green-500 text-white rounded-lg shadow-md">
             <FontAwesomeIcon icon={faGift} className="text-3xl mb-2" />
             <h3 className="text-lg font-bold">Auto Holiday Wishes</h3>
             <p className="text-sm opacity-90">Automatic on Ghana public holidays at 8 AM</p>

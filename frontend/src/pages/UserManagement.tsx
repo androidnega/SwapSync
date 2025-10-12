@@ -110,13 +110,21 @@ const UserManagement: React.FC = () => {
 
   const getUserHierarchy = () => {
     // Organize users into hierarchy: Managers -> their staff
-    const managers = users.filter(u => u.role === 'manager' || u.role === 'ceo' || u.role === 'admin' || u.role === 'super_admin');
+    // Exclude system admins from hierarchy
+    const managers = users.filter(u => 
+      (u.role === 'manager' || u.role === 'ceo') && 
+      u.role !== 'admin' && 
+      u.role !== 'super_admin'
+    );
     const staff = users.filter(u => u.role === 'shop_keeper' || u.role === 'repairer');
     
-    return managers.map(manager => ({
-      manager,
-      staff: staff.filter(s => s.parent_user_id === manager.id)
-    }));
+    return managers.map(manager => {
+      const managerStaff = staff.filter(s => s.parent_user_id === manager.id);
+      return {
+        manager,
+        staff: managerStaff
+      };
+    });
   };
 
   const handleEditClick = (user: User) => {
@@ -148,6 +156,13 @@ const UserManagement: React.FC = () => {
   };
 
   const handleDeleteUser = async (user: User) => {
+    // Prevent deletion of admin accounts
+    if (user.role === 'admin' || user.role === 'super_admin') {
+      setMessage('❌ Cannot delete administrator accounts. Admins can only be deactivated or have their details changed.');
+      setTimeout(() => setMessage(''), 5000);
+      return;
+    }
+
     if (!confirm(`⚠️ WARNING: Delete user "${user.username}" (${user.full_name})?\n\nThis action cannot be undone!`)) {
       return;
     }
@@ -384,13 +399,15 @@ const UserManagement: React.FC = () => {
                       >
                         <FontAwesomeIcon icon={faKey} />
                       </button>
-                      <button
-                        onClick={() => handleDeleteUser(user)}
-                        className="text-red-600 hover:text-red-800 transition-colors"
-                        title="Delete User"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
+                      {user.role !== 'admin' && user.role !== 'super_admin' && (
+                        <button
+                          onClick={() => handleDeleteUser(user)}
+                          className="text-red-600 hover:text-red-800 transition-colors"
+                          title="Delete User"
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -411,9 +428,9 @@ const UserManagement: React.FC = () => {
       {viewMode === 'hierarchy' && (
         <div className="space-y-6">
           {getUserHierarchy().map(({ manager, staff }) => (
-            <div key={manager.id} className="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-purple-500">
+            <div key={manager.id} className="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-blue-400">
               {/* Manager Card */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 md:p-6">
+              <div className="bg-blue-50 p-4 md:p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
