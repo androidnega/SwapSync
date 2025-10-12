@@ -177,7 +177,9 @@ const Repairs: React.FC = () => {
 
   const handleStatusUpdate = async (id: number, newStatus: string) => {
     try {
-      await api.put(`/repairs/${id}/status`, { status: newStatus });
+      await api.patch(`/repairs/${id}/status`, null, {
+        params: { new_status: newStatus }
+      });
       setMessage(`✅ Status updated to ${newStatus}! SMS notification sent.`);
       fetchRepairs();
     } catch (error: any) {
