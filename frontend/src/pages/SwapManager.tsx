@@ -47,6 +47,7 @@ const SwapManager = () => {
   const [phoneSearchQuery, setPhoneSearchQuery] = useState('');
   const [showPhoneDropdown, setShowPhoneDropdown] = useState(false);
   const [companyName, setCompanyName] = useState<string>('SwapSync Shop');
+  const [userRole, setUserRole] = useState<string>('');
   
   const [form, setForm] = useState({
     customer_id: '',
@@ -81,10 +82,13 @@ const SwapManager = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
       });
       setCompanyName(response.data.company_name || 'SwapSync Shop');
+      setUserRole(response.data.role || '');
     } catch (error) {
       console.error('Failed to fetch company name:', error);
     }
   };
+
+  const isManager = userRole === 'manager' || userRole === 'ceo';
 
   useEffect(() => {
     // Calculate values when form changes
@@ -244,8 +248,22 @@ const SwapManager = () => {
           </div>
         </div>
 
+        {/* Manager Restriction Notice */}
+        {isManager && (
+          <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-yellow-900 mb-2">🔒 Manager Restriction</h3>
+            <p className="text-yellow-800 mb-3">
+              Managers cannot record phone swaps. Only <strong>Repairers</strong> and <strong>Shopkeepers</strong> can create swap transactions.
+            </p>
+            <p className="text-yellow-700 text-sm">
+              💡 You can view phone inventory and access other swap hub features, but swap recording is restricted to operational staff.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Swap Form */}
+          {!isManager && (
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-4 sm:p-5 md:p-6 space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">New Swap Transaction</h2>
@@ -612,6 +630,7 @@ const SwapManager = () => {
               )}
             </form>
           </div>
+          )}
 
           {/* Selected Phone Details */}
           <div>
