@@ -144,8 +144,22 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
     // Validate value is a positive number
     const valueNum = parseFloat(formData.value);
     if (isNaN(valueNum) || valueNum <= 0) {
-      setMessage('❌ Please enter a valid value greater than 0');
+      setMessage('❌ Please enter a valid selling price greater than 0');
       return;
+    }
+
+    // Validate cost price is a positive number
+    const costPriceNum = parseFloat(formData.cost_price);
+    if (isNaN(costPriceNum) || costPriceNum <= 0) {
+      setMessage('❌ Please enter a valid cost price greater than 0');
+      return;
+    }
+
+    // Warn if cost price is higher than selling price
+    if (costPriceNum > valueNum) {
+      if (!confirm('⚠️ Warning: Cost price is higher than selling price. This will result in a loss. Continue?')) {
+        return;
+      }
     }
 
     // Build specs object
@@ -169,9 +183,8 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
     if (formData.category_id) {
       phoneData.category_id = parseInt(formData.category_id);
     }
-    if (formData.cost_price) {
-      phoneData.cost_price = parseFloat(formData.cost_price);
-    }
+    // Cost price is now required
+    phoneData.cost_price = costPriceNum;
     if (Object.keys(specs).length > 0) {
       phoneData.specs = specs;
     }
@@ -499,7 +512,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
                 Condition
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Value (₵)
+                Selling Price (₵)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -841,7 +854,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Value (₵) *
+                    Selling Price (₵) *
                   </label>
                   <input
                     type="number"
@@ -852,20 +865,23 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
                     placeholder="e.g., 5000"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Price at which the phone will be sold to customers</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cost Price (₵) (Optional)
+                    Cost Price (₵) *
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     value={formData.cost_price}
                     onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
+                    required
                     placeholder="e.g., 4000"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Amount paid to acquire this phone</p>
                 </div>
 
                 {/* Swap Availability Toggle */}

@@ -12,8 +12,8 @@ class PhoneCreate(BaseModel):
     brand: str = Field(..., min_length=1, max_length=50)
     model: str = Field(..., min_length=1, max_length=100)
     condition: str = Field(..., pattern="^(New|Used|Refurbished)$")
-    value: float = Field(..., gt=0)
-    cost_price: Optional[float] = None
+    value: float = Field(..., gt=0, description="Selling price")
+    cost_price: float = Field(..., gt=0, description="Cost price (amount paid to acquire)")
     category_id: Optional[int] = None
     brand_id: Optional[int] = None
     specs: Optional[Dict[str, Any]] = None
