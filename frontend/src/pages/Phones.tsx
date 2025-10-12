@@ -1139,6 +1139,38 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
               </div>
 
 
+              {/* Swap Transaction Details (if swapped) */}
+              {viewingPhone.status === 'SWAPPED' && viewingPhone.swapped_from_id && (
+                <div className="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-400">
+                  <h3 className="text-sm font-semibold text-yellow-900 uppercase mb-3 flex items-center gap-2">
+                    🔄 Swap Transaction Details
+                  </h3>
+                  <p className="text-sm text-yellow-800 mb-3">
+                    This phone was given to a customer through a swap transaction. 
+                    <strong className="text-yellow-900"> Customer gave us a trade-in phone + cash in exchange.</strong>
+                  </p>
+                  <div className="bg-white rounded-lg p-3 border border-yellow-300">
+                    <p className="text-xs text-gray-600 mb-2">
+                      📋 To view full swap details (trade-in phone, cash received, etc.):
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <a 
+                        href="/pending-resales" 
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium underline flex items-center gap-1"
+                      >
+                        → View in Pending Resales
+                      </a>
+                      <a 
+                        href="/swap-manager" 
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium underline flex items-center gap-1"
+                      >
+                        → View in Swap Manager
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Metadata */}
               <div className="bg-gray-50 rounded-lg p-4 border-t-2 border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-700 uppercase mb-3 flex items-center gap-2">
