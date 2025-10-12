@@ -251,14 +251,26 @@ async def verify_otp(
             message="No active OTP session. Please request a new code."
         )
     
-    # Check expiration
+    # Check expiration (with detailed logging)
+    current_time = datetime.utcnow()
+    time_remaining = int((otp_session.expires_at - current_time).total_seconds())
+    
+    print(f"\n⏰ OTP EXPIRATION CHECK:")
+    print(f"   Created: {otp_session.created_at}")
+    print(f"   Expires: {otp_session.expires_at}")
+    print(f"   Current: {current_time}")
+    print(f"   Time Remaining: {time_remaining} seconds ({time_remaining // 60}:{time_remaining % 60:02d})")
+    
     if otp_session.is_expired():
         otp_session.status = "expired"
         db.commit()
+        print(f"   ❌ EXPIRED!")
         return OTPVerifyResponse(
             success=False,
             message="OTP code has expired. Please request a new code."
         )
+    
+    print(f"   ✅ Still valid")
     
     # Check if locked
     if otp_session.is_locked():
