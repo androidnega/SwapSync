@@ -79,9 +79,9 @@ Password: {password}
 • View analytics & reports
 • Access all company features
 
-Welcome to SwapSync!
+Thank you for choosing {company_name}!
 
-- SwapSync Team""",
+- {company_name} Team""",
         
         'shop_keeper': f"""Welcome to {company_name}!
 
@@ -96,9 +96,9 @@ Password: {password}
 • Manage customer transactions
 • Handle daily operations
 
-Welcome to SwapSync!
+Thank you for choosing {company_name}!
 
-- SwapSync Team""",
+- {company_name} Team""",
         
         'repairer': f"""Welcome to {company_name}!
 
@@ -113,9 +113,9 @@ Password: {password}
 • Update repair status
 • Track repair progress
 
-Welcome to SwapSync!
+Thank you for choosing {company_name}!
 
-- SwapSync Team""",
+- {company_name} Team""",
         
         'ceo': f"""Welcome to {company_name}!
 
@@ -131,9 +131,9 @@ Password: {password}
 • Access all system features
 • View company analytics
 
-Welcome to SwapSync!
+Thank you for choosing {company_name}!
 
-- SwapSync Team"""
+- {company_name} Team"""
     }
     
     # Get role-specific message or default
@@ -145,9 +145,9 @@ Password: {password}
 
 🔗 Login: https://swapsync.digitstec.store
 
-Welcome to SwapSync!
+Thank you for choosing {company_name}!
 
-- SwapSync Team""")
+- {company_name} Team""")
     
     return send_sms(phone_number, message)
 

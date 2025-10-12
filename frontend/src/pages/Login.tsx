@@ -214,19 +214,8 @@ const Login: React.FC = () => {
           <div className="w-full max-w-md">
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="inline-block mb-4">
-                <img src={swapsyncImage} alt="SwapSync" className="h-16 w-auto" />
-              </div>
               <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
               <p className="text-gray-600 mt-2">Login to continue to your account</p>
-              
-              {/* Info Button */}
-              <button
-                onClick={() => setShowInfoModal(true)}
-                className="mt-3 text-sm text-blue-600 hover:text-blue-700 hover:underline"
-              >
-                ℹ️ About SwapSync
-              </button>
             </div>
 
             {/* Login Form Card - No Shadow, Wider */}
@@ -243,7 +232,7 @@ const Login: React.FC = () => {
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    🔑 Password
+                    Password
                   </button>
                   <button
                     type="button"
@@ -254,7 +243,7 @@ const Login: React.FC = () => {
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    📱 SMS OTP
+                    SMS OTP
                   </button>
                 </div>
 
@@ -354,53 +343,6 @@ const Login: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Info Modal */}
-      {showInfoModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
-            <button
-              onClick={() => setShowInfoModal(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
-            >
-              ×
-            </button>
-            
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">SwapSync</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Phone Swapping & Repair Shop Management System
-              </p>
-            </div>
-
-            <div className="space-y-2 text-sm text-gray-700">
-              <div className="flex items-start">
-                <span className="mr-2 text-green-600">✓</span>
-                <span>Manage phone swaps and sales</span>
-              </div>
-              <div className="flex items-start">
-                <span className="mr-2 text-green-600">✓</span>
-                <span>Track repairs with SMS notifications</span>
-              </div>
-              <div className="flex items-start">
-                <span className="mr-2 text-green-600">✓</span>
-                <span>Automatic profit/loss calculation</span>
-              </div>
-              <div className="flex items-start">
-                <span className="mr-2 text-green-600">✓</span>
-                <span>Complete analytics and reporting</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowInfoModal(false)}
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm font-medium"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Password Reset Modal */}
       {showResetModal && (

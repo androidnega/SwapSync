@@ -15,6 +15,7 @@ from app.models.user import User
 from app.models.swap import Swap, ResaleStatus
 from app.models.customer import Customer
 from app.models.phone import Phone, PhoneStatus, PhoneOwnershipHistory
+from app.models.pending_resale import PendingResale, TransactionType, PhoneSaleStatus, ProfitStatus
 from app.schemas.swap import SwapCreate, SwapResponse, SwapResaleUpdate
 
 router = APIRouter(prefix="/swaps", tags=["Swaps"])
@@ -144,6 +145,75 @@ def create_swap(
         change_date=datetime.utcnow()
     )
     db.add(ownership_change)
+    
+    # Create incoming phone record for the trade-in phone
+    incoming_phone = None
+    if swap.given_phone_value > 0:
+        # Parse phone description to extract brand and model
+        # Format expected: "Brand Model, Condition" or "Brand Model"
+        parts = swap.given_phone_description.split(',')
+        phone_desc = parts[0].strip()
+        phone_parts = phone_desc.split(' ', 1)
+        
+        incoming_brand = phone_parts[0] if len(phone_parts) > 0 else "Unknown"
+        incoming_model = phone_parts[1] if len(phone_parts) > 1 else "Unknown"
+        
+        # Determine condition from description or default
+        incoming_condition = parts[1].strip() if len(parts) > 1 else "Used"
+        
+        # Create phone record for incoming phone
+        incoming_phone = Phone(
+            brand=incoming_brand,
+            model=incoming_model,
+            condition=incoming_condition,
+            value=swap.given_phone_value,
+            cost_price=0.0,  # We got it in trade
+            status=PhoneStatus.SWAPPED,
+            is_available=True,
+            swapped_from_id=new_swap.id,
+            created_by_user_id=current_user.id,
+            current_owner_type="shop",
+            created_at=datetime.utcnow()
+        )
+        
+        # Add IMEI if provided
+        if swap.given_phone_imei:
+            incoming_phone.imei = swap.given_phone_imei
+        
+        db.add(incoming_phone)
+        db.flush()  # Get the phone ID
+        
+        # Generate unique ID for incoming phone
+        incoming_phone.generate_unique_id(db)
+    
+    # Create comprehensive pending resale record
+    pending_resale = PendingResale(
+        sold_phone_id=new_phone.id,
+        sold_phone_brand=new_phone.brand,
+        sold_phone_model=new_phone.model,
+        sold_phone_value=new_phone.value,
+        sold_phone_status="swapped",
+        incoming_phone_id=incoming_phone.id if incoming_phone else None,
+        incoming_phone_brand=incoming_brand if incoming_phone else None,
+        incoming_phone_model=incoming_model if incoming_phone else None,
+        incoming_phone_condition=incoming_condition if incoming_phone else None,
+        incoming_phone_value=swap.given_phone_value if incoming_phone else None,
+        incoming_phone_status=PhoneSaleStatus.AVAILABLE if incoming_phone else None,
+        transaction_type=TransactionType.SWAP,
+        customer_id=customer.id,
+        attending_staff_id=current_user.id,
+        balance_paid=final_price,
+        discount_amount=swap.discount_amount,
+        final_price=final_price,
+        profit_status=ProfitStatus.PENDING,
+        swap_id=new_swap.id,
+        transaction_date=datetime.utcnow()
+    )
+    db.add(pending_resale)
+    db.flush()
+    
+    # Generate unique ID for pending resale
+    pending_resale.generate_unique_id(db)
     
     # Generate invoice
     invoice = create_swap_invoice(db, new_swap, customer, new_phone, current_user)

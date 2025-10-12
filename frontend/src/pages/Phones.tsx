@@ -528,12 +528,28 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        phone.is_available
+                        phone.status === 'SWAPPED'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : phone.status === 'AVAILABLE'
+                          ? 'bg-green-100 text-green-800'
+                          : phone.status === 'SOLD'
+                          ? 'bg-red-100 text-red-800'
+                          : phone.status === 'UNDER_REPAIR'
+                          ? 'bg-blue-100 text-blue-800'
+                          : phone.is_available
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      {phone.is_available ? 'Available' : 'Sold/Swapped'}
+                      {phone.status === 'SWAPPED' 
+                        ? 'Swapped'
+                        : phone.status === 'AVAILABLE'
+                        ? 'Available'
+                        : phone.status === 'SOLD'
+                        ? 'Sold'
+                        : phone.status === 'UNDER_REPAIR'
+                        ? 'Under Repair'
+                        : phone.is_available ? 'Available' : 'Sold/Swapped'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -591,12 +607,28 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
                 </div>
                 <span
                   className={`px-2.5 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-                    phone.is_available
+                    phone.status === 'SWAPPED'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : phone.status === 'AVAILABLE'
+                      ? 'bg-green-100 text-green-800'
+                      : phone.status === 'SOLD'
+                      ? 'bg-red-100 text-red-800'
+                      : phone.status === 'UNDER_REPAIR'
+                      ? 'bg-blue-100 text-blue-800'
+                      : phone.is_available
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   }`}
                 >
-                  {phone.is_available ? 'Available' : 'Sold'}
+                  {phone.status === 'SWAPPED' 
+                    ? 'Swapped'
+                    : phone.status === 'AVAILABLE'
+                    ? 'Available'
+                    : phone.status === 'SOLD'
+                    ? 'Sold'
+                    : phone.status === 'UNDER_REPAIR'
+                    ? 'Under Repair'
+                    : phone.is_available ? 'Available' : 'Sold'}
                 </span>
               </div>
               

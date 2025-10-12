@@ -152,16 +152,17 @@ def send_monthly_wishes_job():
         successful = 0
         for manager in managers:
             try:
+                company = manager.company_name or "Your Shop"
                 message = f"Happy New Month, {manager.full_name}!\n\n"
                 message += f"🎉 Welcome to {month_name}!\n\n"
                 message += f"Wishing you and {manager.company_name or 'your business'} a successful and prosperous month ahead.\n\n"
                 message += f"May this month bring growth, success, and great opportunities!\n\n"
-                message += "Best wishes,\nSwapSync Team"
+                message += f"Best wishes,\n{company} Team"
                 
                 result = sms_service.send_sms(
                     phone_number=manager.phone_number,
                     message=message,
-                    company_name="SwapSync"
+                    company_name=company
                 )
                 
                 if result.get('success'):
@@ -224,16 +225,17 @@ def send_holiday_wishes_job():
         successful = 0
         for manager in managers:
             try:
+                company = manager.company_name or "Your Shop"
                 message = f"Happy {holiday_name}!\n\n"
                 message += f"Dear {manager.full_name},\n\n"
-                message += f"On behalf of the SwapSync Team, we wish you and {manager.company_name or 'your business'} a wonderful {holiday_name}!\n\n"
+                message += f"On behalf of the {company} Team, we wish you and {manager.company_name or 'your business'} a wonderful {holiday_name}!\n\n"
                 message += f"May this special day bring joy, peace, and prosperity to you and your loved ones.\n\n"
-                message += "Best wishes,\nSwapSync Team"
+                message += f"Best wishes,\n{company} Team"
                 
                 result = sms_service.send_sms(
                     phone_number=manager.phone_number,
                     message=message,
-                    company_name="SwapSync"
+                    company_name=company
                 )
                 
                 if result.get('success'):
