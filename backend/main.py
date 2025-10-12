@@ -117,7 +117,7 @@ app.add_middleware(
 from app.api.routes import otp_routes
 
 # Include routers
-app.include_router(ping.router, tags=["Health Check"])
+app.include_router(ping.router, prefix="/api", tags=["Health Check"])
 app.include_router(auth_routes.router, prefix="/api")
 app.include_router(otp_routes.router, prefix="/api")
 app.include_router(staff_routes.router, prefix="/api")
