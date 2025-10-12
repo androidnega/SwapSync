@@ -175,12 +175,17 @@ const Repairs: React.FC = () => {
     }
   };
 
-  const handleStatusUpdate = async (id: number, newStatus: string) => {
+  const handleStatusUpdate = async (id: number, newStatus: string, confirmMessage: string) => {
+    // Show confirmation dialog
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
     try {
       await api.patch(`/repairs/${id}/status`, null, {
         params: { new_status: newStatus }
       });
-      setMessage(`✅ Status updated to ${newStatus}! SMS notification sent.`);
+      setMessage(`✅ Status updated to ${newStatus}! SMS notification sent to customer.`);
       fetchRepairs();
     } catch (error: any) {
       setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
@@ -296,6 +301,49 @@ const Repairs: React.FC = () => {
           </p>
         </div>
       )}
+
+      {/* Workflow Guide */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <span>🔄</span> Repair Workflow Guide
+        </h3>
+        <div className="flex flex-col md:flex-row gap-3 text-xs">
+          <div className="flex-1 bg-white rounded-lg p-3 border border-blue-200">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">1️⃣</span>
+              <span className="font-semibold text-blue-700">Create Booking</span>
+            </div>
+            <p className="text-gray-600">Customer brings phone for repair</p>
+          </div>
+          <span className="hidden md:block text-gray-400 self-center">→</span>
+          <div className="flex-1 bg-white rounded-lg p-3 border border-blue-200">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">2️⃣</span>
+              <span className="font-semibold text-blue-700">Start Repair</span>
+            </div>
+            <p className="text-gray-600">Click "▶️ Start Repair" to begin work</p>
+          </div>
+          <span className="hidden md:block text-gray-400 self-center">→</span>
+          <div className="flex-1 bg-white rounded-lg p-3 border border-green-200">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">3️⃣</span>
+              <span className="font-semibold text-green-700">Mark Complete</span>
+            </div>
+            <p className="text-gray-600">When fixed, click "✓ Mark Complete"</p>
+          </div>
+          <span className="hidden md:block text-gray-400 self-center">→</span>
+          <div className="flex-1 bg-white rounded-lg p-3 border border-purple-200">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">4️⃣</span>
+              <span className="font-semibold text-purple-700">Deliver</span>
+            </div>
+            <p className="text-gray-600">When customer picks up, click "📦 Mark Delivered"</p>
+          </div>
+        </div>
+        <p className="text-xs text-gray-600 mt-3 flex items-center gap-1">
+          <span>💡</span> <strong>SMS notifications</strong> are automatically sent to customers at each step!
+        </p>
+      </div>
 
       {message && (
         <div className={`p-4 rounded-lg ${message.includes('✅') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
@@ -447,43 +495,68 @@ const Repairs: React.FC = () => {
                     {new Date(repair.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex gap-2">
-                      {repair.status.toLowerCase() === 'pending' && (
+                    <div className="flex flex-col gap-2">
+                      {/* Workflow Action Buttons */}
+                      <div className="flex gap-2">
+                        {repair.status.toLowerCase() === 'pending' && (
+                          <button
+                            onClick={() => handleStatusUpdate(
+                              repair.id, 
+                              'In Progress',
+                              '🔧 Start working on this repair? Customer will be notified that repair is in progress.'
+                            )}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium flex items-center gap-1"
+                          >
+                            <span>▶️</span> Start Repair
+                          </button>
+                        )}
+                        {repair.status.toLowerCase().replace(/\s+/g, '_') === 'in_progress' && (
+                          <button
+                            onClick={() => handleStatusUpdate(
+                              repair.id, 
+                              'Completed',
+                              '✅ Mark this repair as completed? Customer will be notified that phone is ready for pickup.'
+                            )}
+                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-medium flex items-center gap-1"
+                          >
+                            <span>✓</span> Mark Complete
+                          </button>
+                        )}
+                        {repair.status.toLowerCase() === 'completed' && (
+                          <button
+                            onClick={() => handleStatusUpdate(
+                              repair.id, 
+                              'Delivered',
+                              '📦 Confirm phone delivery? Customer will receive a delivery confirmation.'
+                            )}
+                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-medium flex items-center gap-1"
+                          >
+                            <span>📦</span> Mark Delivered
+                          </button>
+                        )}
+                        {repair.status.toLowerCase() === 'delivered' && (
+                          <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-md text-xs font-medium border border-green-200">
+                            ✓ Completed & Delivered
+                          </span>
+                        )}
+                      </div>
+                      {/* Management Buttons */}
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => handleStatusUpdate(repair.id, 'In Progress')}
-                          className="text-blue-600 hover:text-blue-900 text-xs"
+                          onClick={() => handleEdit(repair)}
+                          className="text-blue-600 hover:text-blue-900 text-xs underline"
                         >
-                          Start
+                          Edit Details
                         </button>
-                      )}
-                      {repair.status.toLowerCase() === 'in_progress' && (
-                        <button
-                          onClick={() => handleStatusUpdate(repair.id, 'Completed')}
-                          className="text-green-600 hover:text-green-900 text-xs"
-                        >
-                          Complete
-                        </button>
-                      )}
-                      {repair.status.toLowerCase() === 'completed' && (
-                        <button
-                          onClick={() => handleStatusUpdate(repair.id, 'Delivered')}
-                          className="text-purple-600 hover:text-purple-900 text-xs"
-                        >
-                          Deliver
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleEdit(repair)}
-                        className="text-blue-600 hover:text-blue-900 text-xs"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(repair.id)}
-                        className="text-red-600 hover:text-red-900 text-xs"
-                      >
-                        Delete
-                      </button>
+                        {repair.status.toLowerCase() !== 'delivered' && (
+                          <button
+                            onClick={() => handleDelete(repair.id)}
+                            className="text-red-600 hover:text-red-900 text-xs underline"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -543,43 +616,67 @@ const Repairs: React.FC = () => {
                   <span className="text-gray-600">{new Date(repair.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+              {/* Workflow Actions */}
+              <div className="flex flex-col gap-2 pt-3 border-t border-gray-200">
                 {repair.status.toLowerCase() === 'pending' && (
                   <button
-                    onClick={() => handleStatusUpdate(repair.id, 'In Progress')}
-                    className="flex-1 min-w-[80px] px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-sm font-medium"
+                    onClick={() => handleStatusUpdate(
+                      repair.id, 
+                      'In Progress',
+                      '🔧 Start working on this repair? Customer will be notified that repair is in progress.'
+                    )}
+                    className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
                   >
-                    Start
+                    <span>▶️</span> Start Repair
                   </button>
                 )}
-                {repair.status.toLowerCase() === 'in_progress' && (
+                {repair.status.toLowerCase().replace(/\s+/g, '_') === 'in_progress' && (
                   <button
-                    onClick={() => handleStatusUpdate(repair.id, 'Completed')}
-                    className="flex-1 min-w-[80px] px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 text-sm font-medium"
+                    onClick={() => handleStatusUpdate(
+                      repair.id, 
+                      'Completed',
+                      '✅ Mark this repair as completed? Customer will be notified that phone is ready for pickup.'
+                    )}
+                    className="w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
                   >
-                    Complete
+                    <span>✓</span> Mark Complete (Ready for Pickup)
                   </button>
                 )}
                 {repair.status.toLowerCase() === 'completed' && (
                   <button
-                    onClick={() => handleStatusUpdate(repair.id, 'Delivered')}
-                    className="flex-1 min-w-[80px] px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 text-sm font-medium"
+                    onClick={() => handleStatusUpdate(
+                      repair.id, 
+                      'Delivered',
+                      '📦 Confirm phone delivery? Customer will receive a delivery confirmation.'
+                    )}
+                    className="w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
                   >
-                    Deliver
+                    <span>📦</span> Mark Delivered
                   </button>
                 )}
-                <button
-                  onClick={() => handleEdit(repair)}
-                  className="flex-1 min-w-[60px] px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-sm font-medium"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(repair.id)}
-                  className="flex-1 min-w-[60px] px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 text-sm font-medium"
-                >
-                  Delete
-                </button>
+                {repair.status.toLowerCase() === 'delivered' && (
+                  <div className="w-full px-4 py-2.5 bg-green-50 text-green-700 rounded-lg text-sm font-medium text-center border border-green-200">
+                    ✓ Completed & Delivered
+                  </div>
+                )}
+                
+                {/* Management Actions */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(repair)}
+                    className="flex-1 px-3 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 text-sm font-medium"
+                  >
+                    Edit Details
+                  </button>
+                  {repair.status.toLowerCase() !== 'delivered' && (
+                    <button
+                      onClick={() => handleDelete(repair.id)}
+                      className="flex-1 px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 text-sm font-medium"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))
