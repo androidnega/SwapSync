@@ -381,6 +381,7 @@ const SMSBroadcast: React.FC = () => {
         </div>
 
         {/* Info Card */}
+        {/* SMS Branding Rules */}
         <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <h4 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
             <FontAwesomeIcon icon={faExclamationTriangle} />
