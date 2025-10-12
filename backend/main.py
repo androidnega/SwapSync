@@ -33,6 +33,17 @@ async def startup_event():
     """Initialize database tables on application startup"""
     from app.core.database import SessionLocal
     init_db()
+    
+    # Run migrations BEFORE querying database
+    try:
+        from run_migrations import run_migrations
+        logger.info("🔧 Running database migrations...")
+        run_migrations()
+        logger.info("✅ Migrations completed")
+    except Exception as e:
+        logger.warning(f"⚠️ Migration runner error: {e}")
+        logger.warning("Continuing with startup anyway...")
+    
     # Create default admin if no users exist
     db = SessionLocal()
     try:

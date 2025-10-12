@@ -42,6 +42,10 @@ const Settings: React.FC = () => {
     delete_all: false
   });
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  // Debug info state
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     fetchMaintenanceStatus();
