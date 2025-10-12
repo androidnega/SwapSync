@@ -101,14 +101,14 @@ def update_my_account(
 ):
     """
     Update current user's full account details
-    Managers can update: username, email, phone_number, full_name, company_name
-    This is for the manager's account settings page
+    Managers and Admins can update: username, email, phone_number, full_name, company_name
+    This is for the account settings page
     """
-    # Check if manager role
-    if not current_user.is_manager:
+    # Check if manager or admin role
+    if not (current_user.is_manager or current_user.is_admin):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only managers can update full account details. Use /profile/me for profile updates."
+            detail="Only managers and administrators can update full account details. Use /profile/me for profile updates."
         )
     
     changes = []

@@ -29,6 +29,7 @@ const Repairs: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [userRole, setUserRole] = useState<string>('');
   const [formData, setFormData] = useState({
+    customer_id: '',
     customer_phone: '',
     customer_name: '',
     phone_description: '',
@@ -107,7 +108,8 @@ const Repairs: React.FC = () => {
     setFormData({
       ...formData,
       customer_name: customer.full_name,
-      customer_phone: customer.phone_number
+      customer_phone: customer.phone_number,
+      customer_id: customer.id.toString()
     });
     setShowCustomerDropdown(false);
   };
@@ -121,6 +123,12 @@ const Repairs: React.FC = () => {
     e.preventDefault();
     setMessage('');
 
+    // Validate customer selection
+    if (!formData.customer_id || !selectedCustomer) {
+      setMessage('❌ Please select a customer from the dropdown');
+      return;
+    }
+
     // Validate cost
     const costNum = parseFloat(formData.cost);
     if (isNaN(costNum) || costNum <= 0) {
@@ -129,21 +137,16 @@ const Repairs: React.FC = () => {
     }
 
     const repairData: any = {
-      customer_phone: formData.customer_phone.trim(),
+      customer_id: parseInt(formData.customer_id),
       phone_description: formData.phone_description.trim(),
-      issue: formData.issue.trim(),
+      issue_description: formData.issue.trim(),
       cost: costNum,
     };
 
     // Add optional fields
-    if (formData.customer_name.trim()) {
-      repairData.customer_name = formData.customer_name.trim();
-    }
     if (formData.due_date) {
       repairData.due_date = formData.due_date;
     }
-
-    console.log('Submitting repair data:', repairData);
 
     try {
       if (editingId) {
@@ -158,6 +161,7 @@ const Repairs: React.FC = () => {
       
       setShowModal(false);
       setFormData({ 
+        customer_id: '',
         customer_phone: '', 
         customer_name: '', 
         phone_description: '', 
@@ -165,6 +169,8 @@ const Repairs: React.FC = () => {
         cost: '', 
         due_date: '' 
       });
+      setSelectedCustomer(null);
+      setCustomerSearch('');
       setEditingId(null);
       fetchRepairs();
     } catch (error: any) {
@@ -186,12 +192,17 @@ const Repairs: React.FC = () => {
 
   const handleEdit = (repair: Repair) => {
     setFormData({
+      customer_id: repair.customer_id.toString(),
       customer_phone: '',  // We don't store phone number in repair
+      customer_name: '',
       phone_description: repair.phone_description,
       issue: repair.issue,
       cost: repair.cost.toString(),
+      due_date: ''
     });
     setEditingId(repair.id);
+    setSelectedCustomer(null);
+    setCustomerSearch('');
     setShowModal(true);
   };
 
@@ -209,6 +220,7 @@ const Repairs: React.FC = () => {
 
   const openNewModal = () => {
     setFormData({ 
+      customer_id: '',
       customer_phone: '', 
       customer_name: '', 
       phone_description: '', 
@@ -216,6 +228,8 @@ const Repairs: React.FC = () => {
       cost: '', 
       due_date: '' 
     });
+    setSelectedCustomer(null);
+    setCustomerSearch('');
     setEditingId(null);
     setShowModal(true);
   };
@@ -586,7 +600,7 @@ const Repairs: React.FC = () => {
                           onClick={() => {
                             setSelectedCustomer(null);
                             setCustomerSearch('');
-                            setFormData({ ...formData, customer_name: '', customer_phone: '' });
+                            setFormData({ ...formData, customer_id: '', customer_name: '', customer_phone: '' });
                           }}
                           className="text-red-600 hover:text-red-800 text-sm"
                         >

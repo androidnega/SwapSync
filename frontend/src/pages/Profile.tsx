@@ -233,6 +233,8 @@ const Profile: React.FC = () => {
   };
 
   const isManager = profile?.role === 'manager' || profile?.role === 'ceo';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
+  const canEditAccount = isManager || isAdmin;  // Both managers and admins can edit
 
   if (loading) {
     return (
@@ -343,8 +345,8 @@ const Profile: React.FC = () => {
 
             {/* Account Information */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Account Details Card - For Managers */}
-              {isManager ? (
+              {/* Account Details Card - For Managers and Admins */}
+              {canEditAccount ? (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                   <div className="p-6 border-b border-gray-200">
                     <div className="flex items-center justify-between">
@@ -658,10 +660,10 @@ const Profile: React.FC = () => {
               </div>
 
               {/* Security Notice */}
-              {isManager && (
+              {canEditAccount && (
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="text-sm text-yellow-800">
-                    <strong>🔒 Important:</strong> Changing your username or email will affect your login credentials. You cannot delete your own account - contact your system administrator if needed.
+                    <strong>🔒 Important:</strong> Changing your username or email will affect your login credentials. {isAdmin ? 'Administrator accounts cannot be deleted.' : 'You cannot delete your own account - contact your system administrator if needed.'}
                   </p>
                 </div>
               )}
