@@ -25,8 +25,11 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     """Schema for updating user information"""
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
     email: Optional[EmailStr] = None
+    phone_number: Optional[str] = Field(None, min_length=10, max_length=20)
     full_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    company_name: Optional[str] = Field(None, max_length=100)
     role: Optional[str] = Field(None, pattern="^(shop_keeper|repairer|admin|manager|ceo)$")
     is_active: Optional[bool] = None
 

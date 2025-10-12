@@ -271,6 +271,7 @@ def update_user(
 ):
     """
     Update user information (Admin only)
+    Admins can update: username, email, full_name, phone_number, role, company_name, is_active
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -279,15 +280,78 @@ def update_user(
             detail="User not found"
         )
     
+    changes = []
+    
     # Update only provided fields
-    for field, value in user_update.model_dump(exclude_unset=True).items():
-        if field == "role":
-            setattr(user, field, UserRole(value))
-        else:
-            setattr(user, field, value)
+    update_data = user_update.model_dump(exclude_unset=True)
+    
+    # Check username uniqueness if updating
+    if "username" in update_data and update_data["username"] != user.username:
+        existing = db.query(User).filter(
+            User.username == update_data["username"],
+            User.id != user_id
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already taken"
+            )
+        changes.append(f"username: {user.username} → {update_data['username']}")
+        user.username = update_data["username"]
+    
+    # Check email uniqueness if updating
+    if "email" in update_data and update_data["email"] != user.email:
+        existing = db.query(User).filter(
+            User.email == update_data["email"],
+            User.id != user_id
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        changes.append(f"email: {user.email} → {update_data['email']}")
+        user.email = update_data["email"]
+    
+    # Update other fields
+    if "full_name" in update_data and update_data["full_name"] != user.full_name:
+        changes.append(f"name: {user.full_name} → {update_data['full_name']}")
+        user.full_name = update_data["full_name"]
+    
+    if "phone_number" in update_data and update_data["phone_number"] != user.phone_number:
+        changes.append(f"phone: {user.phone_number} → {update_data['phone_number']}")
+        user.phone_number = update_data["phone_number"]
+    
+    if "company_name" in update_data and update_data["company_name"] != user.company_name:
+        changes.append(f"company: {user.company_name} → {update_data['company_name']}")
+        user.company_name = update_data["company_name"]
+    
+    if "role" in update_data:
+        old_role = user.role.value
+        user.role = UserRole(update_data["role"])
+        if old_role != user.role.value:
+            changes.append(f"role: {old_role} → {user.role.value}")
+    
+    if "is_active" in update_data:
+        new_active = 1 if update_data["is_active"] else 0
+        if new_active != user.is_active:
+            changes.append(f"status: {'active' if user.is_active else 'inactive'} → {'active' if new_active else 'inactive'}")
+            user.is_active = new_active
     
     db.commit()
     db.refresh(user)
+    
+    # Log activity
+    from app.core.activity_logger import log_activity
+    if changes:
+        log_activity(
+            db=db,
+            user=current_user,
+            action=f"updated user {user.username}",
+            module="users",
+            target_id=user.id,
+            details=", ".join(changes)
+        )
     
     return user
 
