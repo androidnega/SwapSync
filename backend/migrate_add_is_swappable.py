@@ -30,10 +30,10 @@ def migrate():
     
     try:
         with engine.connect() as conn:
-            # Add column with default value TRUE
+            # Add column with default value TRUE (PostgreSQL and SQLite compatible)
             conn.execute(text("""
                 ALTER TABLE phones 
-                ADD COLUMN is_swappable BOOLEAN DEFAULT 1 NOT NULL
+                ADD COLUMN is_swappable BOOLEAN DEFAULT TRUE NOT NULL
             """))
             conn.commit()
         
