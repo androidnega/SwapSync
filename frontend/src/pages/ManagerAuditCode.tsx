@@ -161,7 +161,6 @@ const ManagerAuditCode: React.FC = () => {
               </p>
             </div>
           </div>
-        )}
 
         {/* Information Card */}
         <div className="bg-white rounded-xl shadow p-6">
