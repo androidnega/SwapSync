@@ -26,17 +26,38 @@ def send_repair_completion_sms_background(
     company_name: str,
     repair_description: str,
     cost: float,
-    invoice_number: str = None
+    invoice_number: str = None,
+    manager_id: int = None
 ):
-    """Background task to send repair completion SMS"""
+    """Background task to send repair completion SMS with dynamic branding"""
     try:
         from app.core.database import SessionLocal
+        
+        # Determine SMS sender based on manager's branding preference
+        db = SessionLocal()
+        sms_sender = company_name  # Default
+        
+        if manager_id:
+            manager = db.query(User).filter(User.id == manager_id).first()
+            if manager and hasattr(manager, 'use_company_sms_branding'):
+                if manager.use_company_sms_branding == 1 and manager.company_name:
+                    sms_sender = manager.company_name
+                    print(f"📱 Using company branding: {manager.company_name}")
+                else:
+                    sms_sender = "SwapSync"
+                    print(f"📱 Using SwapSync branding (company toggle off)")
+            else:
+                sms_sender = "SwapSync"
+        else:
+            sms_sender = "SwapSync"
+        
+        db.close()
         
         sms_service = get_sms_service()
         sms_result = sms_service.send_repair_completion_sms(
             phone_number=customer_phone,
             customer_name=customer_name,
-            company_name=company_name,
+            company_name=sms_sender,  # Use determined sender
             repair_description=repair_description,
             cost=cost,
             invoice_number=invoice_number
@@ -329,21 +350,26 @@ def update_repair_status(
     if old_status != new_status and new_status == "Completed":
         customer = db.query(Customer).filter(Customer.id == repair.customer_id).first()
         if customer:
-            # Get company name (Manager who owns this repair)
+            # Get manager for branding check
+            manager_id = None
             company_name = "SwapSync"  # Default
+            
             if repair.created_by_user_id:
                 created_by = db.query(User).filter(User.id == repair.created_by_user_id).first()
                 if created_by:
                     # If created by shopkeeper/repairer, get their manager's company
                     if created_by.parent_user_id:
                         manager = db.query(User).filter(User.id == created_by.parent_user_id).first()
-                        if manager and manager.company_name:
-                            company_name = manager.company_name
+                        if manager:
+                            manager_id = manager.id
+                            company_name = manager.company_name or "SwapSync"
                     # If created by manager directly
-                    elif created_by.is_manager and created_by.company_name:
-                        company_name = created_by.company_name
+                    elif created_by.is_manager:
+                        manager_id = created_by.id
+                        company_name = created_by.company_name or "SwapSync"
             
             # Schedule SMS in background (non-blocking)
+            # Branding determined by manager's use_company_sms_branding setting
             background_tasks.add_task(
                 send_repair_completion_sms_background,
                 customer_id=customer.id,
@@ -352,7 +378,8 @@ def update_repair_status(
                 company_name=company_name,
                 repair_description=repair.phone_description,
                 cost=repair.cost,
-                invoice_number=None  # TODO: Generate invoice
+                invoice_number=None,  # TODO: Generate invoice
+                manager_id=manager_id  # For dynamic branding
             )
     
     return repair

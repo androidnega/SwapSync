@@ -534,6 +534,7 @@ def get_all_companies(
                 "email": manager.email,
                 "phone_number": manager.phone_number,
                 "company_name": manager.company_name,
+                "use_company_sms_branding": bool(manager.use_company_sms_branding) if hasattr(manager, 'use_company_sms_branding') else False,
                 "is_active": bool(manager.is_active),
                 "created_at": manager.created_at.isoformat() if manager.created_at else None,
                 "last_login": manager.last_login.isoformat() if manager.last_login else None
