@@ -50,22 +50,62 @@ const AdminAuditAccess: React.FC = () => {
     }
 
     try {
-      // Verify audit code
-      await api.post('/audit/verify-access', {
-        ceo_id: selectedManager.id,
-        audit_code: auditCode
+      // Validate expiring audit code
+      const validateResponse = await api.post('/audit/expiring/validate', {
+        manager_id: selectedManager.id,
+        code: auditCode
       });
 
-      // Fetch Manager data
-      const response = await api.get(`/audit/manager-data/${selectedManager.id}`, {
-        params: { audit_code: auditCode }
-      });
+      console.log('✅ Audit code validated:', validateResponse.data);
 
-      setManagerData(response.data);
+      // Fetch Manager data using staff-management endpoint
+      const response = await api.get('/staff/manager-hierarchy');
+      
+      // Find the manager's data
+      const managerCompany = response.data.companies?.find((c: any) => c.manager.id === selectedManager.id);
+      
+      if (!managerCompany) {
+        throw new Error('Manager data not found');
+      }
+
+      // Format data to match expected structure
+      const formattedData = {
+        manager_info: {
+          id: managerCompany.manager.id,
+          username: managerCompany.manager.username,
+          full_name: managerCompany.manager.full_name,
+          email: managerCompany.manager.email,
+          created_at: managerCompany.manager.created_at,
+          last_login: managerCompany.manager.last_login
+        },
+        business_stats: {
+          total_customers: managerCompany.total_customers || 0,
+          total_phones: 0,  // Not available in staff endpoint
+          total_swaps: 0,   // Not available in staff endpoint
+          total_sales: 0,   // Not available in staff endpoint
+          total_repairs: 0, // Not available in staff endpoint
+          sales_revenue: 0.0,
+          repair_revenue: 0.0,
+          total_revenue: 0.0
+        },
+        staff: managerCompany.staff.map((s: any) => ({
+          id: s.id,
+          username: s.username,
+          full_name: s.full_name,
+          role: s.role,
+          email: s.email || '',
+          is_active: s.is_active
+        })),
+        recent_activity: managerCompany.recent_activities || []
+      };
+
+      setManagerData(formattedData);
       setMessage('✅ Audit access granted! Viewing Manager data...');
       setTimeout(() => setMessage(''), 3000);
     } catch (error: any) {
-      setMessage(`❌ ${error.response?.data?.detail || 'Invalid audit code or access denied'}`);
+      console.error('Audit access error:', error);
+      const errorDetail = error.response?.data?.detail || error.message || 'Invalid audit code or access denied';
+      setMessage(`❌ ${errorDetail}`);
       setManagerData(null);
     }
   };
@@ -143,10 +183,13 @@ const AdminAuditAccess: React.FC = () => {
                     <div className="bg-purple-600 text-white w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
                       <FontAwesomeIcon icon={faLock} className="text-xl md:text-2xl" />
                     </div>
-                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Enter Audit Code</h3>
+                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Enter 90-Second Expiring Code</h3>
                     <p className="text-gray-600 text-xs md:text-sm mt-2">
-                      Request code from <strong>{selectedManager.full_name}</strong>
+                      Request the expiring audit code from <strong>{selectedManager.full_name}</strong>
                       {selectedManager.company_name && <> ({selectedManager.company_name})</>}
+                    </p>
+                    <p className="text-red-600 text-xs mt-1 font-semibold">
+                      ⏰ Code expires in 90 seconds - use immediately!
                     </p>
                   </div>
 

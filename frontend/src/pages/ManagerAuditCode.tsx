@@ -4,8 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faKey, faSync, faCopy, faShieldAlt, faClock } from '@fortawesome/free-solid-svg-icons';
 
 const ManagerAuditCode: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'permanent' | 'expiring'>('permanent');
-  const [auditData, setAuditData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
@@ -15,49 +13,13 @@ const ManagerAuditCode: React.FC = () => {
   const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
 
   useEffect(() => {
-    fetchAuditCode();
-    if (activeTab === 'expiring') {
-      fetchCurrentExpiringCode();
-    }
-  }, [activeTab]);
+    fetchCurrentExpiringCode();
+    setLoading(false);
+  }, []);
 
-  const fetchAuditCode = async () => {
-    try {
-      const response = await api.get('/audit/my-audit-code');
-      setAuditData(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching audit code:', error);
-      setLoading(false);
-    }
-  };
-
-  const regenerateCode = async () => {
-    if (!confirm('Are you sure you want to regenerate your audit code? The old code will no longer work.')) {
-      return;
-    }
-
-    try {
-      const response = await api.post('/audit/regenerate-audit-code');
-      setMessage('✅ Audit code regenerated successfully!');
-      fetchAuditCode();
-      setTimeout(() => setMessage(''), 3000);
-    } catch (error) {
-      setMessage('❌ Failed to regenerate audit code');
-    }
-  };
-
-  const copyToClipboard = () => {
-    if (auditData?.audit_code) {
-      navigator.clipboard.writeText(auditData.audit_code);
-      setMessage('✅ Audit code copied to clipboard!');
-      setTimeout(() => setMessage(''), 2000);
-    }
-  };
-
-  // Expiring code functions
+  // Auto-countdown timer for expiring code
   useEffect(() => {
-    if (activeTab === 'expiring' && secondsRemaining > 0) {
+    if (secondsRemaining > 0) {
       const timer = setInterval(() => {
         setSecondsRemaining(prev => {
           if (prev <= 1) {
@@ -71,7 +33,7 @@ const ManagerAuditCode: React.FC = () => {
 
       return () => clearInterval(timer);
     }
-  }, [secondsRemaining, activeTab]);
+  }, [secondsRemaining]);
 
   const fetchCurrentExpiringCode = async () => {
     try {
@@ -128,9 +90,9 @@ const ManagerAuditCode: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Audit Code</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Audit Code (90-Second Expiring)</h1>
           <p className="text-gray-600 mt-1">
-            Your audit code allows System Administrators to access your business data for auditing purposes
+            Share this time-limited code with System Administrators when they request audit access
           </p>
         </div>
 
@@ -140,80 +102,8 @@ const ManagerAuditCode: React.FC = () => {
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab('permanent')}
-              className={`flex-1 px-6 py-4 text-sm font-semibold transition ${
-                activeTab === 'permanent'
-                  ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-            >
-              <FontAwesomeIcon icon={faKey} className="mr-2" />
-              Permanent Code
-            </button>
-            <button
-              onClick={() => setActiveTab('expiring')}
-              className={`flex-1 px-6 py-4 text-sm font-semibold transition ${
-                activeTab === 'expiring'
-                  ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-            >
-              <FontAwesomeIcon icon={faClock} className="mr-2" />
-              90-Second Expiring Code
-            </button>
-          </div>
-        </div>
-
-        {/* Permanent Audit Code Tab */}
-        {activeTab === 'permanent' && (
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-lg p-8 border-2 border-purple-200">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-purple-600 text-white p-3 rounded-full">
-                  <FontAwesomeIcon icon={faKey} className="text-2xl" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Your Permanent Audit Code</h2>
-                  <p className="text-sm text-gray-600">Share this only when audit access is needed</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg p-6 mb-6 border-2 border-purple-300">
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">Current Audit Code:</p>
-                <div className="text-5xl font-bold text-purple-600 tracking-wider mb-4 font-mono">
-                  {auditData?.audit_code || 'NOT SET'}
-                </div>
-                <button
-                  onClick={copyToClipboard}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-                >
-                  <FontAwesomeIcon icon={faCopy} className="mr-2" />
-                  Copy Code
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={regenerateCode}
-                className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold"
-              >
-                <FontAwesomeIcon icon={faSync} className="mr-2" />
-                Regenerate Code
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Expiring Audit Code Tab */}
-        {activeTab === 'expiring' && (
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-lg p-8 border-2 border-purple-200">
+        {/* Expiring Audit Code */}
+        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-lg p-8 border-2 border-purple-200">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="bg-purple-600 text-white p-3 rounded-full">
@@ -279,43 +169,26 @@ const ManagerAuditCode: React.FC = () => {
             <FontAwesomeIcon icon={faShieldAlt} className="text-blue-600 text-xl mt-1" />
             <div>
               <h3 className="font-semibold text-gray-900 mb-2">
-                {activeTab === 'permanent' ? 'What is a Permanent Audit Code?' : 'What is an Expiring Audit Code?'}
+                How Does the Expiring Audit Code Work?
               </h3>
               
-              {activeTab === 'permanent' ? (
-                <>
-                  <p className="text-gray-600 text-sm mb-3">
-                    The permanent audit code allows System Administrators to access your complete business data when needed for:
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-4">
-                    <li>Financial audits</li>
-                    <li>Troubleshooting system issues</li>
-                    <li>Compliance reviews</li>
-                    <li>Data verification</li>
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <p className="text-gray-600 text-sm mb-3">
-                    The expiring audit code is a temporary, time-limited code for enhanced security:
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-2">
-                    <li>Code is generated automatically and expires in 90 seconds</li>
-                    <li>Share the code with System Administrator when they request access</li>
-                    <li>After expiry, a new code is auto-generated</li>
-                    <li>Each code can only be used once</li>
-                    <li>You can manually generate a new code anytime</li>
-                    <li>All audit access is logged for your records</li>
-                  </ul>
-                </>
-              )}
+              <p className="text-gray-600 text-sm mb-3">
+                The expiring audit code is a temporary, time-limited code for enhanced security:
+              </p>
+              <ul className="list-disc list-inside text-sm text-gray-600 space-y-2">
+                <li>Code is generated automatically and expires in 90 seconds</li>
+                <li>Share the code with System Administrator when they request access</li>
+                <li>After expiry, a new code is auto-generated</li>
+                <li>Each code can only be used once</li>
+                <li>You can manually generate a new code anytime</li>
+                <li>All audit access is logged for your records</li>
+              </ul>
             </div>
           </div>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
             <p className="text-sm text-yellow-800">
-              <strong>⚠️ Security Note:</strong> Only share your audit code with authorized System Administrators when required. 
-              {activeTab === 'expiring' && ' The expiring code provides enhanced security with time-limited access.'}
+              <strong>⚠️ Security Note:</strong> Only share your audit code with authorized System Administrators when required. The expiring code provides enhanced security with time-limited access.
             </p>
           </div>
         </div>
