@@ -604,48 +604,47 @@ const Customers: React.FC = () => {
                 </div>
               </div>
 
-                {/* Deletion Code - ONLY visible to the creator (not all staff) */}
-                {selectedCustomer.deletion_code && selectedCustomer.is_editable && (userRole === 'shop_keeper' || userRole === 'repairer') && (
-                  <div className="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-300">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faKey} className="text-yellow-600" />
-                        <span className="text-sm text-yellow-700 font-semibold">Deletion Code (You Created This)</span>
-                      </div>
+              {/* Deletion Code - ONLY visible to the creator (not all staff) */}
+              {selectedCustomer.deletion_code && selectedCustomer.is_editable && (userRole === 'shop_keeper' || userRole === 'repairer') && (
+                <div className="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-300">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <FontAwesomeIcon icon={faKey} className="text-yellow-600" />
+                      <span className="text-sm text-yellow-700 font-semibold">Deletion Code (You Created This)</span>
                     </div>
-                    <p className="text-3xl font-bold text-yellow-900 tracking-wider mb-3 font-mono">{selectedCustomer.deletion_code}</p>
-                    <div className="bg-yellow-100 rounded p-3 mb-2">
-                      <p className="text-xs text-yellow-900 font-semibold mb-2">
-                        🔒 Secure Deletion System:
-                      </p>
-                      <ul className="text-xs text-yellow-800 space-y-1 list-disc ml-4">
-                        <li>Only YOU can see this deletion code</li>
-                        <li>Manager needs this code to delete this customer</li>
-                        <li>Share it only when deletion is necessary</li>
-                        <li>Your code cannot delete other users' customers</li>
-                      </ul>
-                    </div>
-                    <p className="text-xs text-yellow-700 flex items-center gap-1">
-                      <FontAwesomeIcon icon={faKey} />
-                      Share this code with Manager when they need to delete this customer
-                    </p>
                   </div>
-                )}
-                
-                {/* Read-only indicator for customers created by others */}
-                {!selectedCustomer.is_editable && (userRole === 'shop_keeper' || userRole === 'repairer') && (
-                  <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FontAwesomeIcon icon={faLock} className="text-blue-600" />
-                      <span className="text-sm text-blue-700 font-semibold">Read-Only Customer</span>
-                    </div>
-                    <p className="text-xs text-blue-800">
-                      This customer was created by <strong>{selectedCustomer.created_by_username || 'another user'}</strong>. 
-                      You can view but cannot edit or see the deletion code.
+                  <p className="text-3xl font-bold text-yellow-900 tracking-wider mb-3 font-mono">{selectedCustomer.deletion_code}</p>
+                  <div className="bg-yellow-100 rounded p-3 mb-2">
+                    <p className="text-xs text-yellow-900 font-semibold mb-2">
+                      🔒 Secure Deletion System:
                     </p>
+                    <ul className="text-xs text-yellow-800 space-y-1 list-disc ml-4">
+                      <li>Only YOU can see this deletion code</li>
+                      <li>Manager needs this code to delete this customer</li>
+                      <li>Share it only when deletion is necessary</li>
+                      <li>Your code cannot delete other users&apos; customers</li>
+                    </ul>
                   </div>
-                )}
-              </div>
+                  <p className="text-xs text-yellow-700 flex items-center gap-1">
+                    <FontAwesomeIcon icon={faKey} />
+                    Share this code with Manager when they need to delete this customer
+                  </p>
+                </div>
+              )}
+              
+              {/* Read-only indicator for customers created by others */}
+              {!selectedCustomer.is_editable && (userRole === 'shop_keeper' || userRole === 'repairer') && (
+                <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FontAwesomeIcon icon={faLock} className="text-blue-600" />
+                    <span className="text-sm text-blue-700 font-semibold">Read-Only Customer</span>
+                  </div>
+                  <p className="text-xs text-blue-800">
+                    This customer was created by <strong>{selectedCustomer.created_by_username || 'another user'}</strong>. 
+                    You can view but cannot edit or see the deletion code.
+                  </p>
+                </div>
+              )}
 
               <button
                 onClick={() => setShowViewModal(false)}
