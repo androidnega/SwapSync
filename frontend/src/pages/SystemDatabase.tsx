@@ -306,51 +306,51 @@ const SystemDatabase: React.FC = () => {
 
         {/* Tabs */}
         <div className="bg-white rounded-xl shadow">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
+          <div className="border-b border-gray-200 overflow-x-auto">
+            <nav className="flex -mb-px min-w-max md:min-w-0">
               <button
                 onClick={() => setActiveTab('backups')}
-                className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
+                className={`px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium border-b-2 transition whitespace-nowrap ${
                   activeTab === 'backups'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <FontAwesomeIcon icon={faDatabase} className="mr-2" />
-                Database Backups
+                <FontAwesomeIcon icon={faDatabase} className="mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Database </span>Backups
               </button>
               <button
                 onClick={() => setActiveTab('ceos')}
-                className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
+                className={`px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium border-b-2 transition whitespace-nowrap ${
                   activeTab === 'ceos'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                Manager Data Management
+                <FontAwesomeIcon icon={faFileExport} className="mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Manager </span>Data<span className="hidden lg:inline"> Management</span>
               </button>
               <button
                 onClick={() => setActiveTab('tables')}
-                className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
+                className={`px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium border-b-2 transition whitespace-nowrap ${
                   activeTab === 'tables'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <FontAwesomeIcon icon={faTable} className="mr-2" />
-                Database Tables & Stats
+                <FontAwesomeIcon icon={faTable} className="mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Database </span>Tables<span className="hidden lg:inline"> & Stats</span>
               </button>
               <button
                 onClick={() => setActiveTab('clear')}
-                className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
+                className={`px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium border-b-2 transition whitespace-nowrap ${
                   activeTab === 'clear'
                     ? 'border-red-600 text-red-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <FontAwesomeIcon icon={faTrash} className="mr-2" />
-                Data Clearing
+                <FontAwesomeIcon icon={faTrash} className="mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Data </span>Clearing
               </button>
             </nav>
           </div>
