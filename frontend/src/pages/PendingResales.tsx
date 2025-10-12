@@ -113,21 +113,25 @@ const PendingResales: React.FC<PendingResalesProps> = ({ onUpdate }) => {
     }
   };
 
+  // Apply search filter if query exists
   const filteredResales = searchQuery.trim()
-    ? pendingResales.filter(resale => 
-        resale.sold_phone_brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        resale.sold_phone_model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        resale.incoming_phone_brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        resale.incoming_phone_model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        resale.unique_id?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? pendingResales.filter(resale => {
+        const query = searchQuery.toLowerCase();
+        return (
+          resale.sold_phone_brand?.toLowerCase().includes(query) ||
+          resale.sold_phone_model?.toLowerCase().includes(query) ||
+          resale.incoming_phone_brand?.toLowerCase().includes(query) ||
+          resale.incoming_phone_model?.toLowerCase().includes(query) ||
+          resale.unique_id?.toLowerCase().includes(query) ||
+          resale.id.toString().includes(query)
+        );
+      })
     : pendingResales;
 
-  const pendingCount = pendingResales.filter(r => r.incoming_phone_status === 'available').length;
+  // Stats based on ALL data (regardless of current filter, since backend handles filtering)
+  const pendingCount = pendingResales.length;
   const soldCount = pendingResales.filter(r => r.incoming_phone_status === 'sold').length;
-  const totalValue = pendingResales
-    .filter(r => r.incoming_phone_status === 'available')
-    .reduce((sum, r) => sum + (r.incoming_phone_value || 0), 0);
+  const totalValue = pendingResales.reduce((sum, r) => sum + (r.incoming_phone_value || 0), 0);
 
   if (loading) {
     return (

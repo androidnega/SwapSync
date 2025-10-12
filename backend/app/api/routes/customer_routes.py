@@ -127,6 +127,11 @@ def list_customers(
         # - Managers: NEVER see codes (they request from creator)
         # - Repairer/ShopKeeper: ONLY see codes for customers THEY created
         if not current_user.is_manager and is_creator:
+            # Generate deletion code if it doesn't exist (for old customers created before this feature)
+            if not customer.deletion_code:
+                customer.generate_deletion_code()
+                db.commit()
+            
             customer_dict["deletion_code"] = customer.deletion_code
             customer_dict["code_generated_at"] = customer.code_generated_at.isoformat() if customer.code_generated_at else None
         
@@ -202,6 +207,12 @@ def get_customer(
     # - Managers: NEVER see codes (they request from creator)
     # - Repairer/ShopKeeper: ONLY see codes for customers THEY created
     if not current_user.is_manager and is_creator:
+        # Generate deletion code if it doesn't exist (for old customers created before this feature)
+        if not customer.deletion_code:
+            customer.generate_deletion_code()
+            db.commit()
+            db.refresh(customer)
+        
         customer_dict["deletion_code"] = customer.deletion_code
         customer_dict["code_generated_at"] = customer.code_generated_at.isoformat() if customer.code_generated_at else None
     
