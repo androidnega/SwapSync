@@ -170,13 +170,29 @@ def create_repair(
         details=f"{new_repair.phone_description} - Cost: GHS {new_repair.cost}"
     )
     
+    # Get manager for SMS branding
+    manager_id = None
+    company_name = "SwapSync"
+    if current_user.parent_user_id:
+        # User is shopkeeper/repairer under a manager
+        manager = db.query(User).filter(User.id == current_user.parent_user_id).first()
+        if manager:
+            manager_id = manager.id
+            company_name = manager.company_name or "SwapSync"
+    elif current_user.is_manager:
+        # User is a manager
+        manager_id = current_user.id
+        company_name = current_user.company_name or "SwapSync"
+    
     # Send SMS notification (non-blocking, don't fail if SMS fails)
     try:
         send_repair_created_sms(
             customer_name=customer.full_name,
             phone_number=customer.phone_number,
             repair_id=new_repair.id,
-            phone_description=new_repair.phone_description
+            phone_description=new_repair.phone_description,
+            manager_id=manager_id,
+            company_name=company_name
         )
         print(f"✅ SMS notification sent to {customer.full_name}")
     except Exception as sms_error:
@@ -426,11 +442,28 @@ def update_repair_status(
                     print(f"✅ Completion SMS scheduled for {customer.full_name}")
                 else:
                     # For other status changes, send simple status update SMS
+                    # Get manager for SMS branding
+                    manager_id = None
+                    company_name = "SwapSync"
+                    if repair.created_by_user_id:
+                        created_by = db.query(User).filter(User.id == repair.created_by_user_id).first()
+                        if created_by:
+                            if created_by.parent_user_id:
+                                manager = db.query(User).filter(User.id == created_by.parent_user_id).first()
+                                if manager:
+                                    manager_id = manager.id
+                                    company_name = manager.company_name or "SwapSync"
+                            elif created_by.is_manager:
+                                manager_id = created_by.id
+                                company_name = created_by.company_name or "SwapSync"
+                    
                     send_repair_status_update_sms(
                         customer_name=customer.full_name,
                         phone_number=customer.phone_number,
                         status=new_status,
-                        repair_id=repair.id
+                        repair_id=repair.id,
+                        manager_id=manager_id,
+                        company_name=company_name
                     )
                     print(f"✅ Status update SMS sent to {customer.full_name} - Status: {new_status}")
             except Exception as sms_error:
