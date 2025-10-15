@@ -42,6 +42,7 @@ const Repairs: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [userRole, setUserRole] = useState<string>('');
   const [itemSearchTerm, setItemSearchTerm] = useState<string>('');
+  const [showItemsDropdown, setShowItemsDropdown] = useState(false);
   const [formData, setFormData] = useState({
     customer_id: '',
     customer_phone: '',
@@ -1390,15 +1391,18 @@ const Repairs: React.FC = () => {
                   <div className="mb-2">
                     <input
                       type="text"
-                      placeholder="🔍 Search repair items by name or category..."
+                      placeholder="🔍 Click to search repair items by name or category..."
                       value={itemSearchTerm}
                       onChange={(e) => setItemSearchTerm(e.target.value)}
+                      onFocus={() => setShowItemsDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowItemsDropdown(false), 200)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                   </div>
 
                   {/* Available Items Dropdown */}
-                  <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg bg-white">
+                  {showItemsDropdown && (
+                    <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg bg-white">
                     {repairItems.filter(item => item.stock_quantity > 0).length === 0 ? (
                       <div className="p-3 text-sm text-gray-500 text-center">
                         No repair items in stock
@@ -1419,6 +1423,7 @@ const Repairs: React.FC = () => {
                             onClick={() => {
                               handleAddItem(item);
                               setItemSearchTerm(''); // Clear search after selection
+                              setShowItemsDropdown(false);
                             }}
                             className="w-full flex items-center justify-between p-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 text-left transition-colors"
                           >
@@ -1447,7 +1452,8 @@ const Repairs: React.FC = () => {
                         No items match "{itemSearchTerm}"
                       </div>
                     )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Cost Summary */}

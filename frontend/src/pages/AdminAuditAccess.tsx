@@ -285,10 +285,6 @@ const AdminAuditAccess: React.FC = () => {
                   <p className="text-sm text-gray-600">Repairs</p>
                   <p className="text-2xl font-bold text-orange-600">{managerData.business_stats.total_repairs}</p>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Sales Revenue</p>
-                  <p className="text-2xl font-bold text-green-600">₵{managerData.business_stats.sales_revenue.toFixed(2)}</p>
-                </div>
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600">Repair Revenue</p>
                   <p className="text-2xl font-bold text-blue-600">₵{managerData.business_stats.repair_revenue.toFixed(2)}</p>

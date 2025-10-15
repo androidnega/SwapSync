@@ -62,6 +62,7 @@ const ProductSales = () => {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [lastSaleReceipt, setLastSaleReceipt] = useState<any>(null);
   const [productSearchTerm, setProductSearchTerm] = useState<string>('');
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
   
   const [form, setForm] = useState({
     customer_id: '',
@@ -519,9 +520,11 @@ const ProductSales = () => {
                   {/* Search Input */}
                   <input
                     type="text"
-                    placeholder="🔍 Search products by name or brand..."
+                    placeholder="🔍 Click to search products by name or brand..."
                     value={productSearchTerm}
                     onChange={(e) => setProductSearchTerm(e.target.value)}
+                    onFocus={() => setShowProductDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowProductDropdown(false), 200)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                   
@@ -550,7 +553,7 @@ const ProductSales = () => {
                   )}
                   
                   {/* Products Dropdown */}
-                  {!selectedProduct && (
+                  {!selectedProduct && showProductDropdown && (
                     <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-b-lg bg-white">
                       {availableProducts.length === 0 ? (
                         <div className="p-3 text-sm text-gray-500 text-center">
@@ -571,6 +574,7 @@ const ProductSales = () => {
                                 setForm({ ...form, product_id: p.id.toString() });
                                 setSelectedProduct(p);
                                 setProductSearchTerm('');
+                                setShowProductDropdown(false);
                               }}
                               className="w-full flex items-center justify-between p-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 text-left transition-colors"
                             >
