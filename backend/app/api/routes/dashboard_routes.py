@@ -88,7 +88,7 @@ def get_dashboard_cards(
         }
     
     # CEO & SHOP KEEPER - Business cards
-    if current_user.role in [UserRole.CEO, UserRole.SHOP_KEEPER]:
+    if current_user.role in [UserRole.CEO, UserRole.SHOP_KEEPER, UserRole.MANAGER]:
         # Total Customers
         cards.append({
             "id": "total_customers",
@@ -96,7 +96,7 @@ def get_dashboard_cards(
             "value": db.query(func.count(Customer.id)).scalar(),
             "icon": "faUserCircle",
             "color": "blue",
-            "visible_to": ["shop_keeper", "ceo"]
+            "visible_to": ["shop_keeper", "ceo", "manager"]
         })
         
         # Pending Resales Card - Use PendingResale table
@@ -111,7 +111,7 @@ def get_dashboard_cards(
             "value": pending_resales,
             "icon": "faClock",
             "color": "yellow",
-            "visible_to": ["shop_keeper", "ceo"]
+            "visible_to": ["shop_keeper", "ceo", "manager"]
         })
         
         # Completed Swaps Card - Use PendingResale table
@@ -125,26 +125,17 @@ def get_dashboard_cards(
             "value": completed_swaps,
             "icon": "faCheckCircle",
             "color": "green",
-            "visible_to": ["shop_keeper", "ceo"]
+            "visible_to": ["shop_keeper", "ceo", "manager"]
         })
         
-        # Total Discounts Applied Card (CEO/Manager only - filtered by their staff)
-        if current_user.role in [UserRole.CEO, UserRole.MANAGER]:
-            # Get staff IDs for filtering
-            staff = db.query(User).filter(User.parent_user_id == current_user.id).all()
-            staff_ids = [current_user.id] + [s.id for s in staff]
-            
-            # Calculate discounts from swaps
-            swap_discounts = db.query(func.sum(Swap.discount_amount)).filter(
-                Swap.staff_id.in_(staff_ids)
-            ).scalar() or 0.0
-            
-            # Calculate discounts from phone sales
-            sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
-                Sale.created_by_user_id.in_(staff_ids)
-            ).scalar() or 0.0
-            
-            total_discounts = swap_discounts + sale_discounts
+        # Total Discounts Applied Card (Shop Keeper sees all, Manager sees filtered)
+        if current_user.role == UserRole.SHOP_KEEPER:
+            # Shop keeper sees all system discounts
+            total_discounts = (
+                db.query(func.sum(Swap.discount_amount)).scalar() or 0.0
+            ) + (
+                db.query(func.sum(Sale.discount_amount)).scalar() or 0.0
+            )
             
             cards.append({
                 "id": "total_discounts",
@@ -152,7 +143,7 @@ def get_dashboard_cards(
                 "value": f"₵{total_discounts:.2f}",
                 "icon": "faPercent",
                 "color": "purple",
-                "visible_to": ["ceo", "manager"]
+                "visible_to": ["shop_keeper"]
             })
         
         # Available Phones - Exclude trade-ins waiting for resale
@@ -167,7 +158,7 @@ def get_dashboard_cards(
             "value": available_phones,
             "icon": "faMobileAlt",
             "color": "indigo",
-            "visible_to": ["shop_keeper", "ceo"]
+            "visible_to": ["shop_keeper", "ceo", "manager"]
         })
     
     # REPAIRER - Repair cards only
@@ -257,6 +248,26 @@ def get_dashboard_cards(
             "value": f"₵{total_repair_revenue:.2f}",
             "icon": "faTools",
             "color": "blue",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Total Discounts Applied (filtered by manager and their staff)
+        swap_discounts = db.query(func.sum(Swap.discount_amount)).filter(
+            Swap.staff_id.in_(staff_ids)
+        ).scalar() or 0.0
+        
+        sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
+            Sale.created_by_user_id.in_(staff_ids)
+        ).scalar() or 0.0
+        
+        total_discounts = swap_discounts + sale_discounts
+        
+        cards.append({
+            "id": "total_discounts",
+            "title": "Discounts Applied",
+            "value": f"₵{total_discounts:.2f}",
+            "icon": "faPercent",
+            "color": "purple",
             "visible_to": ["ceo", "manager"]
         })
     
