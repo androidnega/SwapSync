@@ -371,15 +371,28 @@ def clear_phones(
     current_user: User = Depends(get_current_active_admin),
     db: Session = Depends(get_db)
 ):
-    """Clear all phone records"""
+    """Clear all phone records (also clears ownership history, sales, swaps, pending resales)"""
     try:
+        from app.models.phone import PhoneOwnershipHistory
+        from app.models.product_sale import ProductSale
+        
         count = db.query(Phone).count()
+        
+        # Delete all related records first (to avoid foreign key violations)
+        db.query(PhoneOwnershipHistory).delete()  # Delete ownership history
+        db.query(PendingResale).delete()  # Delete pending resales
+        db.query(ProductSale).delete()  # Delete product sales
+        db.query(Sale).delete()  # Delete phone sales
+        db.query(Swap).delete()  # Delete swaps
+        db.query(Repair).delete()  # Delete repairs
+        
+        # Now delete phones
         db.query(Phone).delete()
         db.commit()
         
         return {
             "success": True,
-            "message": f"Cleared {count} phone records successfully",
+            "message": f"Cleared {count} phones and all related transactions successfully",
             "cleared_at": datetime.now().isoformat(),
             "cleared_by": current_user.username
         }
