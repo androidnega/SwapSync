@@ -208,7 +208,7 @@ def get_dashboard_cards(
         # Total Profit from Swaps - Use PendingResale table (filtered by staff)
         total_profit = db.query(func.sum(PendingResale.profit_amount)).filter(
             PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD,
-            PendingResale.staff_id.in_(staff_ids)
+            PendingResale.attending_staff_id.in_(staff_ids)
         ).scalar() or 0.0
         
         cards.append({
