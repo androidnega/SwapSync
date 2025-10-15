@@ -303,17 +303,30 @@ def clear_all_data(
     WARNING: This will permanently delete all business data!
     """
     try:
-        # Clear all business data in order (respecting foreign key constraints)
+        from app.models.repair_item_usage import RepairItemUsage
+        
+        # Clear all business data in proper order (respecting ALL foreign key constraints)
+        # Step 1: Break circular dependencies
+        db.query(Phone).update({"swapped_from_id": None})
+        
+        # Step 2: Delete child records first
+        db.query(RepairItemUsage).delete()  # References repairs
+        db.query(PhoneOwnershipHistory).delete()  # References phones
+        db.query(Invoice).delete()  # References customers/sales/swaps/repairs
+        
+        # Step 3: Delete transaction records
+        db.query(PendingResale).delete()
         db.query(ProductSale).delete()
-        db.query(Invoice).delete()
         db.query(Repair).delete()
         db.query(Sale).delete()
         db.query(Swap).delete()
+        
+        # Step 4: Delete master records
         db.query(Product).delete()
         db.query(Phone).delete()
         db.query(Customer).delete()
         
-        # Clear activity logs
+        # Step 5: Clear activity logs
         db.query(ActivityLog).delete()
         
         db.commit()
@@ -342,20 +355,23 @@ def clear_customers(
         count = db.query(Customer).count()
         
         # Delete all related records first (to avoid foreign key violations)
-        # Step 1: Clear phone foreign keys that reference swaps
+        # Step 1: Clear phone foreign keys that reference swaps (circular dependency)
         db.query(Phone).update({"swapped_from_id": None})
         
         # Step 2: Delete ownership history (references phones)
         db.query(PhoneOwnershipHistory).delete()
         
-        # Step 3: Delete transaction records
+        # Step 3: Delete all invoices (references customers)
+        db.query(Invoice).delete()
+        
+        # Step 4: Delete transaction records
         db.query(PendingResale).delete()  # Delete pending resales (references customers)
         db.query(ProductSale).delete()  # Delete product sales referencing customers
         db.query(Sale).delete()  # Delete phone sales
         db.query(Swap).delete()  # Delete swaps (now safe - phones.swapped_from_id cleared)
         db.query(Repair).delete()  # Delete repairs
         
-        # Step 4: Delete customers
+        # Step 5: Delete customers
         db.query(Customer).delete()
         db.commit()
         
@@ -417,9 +433,20 @@ def clear_swaps(
     current_user: User = Depends(get_current_active_admin),
     db: Session = Depends(get_db)
 ):
-    """Clear all swap transactions"""
+    """Clear all swap transactions (also clears phone references and pending resales)"""
     try:
         count = db.query(Swap).count()
+        
+        # Clear phone foreign keys that reference swaps (circular dependency)
+        db.query(Phone).update({"swapped_from_id": None})
+        
+        # Delete pending resales that reference swaps
+        db.query(PendingResale).delete()
+        
+        # Delete invoices for swaps
+        db.query(Invoice).filter(Invoice.transaction_type == 'swap').delete()
+        
+        # Now delete swaps
         db.query(Swap).delete()
         db.commit()
         
@@ -442,9 +469,17 @@ def clear_sales(
     current_user: User = Depends(get_current_active_admin),
     db: Session = Depends(get_db)
 ):
-    """Clear all sales records"""
+    """Clear all sales records (also clears related invoices and ownership history)"""
     try:
         count = db.query(Sale).count()
+        
+        # Delete invoices for sales first
+        db.query(Invoice).filter(Invoice.transaction_type == 'sale').delete()
+        
+        # Delete phone ownership history for sales
+        db.query(PhoneOwnershipHistory).filter(PhoneOwnershipHistory.change_reason == 'sale').delete()
+        
+        # Now delete sales
         db.query(Sale).delete()
         db.commit()
         
@@ -467,9 +502,22 @@ def clear_repairs(
     current_user: User = Depends(get_current_active_admin),
     db: Session = Depends(get_db)
 ):
-    """Clear all repair records"""
+    """Clear all repair records (also clears repair item usage and ownership history)"""
     try:
+        from app.models.repair_item_usage import RepairItemUsage
+        
         count = db.query(Repair).count()
+        
+        # Delete repair item usage first (references repairs)
+        db.query(RepairItemUsage).delete()
+        
+        # Delete phone ownership history for repairs
+        db.query(PhoneOwnershipHistory).filter(PhoneOwnershipHistory.change_reason == 'repair').delete()
+        
+        # Delete invoices for repairs
+        db.query(Invoice).filter(Invoice.transaction_type == 'repair').delete()
+        
+        # Now delete repairs
         db.query(Repair).delete()
         db.commit()
         
