@@ -127,18 +127,18 @@ def create_repair(
         for item_data in repair_items_data:
             # Get the repair item
             repair_item = db.query(RepairItem).filter(
-                RepairItem.id == item_data['repair_item_id']
+                RepairItem.id == item_data.repair_item_id
             ).first()
             
             if not repair_item:
                 db.rollback()
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Repair item {item_data['repair_item_id']} not found"
+                    detail=f"Repair item {item_data.repair_item_id} not found"
                 )
             
             # Check stock
-            if repair_item.stock_quantity < item_data['quantity']:
+            if repair_item.stock_quantity < item_data.quantity:
                 db.rollback()
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -149,16 +149,16 @@ def create_repair(
             item_usage = RepairItemUsage(
                 repair_id=new_repair.id,
                 repair_item_id=repair_item.id,
-                quantity=item_data['quantity'],
+                quantity=item_data.quantity,
                 unit_cost=repair_item.selling_price,
-                total_cost=repair_item.selling_price * item_data['quantity']
+                total_cost=repair_item.selling_price * item_data.quantity
             )
             db.add(item_usage)
             
             # Deduct from stock
-            repair_item.stock_quantity -= item_data['quantity']
+            repair_item.stock_quantity -= item_data.quantity
             
-            print(f"✅ Added {item_data['quantity']}x {repair_item.name} to repair")
+            print(f"✅ Added {item_data.quantity}x {repair_item.name} to repair")
     
     # Generate unique ID and tracking code
     new_repair.generate_unique_id(db)
