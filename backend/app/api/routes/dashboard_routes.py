@@ -237,7 +237,7 @@ def get_dashboard_cards(
         # Total Repairs Revenue (filtered by manager and their staff)
         total_repair_revenue = db.query(func.sum(Repair.cost)).filter(
             Repair.staff_id.in_(staff_ids),
-            Repair.status == 'delivered'
+            Repair.status.in_(['Completed', 'Delivered'])
         ).scalar() or 0.0
         
         cards.append({

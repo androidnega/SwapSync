@@ -51,11 +51,12 @@ def create_repair_item(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new repair item (Admin/Manager only)"""
-    if current_user.role not in ["manager", "ceo"]:
+    """Create a new repair item (Manager/Repairer)"""
+    from app.models.user import UserRole
+    if current_user.role not in [UserRole.MANAGER, UserRole.CEO, UserRole.REPAIRER]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only managers can add repair items"
+            detail="Only managers and repairers can add repair items"
         )
     
     # Create new item
@@ -73,11 +74,12 @@ def update_repair_item(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Update a repair item (Admin/Manager only)"""
-    if current_user.role not in ["manager", "ceo"]:
+    """Update a repair item (Manager/Repairer)"""
+    from app.models.user import UserRole
+    if current_user.role not in [UserRole.MANAGER, UserRole.CEO, UserRole.REPAIRER]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only managers can update repair items"
+            detail="Only managers and repairers can update repair items"
         )
     
     item = db.query(RepairItem).filter(RepairItem.id == item_id).first()
@@ -99,11 +101,12 @@ def delete_repair_item(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Delete a repair item (Admin/Manager only)"""
-    if current_user.role not in ["manager", "ceo"]:
+    """Delete a repair item (Manager/Repairer)"""
+    from app.models.user import UserRole
+    if current_user.role not in [UserRole.MANAGER, UserRole.CEO, UserRole.REPAIRER]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only managers can delete repair items"
+            detail="Only managers and repairers can delete repair items"
         )
     
     item = db.query(RepairItem).filter(RepairItem.id == item_id).first()

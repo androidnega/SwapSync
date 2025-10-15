@@ -209,7 +209,7 @@ def get_manager_data(
     sales_revenue = db.query(func.sum(Sale.amount_paid)).filter(Sale.created_by_user_id.in_(staff_ids)).scalar() or 0.0
     repair_revenue = db.query(func.sum(Repair.cost)).filter(
         Repair.staff_id.in_(staff_ids),
-        Repair.status == 'delivered'
+        Repair.status.in_(['Completed', 'Delivered'])
     ).scalar() or 0.0
     
     # Get recent activity
