@@ -225,8 +225,13 @@ def list_product_sales(
 ):
     """
     List all product sales (Manager and Shopkeeper can view)
+    Only shows sales for active products (excludes deleted products)
     """
-    sales = db.query(ProductSale).order_by(
+    sales = db.query(ProductSale).join(
+        Product, ProductSale.product_id == Product.id
+    ).filter(
+        Product.is_active == True
+    ).order_by(
         ProductSale.created_at.desc()
     ).offset(skip).limit(limit).all()
     
@@ -240,8 +245,13 @@ def get_product_sales_summary(
 ):
     """
     Get product sales summary statistics
+    Only includes sales for active products (excludes deleted products)
     """
-    sales = db.query(ProductSale).all()
+    sales = db.query(ProductSale).join(
+        Product, ProductSale.product_id == Product.id
+    ).filter(
+        Product.is_active == True
+    ).all()
     
     total_sales = len(sales)
     total_revenue = sum(s.total_amount for s in sales)
