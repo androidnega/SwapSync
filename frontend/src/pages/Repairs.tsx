@@ -38,12 +38,29 @@ interface Category {
   description?: string;
 }
 
+interface HubStats {
+  total_repairs: number;
+  total_revenue: number;
+  service_charges: number;
+  items_revenue: number;
+  items_profit: number;
+  total_profit: number;
+  repairs_by_status: {
+    pending: number;
+    in_progress: number;
+    completed: number;
+    delivered: number;
+  };
+  user_role: string;
+}
+
 const Repairs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'repairs' | 'items' | 'stats'>('repairs');
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [repairItems, setRepairItems] = useState<RepairItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [hubStats, setHubStats] = useState<HubStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showItemModal, setShowItemModal] = useState(false);
@@ -86,6 +103,7 @@ const Repairs: React.FC = () => {
     fetchCustomers();
     fetchRepairItems(); // Fetch for all roles (repairers need to select items too)
     fetchCategories(); // Fetch categories for repair item modal
+    fetchHubStats(); // Fetch comprehensive hub statistics
   }, []);
 
   // Close dropdown when clicking outside
@@ -153,6 +171,15 @@ const Repairs: React.FC = () => {
     }
   };
 
+  const fetchHubStats = async () => {
+    try {
+      const response = await api.get('/repairs/stats/hub');
+      setHubStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch hub stats:', error);
+    }
+  };
+
   const handleItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
@@ -188,6 +215,7 @@ const Repairs: React.FC = () => {
       });
       setEditingItemId(null);
       fetchRepairItems();
+      fetchHubStats(); // Refresh stats after item changes
     } catch (error: any) {
       console.error('Item submission error:', error);
       const errorDetail = error.response?.data?.detail || error.message;
@@ -202,6 +230,7 @@ const Repairs: React.FC = () => {
       await api.delete(`/repair-items/${id}`);
       setMessage('✅ Repair item deleted successfully!');
       fetchRepairItems();
+      fetchHubStats(); // Refresh stats after item deletion
     } catch (error: any) {
       setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
     }
@@ -353,6 +382,7 @@ const Repairs: React.FC = () => {
       setCustomerSearch('');
       setEditingId(null);
       fetchRepairs();
+      fetchHubStats(); // Refresh stats after creating/updating repair
     } catch (error: any) {
       console.error('Repair submission error:', error);
       const errorDetail = error.response?.data?.detail || error.message;
@@ -372,6 +402,7 @@ const Repairs: React.FC = () => {
       });
       setMessage(`✅ Status updated to ${newStatus}! SMS notification sent to customer.`);
       fetchRepairs();
+      fetchHubStats(); // Refresh stats after status update
     } catch (error: any) {
       setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
     }
@@ -400,6 +431,7 @@ const Repairs: React.FC = () => {
       await api.delete(`/repairs/${id}`);
       setMessage('✅ Repair deleted successfully!');
       fetchRepairs();
+      fetchHubStats(); // Refresh stats after deletion
     } catch (error: any) {
       setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
     }
@@ -1154,65 +1186,101 @@ const Repairs: React.FC = () => {
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">📊 Repairer Hub Statistics</h3>
             <p className="text-gray-700">
-              Overview of repair services performance, revenue, and profit analytics.
+              Overview of repair services performance, service charges, and items profit analytics.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="text-sm text-gray-600 mb-2">Total Repairs</div>
-              <div className="text-4xl font-bold text-blue-600 mb-2">{repairs.length}</div>
-              <div className="text-xs text-gray-500">All time</div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="text-sm text-gray-600 mb-2">Total Revenue</div>
-              <div className="text-4xl font-bold text-green-600 mb-2">
-                ₵{repairs.reduce((sum, r) => sum + r.cost, 0).toFixed(2)}
+          {hubStats ? (
+            <>
+              {/* Main Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-blue-200">
+                  <div className="text-sm text-gray-600 mb-2">Total Repairs</div>
+                  <div className="text-4xl font-bold text-blue-600 mb-2">{hubStats.total_repairs}</div>
+                  <div className="text-xs text-gray-500">All time</div>
+                </div>
+                
+                <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-green-200">
+                  <div className="text-sm text-gray-600 mb-2">Total Revenue</div>
+                  <div className="text-4xl font-bold text-green-600 mb-2">
+                    ₵{hubStats.total_revenue.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-gray-500">Service + Items</div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-orange-200">
+                  <div className="text-sm text-gray-600 mb-2">Service Charges</div>
+                  <div className="text-4xl font-bold text-orange-600 mb-2">
+                    ₵{hubStats.service_charges.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-gray-500">Workmanship fees</div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-purple-200">
+                  <div className="text-sm text-gray-600 mb-2">Items Profit</div>
+                  <div className="text-4xl font-bold text-purple-600 mb-2">
+                    ₵{hubStats.items_profit.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-gray-500">From items used</div>
+                </div>
               </div>
-              <div className="text-xs text-gray-500">From repairs</div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="text-sm text-gray-600 mb-2">Hub Profit</div>
-              <div className="text-4xl font-bold text-purple-600 mb-2">
-                ₵{(repairItems.reduce((sum, item) => 
-                  sum + ((item.selling_price - item.cost_price) * item.stock_quantity), 0
-                )).toFixed(2)}
+
+              {/* Secondary Stats - Items Revenue Breakdown */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <h4 className="font-semibold text-gray-900 mb-4">💰 Items Financial Breakdown</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700 font-medium">Items Revenue (Sold to Customers)</span>
+                      <span className="text-xl font-bold text-green-600">₵{hubStats.items_revenue.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700 font-medium">Items Profit (Revenue - Cost)</span>
+                      <span className="text-xl font-bold text-purple-600">₵{hubStats.items_profit.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-purple-50 p-3 rounded-lg">
+                      <span className="text-gray-900 font-bold">Total Hub Profit</span>
+                      <span className="text-2xl font-bold text-purple-700">₵{hubStats.total_profit.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <h4 className="font-semibold text-gray-900 mb-4">📋 Repairs by Status</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Pending</span>
+                      <span className="font-semibold text-yellow-600">
+                        {hubStats.repairs_by_status.pending}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">In Progress</span>
+                      <span className="font-semibold text-blue-600">
+                        {hubStats.repairs_by_status.in_progress}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Completed</span>
+                      <span className="font-semibold text-green-600">
+                        {hubStats.repairs_by_status.completed}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Delivered</span>
+                      <span className="font-semibold text-purple-600">
+                        {hubStats.repairs_by_status.delivered}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-xs text-gray-500">Potential from stock</div>
-            </div>
-          </div>
+            </>
+          ) : (
+            <div className="text-center py-12 text-gray-500">Loading statistics...</div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h4 className="font-semibold text-gray-900 mb-4">Repairs by Status</h4>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Pending</span>
-                  <span className="font-semibold text-yellow-600">
-                    {repairs.filter(r => r.status.toLowerCase() === 'pending').length}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">In Progress</span>
-                  <span className="font-semibold text-blue-600">
-                    {repairs.filter(r => r.status.toLowerCase().replace(/\s+/g, '_') === 'in_progress').length}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Completed</span>
-                  <span className="font-semibold text-green-600">
-                    {repairs.filter(r => r.status.toLowerCase() === 'completed').length}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Delivered</span>
-                  <span className="font-semibold text-purple-600">
-                    {repairs.filter(r => r.status.toLowerCase() === 'delivered').length}
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h4 className="font-semibold text-gray-900 mb-4">Stock Alerts</h4>
               <div className="space-y-3">

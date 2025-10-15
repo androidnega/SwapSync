@@ -503,6 +503,80 @@ def update_repair_status(
     return repair
 
 
+@router.get("/stats/hub", status_code=status.HTTP_200_OK)
+def get_repair_hub_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get comprehensive repair hub statistics
+    Shows service charges, items profit, and repairer-specific earnings
+    """
+    from app.models.repair_item_usage import RepairItemUsage
+    from app.models.repair_item import RepairItem
+    from sqlalchemy import func
+    
+    # Base query - filter by user role
+    if current_user.role.value == 'repairer':
+        # Repairer sees only their repairs
+        repairs_query = db.query(Repair).filter(Repair.staff_id == current_user.id)
+    elif current_user.role.value in ['manager', 'ceo']:
+        # Manager sees all repairs from their staff
+        staff_ids = [current_user.id]
+        staff_members = db.query(User).filter(User.parent_user_id == current_user.id).all()
+        staff_ids.extend([s.id for s in staff_members])
+        repairs_query = db.query(Repair).filter(Repair.created_by_user_id.in_(staff_ids))
+    else:
+        # Admin sees all repairs
+        repairs_query = db.query(Repair)
+    
+    # Get all repairs
+    repairs = repairs_query.all()
+    
+    # Calculate service charges (workmanship only - not profit)
+    total_service_charges = sum(r.service_cost for r in repairs)
+    
+    # Calculate items profit from actual usage
+    items_usage_query = db.query(RepairItemUsage).join(Repair).filter(Repair.id.in_([r.id for r in repairs]))
+    items_used = items_usage_query.all()
+    
+    # Calculate actual items profit (selling price - cost price) * quantity used
+    items_profit = 0.0
+    items_revenue = 0.0
+    
+    for usage in items_used:
+        item = db.query(RepairItem).filter(RepairItem.id == usage.repair_item_id).first()
+        if item:
+            profit_per_unit = item.selling_price - item.cost_price
+            items_profit += profit_per_unit * usage.quantity
+            items_revenue += usage.total_cost
+    
+    # Total revenue
+    total_revenue = sum(r.cost for r in repairs)
+    
+    # Breakdown by status
+    pending_count = len([r for r in repairs if r.status.lower() == 'pending'])
+    in_progress_count = len([r for r in repairs if r.status.lower().replace(' ', '_') == 'in_progress'])
+    completed_count = len([r for r in repairs if r.status.lower() == 'completed'])
+    delivered_count = len([r for r in repairs if r.status.lower() == 'delivered'])
+    
+    return {
+        "total_repairs": len(repairs),
+        "total_revenue": round(total_revenue, 2),
+        "service_charges": round(total_service_charges, 2),
+        "items_revenue": round(items_revenue, 2),
+        "items_profit": round(items_profit, 2),
+        "total_profit": round(items_profit, 2),  # Only items have profit, service is just charge
+        "repairs_by_status": {
+            "pending": pending_count,
+            "in_progress": in_progress_count,
+            "completed": completed_count,
+            "delivered": delivered_count
+        },
+        "user_role": current_user.role.value
+    }
+
+
 @router.delete("/{repair_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_repair(
     repair_id: int, 

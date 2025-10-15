@@ -250,20 +250,52 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # Total Repairs Revenue (filtered by manager and their staff)
-        # Only count repairs that have staff_id set
-        total_repair_revenue = db.query(func.sum(Repair.cost)).filter(
+        # Service Charges (workmanship fees) - filtered by manager and their staff
+        # Only count completed/delivered repairs
+        total_service_charges = db.query(func.sum(Repair.service_cost)).filter(
             Repair.staff_id.in_(staff_ids),
             Repair.staff_id.isnot(None),
             Repair.status.in_(['Completed', 'Delivered'])
         ).scalar() or 0.0
         
         cards.append({
-            "id": "repair_revenue",
-            "title": "Repair Revenue",
-            "value": f"₵{total_repair_revenue:.2f}",
+            "id": "service_charges",
+            "title": "Service Charges",
+            "value": f"₵{total_service_charges:.2f}",
             "icon": "faTools",
-            "color": "blue",
+            "color": "orange",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Repair Items Profit - Calculate from actual usage
+        # Get all completed/delivered repairs for this manager's staff
+        from app.models.repair_item_usage import RepairItemUsage
+        from app.models.repair_item import RepairItem
+        
+        completed_repairs = db.query(Repair).filter(
+            Repair.staff_id.in_(staff_ids),
+            Repair.staff_id.isnot(None),
+            Repair.status.in_(['Completed', 'Delivered'])
+        ).all()
+        
+        repair_ids = [r.id for r in completed_repairs]
+        items_profit = 0.0
+        
+        if repair_ids:
+            items_used = db.query(RepairItemUsage).filter(RepairItemUsage.repair_id.in_(repair_ids)).all()
+            
+            for usage in items_used:
+                item = db.query(RepairItem).filter(RepairItem.id == usage.repair_item_id).first()
+                if item:
+                    profit_per_unit = item.selling_price - item.cost_price
+                    items_profit += profit_per_unit * usage.quantity
+        
+        cards.append({
+            "id": "repair_items_profit",
+            "title": "Repair Items Profit",
+            "value": f"₵{items_profit:.2f}",
+            "icon": "faBoxOpen",
+            "color": "purple",
             "visible_to": ["ceo", "manager"]
         })
         
