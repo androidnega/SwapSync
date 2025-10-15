@@ -113,6 +113,7 @@ def create_repair(
     
     new_repair = Repair(**repair_dict, created_at=datetime.utcnow())
     new_repair.created_by_user_id = current_user.id  # Track who created this repair
+    new_repair.staff_id = current_user.id  # Assign to current user (repairer)
     db.add(new_repair)
     db.flush()
     
