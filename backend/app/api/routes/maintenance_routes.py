@@ -336,15 +336,25 @@ def clear_customers(
     current_user: User = Depends(get_current_active_admin),
     db: Session = Depends(get_db)
 ):
-    """Clear all customer data"""
+    """Clear all customer data (also clears related sales, swaps, repairs, product sales)"""
     try:
+        from app.models.product_sale import ProductSale
+        
         count = db.query(Customer).count()
+        
+        # Delete all related records first (to avoid foreign key violations)
+        db.query(ProductSale).delete()  # Delete product sales referencing customers
+        db.query(Sale).delete()  # Delete phone sales
+        db.query(Swap).delete()  # Delete swaps
+        db.query(Repair).delete()  # Delete repairs
+        
+        # Now delete customers
         db.query(Customer).delete()
         db.commit()
         
         return {
             "success": True,
-            "message": f"Cleared {count} customers successfully",
+            "message": f"Cleared {count} customers and all related transactions successfully",
             "cleared_at": datetime.now().isoformat(),
             "cleared_by": current_user.username
         }

@@ -235,8 +235,10 @@ def get_dashboard_cards(
         })
         
         # Total Sales Revenue (filtered by manager and their staff)
+        # Only count sales that have created_by_user_id set
         total_sales = db.query(func.sum(Sale.amount_paid)).filter(
-            Sale.created_by_user_id.in_(staff_ids)
+            Sale.created_by_user_id.in_(staff_ids),
+            Sale.created_by_user_id.isnot(None)
         ).scalar() or 0.0
         
         cards.append({
@@ -249,8 +251,10 @@ def get_dashboard_cards(
         })
         
         # Product Sales Revenue (filtered by manager and their staff)
+        # Only count sales that have created_by_user_id set
         product_sales_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
-            ProductSale.created_by_user_id.in_(staff_ids)
+            ProductSale.created_by_user_id.in_(staff_ids),
+            ProductSale.created_by_user_id.isnot(None)
         ).scalar() or 0.0
         
         cards.append({
@@ -263,8 +267,10 @@ def get_dashboard_cards(
         })
         
         # Total Repairs Revenue (filtered by manager and their staff)
+        # Only count repairs that have staff_id set
         total_repair_revenue = db.query(func.sum(Repair.cost)).filter(
             Repair.staff_id.in_(staff_ids),
+            Repair.staff_id.isnot(None),
             Repair.status.in_(['Completed', 'Delivered'])
         ).scalar() or 0.0
         
@@ -278,19 +284,22 @@ def get_dashboard_cards(
         })
         
         # Total Discounts Applied (filtered by manager and their staff)
-        # Use PendingResale for swap discounts (has attending_staff_id)
+        # Only count records that have proper staff tracking
         swap_discounts = db.query(func.sum(PendingResale.discount_amount)).filter(
-            PendingResale.attending_staff_id.in_(staff_ids)
+            PendingResale.attending_staff_id.in_(staff_ids),
+            PendingResale.attending_staff_id.isnot(None)
         ).scalar() or 0.0
         
         # Phone sale discounts (filtered by staff)
         phone_sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
-            Sale.created_by_user_id.in_(staff_ids)
+            Sale.created_by_user_id.in_(staff_ids),
+            Sale.created_by_user_id.isnot(None)
         ).scalar() or 0.0
         
         # Product sale discounts (filtered by staff)
         product_sale_discounts = db.query(func.sum(ProductSale.discount_amount)).filter(
-            ProductSale.created_by_user_id.in_(staff_ids)
+            ProductSale.created_by_user_id.in_(staff_ids),
+            ProductSale.created_by_user_id.isnot(None)
         ).scalar() or 0.0
         
         total_discounts = swap_discounts + phone_sale_discounts + product_sale_discounts
