@@ -185,8 +185,23 @@ def get_dashboard_cards(
             "visible_to": ["repairer"]
         })
         
-        # Pending Repairs Card
+        # My Total Repairs (all repairs by this repairer)
+        my_total_repairs = db.query(func.count(Repair.id)).filter(
+            Repair.staff_id == current_user.id
+        ).scalar()
+        
+        cards.append({
+            "id": "my_total_repairs",
+            "title": "My Total Repairs",
+            "value": my_total_repairs,
+            "icon": "faTools",
+            "color": "indigo",
+            "visible_to": ["repairer"]
+        })
+        
+        # Pending Repairs Card (my pending/in-progress repairs)
         pending_repairs = db.query(func.count(Repair.id)).filter(
+            Repair.staff_id == current_user.id,
             Repair.status.in_(["Pending", "In Progress"])
         ).scalar()
         
@@ -194,13 +209,14 @@ def get_dashboard_cards(
             "id": "pending_repairs",
             "title": "Pending Repairs",
             "value": pending_repairs,
-            "icon": "faTools",
+            "icon": "faClock",
             "color": "orange",
             "visible_to": ["repairer"]
         })
         
-        # Completed Repairs Card
+        # Completed Repairs Card (my completed/delivered repairs)
         completed_repairs = db.query(func.count(Repair.id)).filter(
+            Repair.staff_id == current_user.id,
             Repair.status.in_(["Completed", "Delivered"])
         ).scalar()
         
@@ -210,6 +226,36 @@ def get_dashboard_cards(
             "value": completed_repairs,
             "icon": "faCheckCircle",
             "color": "green",
+            "visible_to": ["repairer"]
+        })
+        
+        # My Total Revenue (service + items) - completed/delivered only
+        my_revenue = db.query(func.sum(Repair.cost)).filter(
+            Repair.staff_id == current_user.id,
+            Repair.status.in_(["Completed", "Delivered"])
+        ).scalar() or 0.0
+        
+        cards.append({
+            "id": "my_revenue",
+            "title": "My Revenue",
+            "value": f"₵{my_revenue:.2f}",
+            "icon": "faMoneyBillWave",
+            "color": "green",
+            "visible_to": ["repairer"]
+        })
+        
+        # My Service Charges (workmanship fees)
+        my_service_charges = db.query(func.sum(Repair.service_cost)).filter(
+            Repair.staff_id == current_user.id,
+            Repair.status.in_(["Completed", "Delivered"])
+        ).scalar() or 0.0
+        
+        cards.append({
+            "id": "my_service_charges",
+            "title": "Service Charges Earned",
+            "value": f"₵{my_service_charges:.2f}",
+            "icon": "faHandHoldingUsd",
+            "color": "teal",
             "visible_to": ["repairer"]
         })
     
@@ -247,6 +293,31 @@ def get_dashboard_cards(
             "value": f"₵{product_sales_revenue:.2f}",
             "icon": "faShoppingCart",
             "color": "purple",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Product Sales Profit - Calculate from actual sales
+        # Get all product sales by manager's staff
+        product_sales = db.query(ProductSale).filter(
+            ProductSale.created_by_user_id.in_(staff_ids),
+            ProductSale.created_by_user_id.isnot(None)
+        ).all()
+        
+        product_sales_profit = 0.0
+        for sale in product_sales:
+            # Get the product to find cost_price
+            product = db.query(Product).filter(Product.id == sale.product_id).first()
+            if product:
+                cost = product.cost_price * sale.quantity
+                revenue = sale.total_amount
+                product_sales_profit += (revenue - cost)
+        
+        cards.append({
+            "id": "product_sales_profit",
+            "title": "Product Sales Profit",
+            "value": f"₵{product_sales_profit:.2f}",
+            "icon": "faMoneyBillWave",
+            "color": "green",
             "visible_to": ["ceo", "manager"]
         })
         
