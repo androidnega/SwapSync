@@ -793,67 +793,74 @@ const Repairs: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              {editingId ? 'Edit Repair' : 'New Repair'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!editingId && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Customer Phone Number *
-                    </label>
-                    <input
-                      type="tel"
-                      value={formData.customer_phone}
-                      onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-                      required
-                      placeholder="+233..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">SMS notifications will be sent to this number</p>
-                  </div>
-                  <div className="relative customer-dropdown-container">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Customer
-                    </label>
-                    <input
-                      type="text"
-                      value={customerSearch}
-                      onChange={(e) => {
-                        setCustomerSearch(e.target.value);
-                        setShowCustomerDropdown(true);
-                      }}
-                      onFocus={() => setShowCustomerDropdown(true)}
-                      placeholder="Search by name or phone..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    
-                    {/* Searchable Dropdown */}
-                    {showCustomerDropdown && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {filteredCustomers.length > 0 ? (
-                          filteredCustomers.map(customer => (
-                            <div
-                              key={customer.id}
-                              onClick={() => handleCustomerSelect(customer)}
-                              className="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                            >
-                              <div className="font-medium text-gray-900">{customer.full_name}</div>
-                              <div className="text-xs text-gray-600">{customer.phone_number}</div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="px-3 py-2 text-gray-500 text-sm">
-                            {customerSearch ? 'No customers found. Type to search...' : 'Start typing to search customers...'}
+          <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 md:p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">
+                {editingId ? 'Edit Repair' : 'New Repair'}
+              </h2>
+            </div>
+            <div className="overflow-y-auto p-4 md:p-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {!editingId && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Customer Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          value={formData.customer_phone}
+                          onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+                          required
+                          placeholder="+233..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">SMS notifications sent here</p>
+                      </div>
+                      <div className="relative customer-dropdown-container">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Select Customer *
+                        </label>
+                        <input
+                          type="text"
+                          value={customerSearch}
+                          onChange={(e) => {
+                            setCustomerSearch(e.target.value);
+                            setShowCustomerDropdown(true);
+                          }}
+                          onFocus={() => setShowCustomerDropdown(true)}
+                          placeholder="Search by name or phone..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        
+                        {/* Searchable Dropdown */}
+                        {showCustomerDropdown && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            {filteredCustomers.length > 0 ? (
+                              filteredCustomers.map(customer => (
+                                <div
+                                  key={customer.id}
+                                  onClick={() => handleCustomerSelect(customer)}
+                                  className="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                >
+                                  <div className="font-medium text-gray-900 text-sm">{customer.full_name}</div>
+                                  <div className="text-xs text-gray-600">{customer.phone_number}</div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="px-3 py-2 text-gray-500 text-xs">
+                                {customerSearch ? 'No customers found' : 'Start typing to search'}
+                              </div>
+                            )}
                           </div>
                         )}
+                        <p className="text-xs text-gray-500 mt-1">Search existing customer</p>
                       </div>
-                    )}
+                    </div>
                     
                     {selectedCustomer && (
-                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center">
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center">
                         <div>
                           <div className="text-sm font-medium text-green-900">{selectedCustomer.full_name}</div>
                           <div className="text-xs text-green-700">{selectedCustomer.phone_number}</div>
@@ -865,84 +872,89 @@ const Repairs: React.FC = () => {
                             setCustomerSearch('');
                             setFormData({ ...formData, customer_id: '', customer_name: '', customer_phone: '' });
                           }}
-                          className="text-red-600 hover:text-red-800 text-sm"
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
                         >
                           Clear
                         </button>
                       </div>
                     )}
-                    <p className="text-xs text-gray-500 mt-1">Search and select an existing customer or enter manually below</p>
+                  </>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Description *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.phone_description}
+                      onChange={(e) => setFormData({ ...formData, phone_description: e.target.value })}
+                      required
+                      placeholder="e.g., iPhone 12 Pro"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
-                </>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Description *
-                </label>
-                <input
-                  type="text"
-                  value={formData.phone_description}
-                  onChange={(e) => setFormData({ ...formData, phone_description: e.target.value })}
-                  required
-                  placeholder="e.g., iPhone 12 Pro"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Issue Description *
-                </label>
-                <textarea
-                  value={formData.issue}
-                  onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
-                  required
-                  rows={3}
-                  placeholder="Describe the problem..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Repair Cost (₵) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.cost}
-                  onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                  required
-                  placeholder="e.g., 200"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Due Date (Optional)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={formData.due_date}
-                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">Optional: Expected completion date for this repair</p>
-              </div>
-              <div className="flex gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                >
-                  {editingId ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </form>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Repair Cost (₵) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.cost}
+                      onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                      required
+                      placeholder="e.g., 200"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Issue Description *
+                  </label>
+                  <textarea
+                    value={formData.issue}
+                    onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
+                    required
+                    rows={2}
+                    placeholder="Describe the problem..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Due Date (Optional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.due_date}
+                    onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Expected completion date</p>
+                </div>
+                
+                <div className="flex gap-2 justify-end pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+                  >
+                    {editingId ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
