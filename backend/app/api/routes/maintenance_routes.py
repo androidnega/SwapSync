@@ -342,6 +342,7 @@ def clear_customers(
         count = db.query(Customer).count()
         
         # Delete all related records first (to avoid foreign key violations)
+        db.query(PendingResale).delete()  # Delete pending resales (references customers)
         db.query(ProductSale).delete()  # Delete product sales referencing customers
         db.query(Sale).delete()  # Delete phone sales
         db.query(Swap).delete()  # Delete swaps
