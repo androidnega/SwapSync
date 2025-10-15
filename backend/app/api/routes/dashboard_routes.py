@@ -15,6 +15,7 @@ from app.models.repair import Repair
 from app.models.customer import Customer
 from app.models.phone import Phone, PhoneStatus
 from app.models.pending_resale import PendingResale, PhoneSaleStatus
+from app.models.product_sale import ProductSale
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
@@ -247,6 +248,20 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
+        # Product Sales Revenue (filtered by manager and their staff)
+        product_sales_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
+            ProductSale.created_by_user_id.in_(staff_ids)
+        ).scalar() or 0.0
+        
+        cards.append({
+            "id": "product_sales_revenue",
+            "title": "Product Sales Revenue",
+            "value": f"₵{product_sales_revenue:.2f}",
+            "icon": "faShoppingCart",
+            "color": "purple",
+            "visible_to": ["ceo", "manager"]
+        })
+        
         # Total Repairs Revenue (filtered by manager and their staff)
         total_repair_revenue = db.query(func.sum(Repair.cost)).filter(
             Repair.staff_id.in_(staff_ids),
@@ -263,14 +278,22 @@ def get_dashboard_cards(
         })
         
         # Total Discounts Applied (filtered by manager and their staff)
-        # Note: Swaps don't have staff_id, so we show all swap discounts
-        swap_discounts = db.query(func.sum(Swap.discount_amount)).scalar() or 0.0
+        # Use PendingResale for swap discounts (has attending_staff_id)
+        swap_discounts = db.query(func.sum(PendingResale.discount_amount)).filter(
+            PendingResale.attending_staff_id.in_(staff_ids)
+        ).scalar() or 0.0
         
-        sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
+        # Phone sale discounts (filtered by staff)
+        phone_sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
             Sale.created_by_user_id.in_(staff_ids)
         ).scalar() or 0.0
         
-        total_discounts = swap_discounts + sale_discounts
+        # Product sale discounts (filtered by staff)
+        product_sale_discounts = db.query(func.sum(ProductSale.discount_amount)).filter(
+            ProductSale.created_by_user_id.in_(staff_ids)
+        ).scalar() or 0.0
+        
+        total_discounts = swap_discounts + phone_sale_discounts + product_sale_discounts
         
         cards.append({
             "id": "total_discounts",
@@ -369,7 +392,6 @@ def get_hub_profits(
     Get detailed profit breakdown for each hub (Products, Swapping, Repairs)
     Manager/CEO only
     """
-    from app.models.product_sale import ProductSale
     from app.models.repair_item_usage import RepairItemUsage
     from app.models.repair_item import RepairItem
     
