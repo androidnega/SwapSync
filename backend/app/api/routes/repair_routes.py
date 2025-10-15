@@ -210,7 +210,7 @@ def create_repair(
         if manager:
             manager_id = manager.id
             company_name = manager.company_name or "SwapSync"
-    elif current_user.is_manager:
+    elif current_user.role.value in ['manager', 'ceo']:
         # User is a manager
         manager_id = current_user.id
         company_name = current_user.company_name or "SwapSync"
@@ -454,7 +454,7 @@ def update_repair_status(
                                     manager_id = manager.id
                                     company_name = manager.company_name or "SwapSync"
                             # If created by manager directly
-                            elif created_by.is_manager:
+                            elif created_by.role.value in ['manager', 'ceo']:
                                 manager_id = created_by.id
                                 company_name = created_by.company_name or "SwapSync"
                     
@@ -484,7 +484,7 @@ def update_repair_status(
                                 if manager:
                                     manager_id = manager.id
                                     company_name = manager.company_name or "SwapSync"
-                            elif created_by.is_manager:
+                            elif created_by.role.value in ['manager', 'ceo']:
                                 manager_id = created_by.id
                                 company_name = created_by.company_name or "SwapSync"
                     

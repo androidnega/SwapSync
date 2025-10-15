@@ -118,13 +118,29 @@ def create_sale(
             from app.core.sms import get_sms_service
             sms_service = get_sms_service()
             
-            # Get company name from current user (who is making the sale)
-            company_name = current_user.company_name if current_user.company_name else "SwapSync"
+            # Get manager for SMS branding
+            from app.core.sms import get_sms_sender_name
+            manager_id = None
+            company_name = "SwapSync"
+            
+            if current_user.parent_user_id:
+                # Staff member - get their manager
+                manager = db.query(User).filter(User.id == current_user.parent_user_id).first()
+                if manager:
+                    manager_id = manager.id
+                    company_name = manager.company_name or "SwapSync"
+            elif current_user.role.value in ['manager', 'ceo']:
+                # Manager directly
+                manager_id = current_user.id
+                company_name = current_user.company_name or "SwapSync"
+            
+            # Determine SMS sender using helper function
+            sms_sender = get_sms_sender_name(manager_id, company_name)
             
             # Create receipt message
             phone_model = f"{phone.brand} {phone.model}"
             receipt_message = f"""
-{company_name} - Purchase Receipt
+{sms_sender} - Purchase Receipt
 
 Phone: {phone_model}
 Condition: {phone.condition}
@@ -136,10 +152,13 @@ Thank you for your purchase!
             """.strip()
             
             # Send SMS
-            success = sms_service.send_sms(
-                to=sale.customer_phone,
-                message=receipt_message
+            result = sms_service.send_sms(
+                phone_number=sale.customer_phone,
+                message=receipt_message,
+                company_name=sms_sender
             )
+            
+            success = result.get('success', False)
             
             if success:
                 new_sale.sms_sent = 1

@@ -338,14 +338,32 @@ def resend_sms_receipt(
     
     # Send SMS
     try:
+        from app.core.sms import get_sms_sender_name
         sms_service = get_sms_service()
         
-        # Get company name
-        manager = db.query(User).filter(User.id == product.created_by_user_id).first()
-        company_name = manager.company_name if manager and manager.company_name else "SwapSync"
+        # Get manager for SMS branding
+        manager_id = None
+        company_name = "SwapSync"
+        
+        if sale.created_by_user_id:
+            created_by = db.query(User).filter(User.id == sale.created_by_user_id).first()
+            if created_by:
+                if created_by.parent_user_id:
+                    # Staff member - get their manager
+                    manager = db.query(User).filter(User.id == created_by.parent_user_id).first()
+                    if manager:
+                        manager_id = manager.id
+                        company_name = manager.company_name or "SwapSync"
+                elif created_by.role.value in ['manager', 'ceo']:
+                    # Manager directly
+                    manager_id = created_by.id
+                    company_name = created_by.company_name or "SwapSync"
+        
+        # Determine SMS sender using helper function
+        sms_sender = get_sms_sender_name(manager_id, company_name)
         
         receipt_message = f"""
-{company_name} - Purchase Receipt
+{sms_sender} - Purchase Receipt
 
 Product: {product.name}
 {f'Brand: {product.brand}' if product.brand else ''}
@@ -357,10 +375,13 @@ Total: ₵{sale.total_amount:.2f}
 Thank you for your purchase!
         """.strip()
         
-        success = sms_service.send_sms(
-            to=sale.customer_phone,
-            message=receipt_message
+        result = sms_service.send_sms(
+            phone_number=sale.customer_phone,
+            message=receipt_message,
+            company_name=sms_sender
         )
+        
+        success = result.get('success', False)
         
         if success:
             sale.sms_sent = 1
