@@ -178,6 +178,8 @@ class SMSService:
         """
         Send SMS via Arkasel API
         Docs: https://developers.arkesel.com/sms/send-sms
+        
+        Note: company_name parameter is used as sender_id for branded messages
         """
         try:
             headers = {
@@ -185,14 +187,17 @@ class SMSService:
                 "Content-Type": "application/json"
             }
             
+            # Use company_name as sender if provided, otherwise use default arkasel_sender_id
+            sender_id = company_name if company_name and company_name != "SwapSync" else self.arkasel_sender_id
+            
             payload = {
-                "sender": self.arkasel_sender_id,
+                "sender": sender_id,
                 "recipients": [phone_number],
                 "message": message,
                 "sandbox": False  # Set to True for testing
             }
             
-            logger.info(f"📱 Sending SMS via Arkasel to {phone_number}")
+            logger.info(f"📱 Sending SMS via Arkasel to {phone_number} from '{sender_id}'")
             response = requests.post(
                 self.arkasel_url,
                 json=payload,
@@ -209,7 +214,7 @@ class SMSService:
                     "provider": "arkasel",
                     "message_id": data.get("id", f"ARKASEL_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"),
                     "sent_at": datetime.utcnow().isoformat(),
-                    "sender_id": self.arkasel_sender_id,
+                    "sender_id": sender_id,  # Show actual sender used
                     "company": company_name,
                     "response": data
                 }
@@ -236,18 +241,23 @@ class SMSService:
         """
         Send SMS via Hubtel API
         Docs: https://developers.hubtel.com/documentations/sendmessage
+        
+        Note: company_name parameter is used as sender_id for branded messages
         """
         try:
             auth = (self.hubtel_client_id, self.hubtel_client_secret)
             
+            # Use company_name as sender if provided, otherwise use default hubtel_sender_id
+            sender_id = company_name if company_name and company_name != "SwapSync" else self.hubtel_sender_id
+            
             payload = {
-                "From": self.hubtel_sender_id,
+                "From": sender_id,
                 "To": phone_number,
                 "Content": message,
                 "RegisteredDelivery": True
             }
             
-            logger.info(f"📱 Sending SMS via Hubtel to {phone_number}")
+            logger.info(f"📱 Sending SMS via Hubtel to {phone_number} from '{sender_id}'")
             response = requests.post(
                 self.hubtel_url,
                 json=payload,
@@ -264,7 +274,7 @@ class SMSService:
                     "provider": "hubtel",
                     "message_id": data.get("MessageId", f"HUBTEL_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"),
                     "sent_at": datetime.utcnow().isoformat(),
-                    "sender_id": self.hubtel_sender_id,
+                    "sender_id": sender_id,  # Show actual sender used
                     "company": company_name,
                     "response": data
                 }

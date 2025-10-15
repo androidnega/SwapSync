@@ -332,7 +332,7 @@ def get_dashboard_cards(
         
         cards.append({
             "id": "service_charges",
-            "title": "Service Charges",
+            "title": "Repair Service Charges",
             "value": f"₵{total_service_charges:.2f}",
             "icon": "faTools",
             "color": "orange",
@@ -371,18 +371,29 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # Total Discounts Applied (filtered by manager and their staff)
+        # Swap Discounts Applied (filtered by manager and their staff)
         # Only count records that have proper staff tracking
         swap_discounts = db.query(func.sum(PendingResale.discount_amount)).filter(
             PendingResale.attending_staff_id.in_(staff_ids),
             PendingResale.attending_staff_id.isnot(None)
         ).scalar() or 0.0
         
-        # Phone sale discounts (filtered by staff)
+        # Phone sale discounts (filtered by staff) - also part of swap discounts
         phone_sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
             Sale.created_by_user_id.in_(staff_ids),
             Sale.created_by_user_id.isnot(None)
         ).scalar() or 0.0
+        
+        total_swap_discounts = swap_discounts + phone_sale_discounts
+        
+        cards.append({
+            "id": "swap_discounts",
+            "title": "Discount Applied (Swap)",
+            "value": f"₵{total_swap_discounts:.2f}",
+            "icon": "faExchangeAlt",
+            "color": "indigo",
+            "visible_to": ["ceo", "manager"]
+        })
         
         # Product sale discounts (filtered by staff)
         product_sale_discounts = db.query(func.sum(ProductSale.discount_amount)).filter(
@@ -390,14 +401,12 @@ def get_dashboard_cards(
             ProductSale.created_by_user_id.isnot(None)
         ).scalar() or 0.0
         
-        total_discounts = swap_discounts + phone_sale_discounts + product_sale_discounts
-        
         cards.append({
-            "id": "total_discounts",
-            "title": "Discounts Applied",
-            "value": f"₵{total_discounts:.2f}",
-            "icon": "faPercent",
-            "color": "purple",
+            "id": "product_discounts",
+            "title": "Discount Applied (Product)",
+            "value": f"₵{product_sale_discounts:.2f}",
+            "icon": "faShoppingCart",
+            "color": "pink",
             "visible_to": ["ceo", "manager"]
         })
     
