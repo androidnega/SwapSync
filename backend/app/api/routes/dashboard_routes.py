@@ -234,22 +234,6 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # Total Sales Revenue (filtered by manager and their staff)
-        # Only count sales that have created_by_user_id set
-        total_sales = db.query(func.sum(Sale.amount_paid)).filter(
-            Sale.created_by_user_id.in_(staff_ids),
-            Sale.created_by_user_id.isnot(None)
-        ).scalar() or 0.0
-        
-        cards.append({
-            "id": "total_sales_revenue",
-            "title": "Sales Revenue",
-            "value": f"₵{total_sales:.2f}",
-            "icon": "faMoneyBillWave",
-            "color": "green",
-            "visible_to": ["ceo", "manager"]
-        })
-        
         # Product Sales Revenue (filtered by manager and their staff)
         # Only count sales that have created_by_user_id set
         product_sales_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
