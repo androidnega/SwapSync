@@ -31,11 +31,19 @@ interface RepairItem {
   min_stock_level: number;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  icon?: string;
+  description?: string;
+}
+
 const Repairs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'repairs' | 'items' | 'stats'>('repairs');
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [repairItems, setRepairItems] = useState<RepairItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showItemModal, setShowItemModal] = useState(false);
@@ -77,6 +85,7 @@ const Repairs: React.FC = () => {
     fetchUserRole();
     fetchCustomers();
     fetchRepairItems(); // Fetch for all roles (repairers need to select items too)
+    fetchCategories(); // Fetch categories for repair item modal
   }, []);
 
   // Close dropdown when clicking outside
@@ -132,6 +141,15 @@ const Repairs: React.FC = () => {
       setRepairItems(response.data);
     } catch (error) {
       console.error('Failed to fetch repair items:', error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/categories/');
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
     }
   };
 
@@ -1537,13 +1555,18 @@ const Repairs: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Category
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={itemFormData.category}
                       onChange={(e) => setItemFormData({ ...itemFormData, category: e.target.value })}
-                      placeholder="e.g., Screen, Battery, Charger"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
+                    >
+                      <option value="">-- Select Category --</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>
+                          {cat.icon ? `${cat.icon} ${cat.name}` : cat.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
