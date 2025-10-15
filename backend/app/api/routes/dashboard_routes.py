@@ -128,21 +128,32 @@ def get_dashboard_cards(
             "visible_to": ["shop_keeper", "ceo"]
         })
         
-        # Total Discounts Applied Card
-        total_discounts = (
-            db.query(func.sum(Swap.discount_amount)).scalar() or 0.0
-        ) + (
-            db.query(func.sum(Sale.discount_amount)).scalar() or 0.0
-        )
-        
-        cards.append({
-            "id": "total_discounts",
-            "title": "Discounts Applied",
-            "value": f"₵{total_discounts:.2f}",
-            "icon": "faPercent",
-            "color": "purple",
-            "visible_to": ["shop_keeper", "ceo"]
-        })
+        # Total Discounts Applied Card (CEO/Manager only - filtered by their staff)
+        if current_user.role in [UserRole.CEO, UserRole.MANAGER]:
+            # Get staff IDs for filtering
+            staff = db.query(User).filter(User.parent_user_id == current_user.id).all()
+            staff_ids = [current_user.id] + [s.id for s in staff]
+            
+            # Calculate discounts from swaps
+            swap_discounts = db.query(func.sum(Swap.discount_amount)).filter(
+                Swap.staff_id.in_(staff_ids)
+            ).scalar() or 0.0
+            
+            # Calculate discounts from phone sales
+            sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
+                Sale.created_by_user_id.in_(staff_ids)
+            ).scalar() or 0.0
+            
+            total_discounts = swap_discounts + sale_discounts
+            
+            cards.append({
+                "id": "total_discounts",
+                "title": "Discounts Applied",
+                "value": f"₵{total_discounts:.2f}",
+                "icon": "faPercent",
+                "color": "purple",
+                "visible_to": ["ceo", "manager"]
+            })
         
         # Available Phones - Exclude trade-ins waiting for resale
         available_phones = db.query(func.count(Phone.id)).filter(

@@ -61,6 +61,7 @@ const ProductSales = () => {
   const [customerType, setCustomerType] = useState<'existing' | 'new' | 'walkin'>('existing');
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [lastSaleReceipt, setLastSaleReceipt] = useState<any>(null);
+  const [productSearchTerm, setProductSearchTerm] = useState<string>('');
   
   const [form, setForm] = useState({
     customer_id: '',
@@ -271,7 +272,7 @@ const ProductSales = () => {
     }
   };
 
-  const availableProducts = products.filter(p => p.is_available && p.quantity > 0);
+  const availableProducts = products.filter(p => p.quantity > 0);
   const quantity = parseInt(form.quantity) || 1;
   const unitPrice = parseFloat(form.unit_price || '0');
   const discount = parseFloat(form.discount_amount || '0');
@@ -511,23 +512,92 @@ const ProductSales = () => {
                   </div>
                 )}
 
-                {/* Product Selection */}
+                {/* Product Selection with Search */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Product *</label>
-                  <select
-                    name="product_id"
-                    value={form.product_id}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">-- Select Product --</option>
-                    {availableProducts.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} {p.brand ? `- ${p.brand}` : ''} (₵{p.selling_price}) [Stock: {p.quantity}]
-                      </option>
-                    ))}
-                  </select>
+                  
+                  {/* Search Input */}
+                  <input
+                    type="text"
+                    placeholder="🔍 Search products by name or brand..."
+                    value={productSearchTerm}
+                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  
+                  {/* Selected Product Display */}
+                  {selectedProduct && (
+                    <div className="p-3 bg-green-50 border-x border-green-200 flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">{selectedProduct.name}</span>
+                        {selectedProduct.brand && <span className="text-xs text-gray-600"> - {selectedProduct.brand}</span>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">₵{selectedProduct.selling_price}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setForm({ ...form, product_id: '' });
+                            setSelectedProduct(null);
+                            setProductSearchTerm('');
+                          }}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Products Dropdown */}
+                  {!selectedProduct && (
+                    <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-b-lg bg-white">
+                      {availableProducts.length === 0 ? (
+                        <div className="p-3 text-sm text-gray-500 text-center">
+                          No products in stock
+                        </div>
+                      ) : (
+                        availableProducts
+                          .filter(p => 
+                            productSearchTerm === '' || 
+                            p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+                            (p.brand && p.brand.toLowerCase().includes(productSearchTerm.toLowerCase()))
+                          )
+                          .map(p => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                setForm({ ...form, product_id: p.id.toString() });
+                                setSelectedProduct(p);
+                                setProductSearchTerm('');
+                              }}
+                              className="w-full flex items-center justify-between p-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 text-left transition-colors"
+                            >
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{p.name}</div>
+                                {p.brand && (
+                                  <div className="text-xs text-gray-500">{p.brand}</div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{p.quantity} in stock</span>
+                                <span className="text-sm font-medium text-green-600">₵{p.selling_price.toFixed(2)}</span>
+                              </div>
+                            </button>
+                          ))
+                      )}
+                      {availableProducts.filter(p => 
+                        productSearchTerm === '' || 
+                        p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+                        (p.brand && p.brand.toLowerCase().includes(productSearchTerm.toLowerCase()))
+                      ).length === 0 && productSearchTerm !== '' && (
+                        <div className="p-3 text-sm text-gray-500 text-center">
+                          No products match "{productSearchTerm}"
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Quantity */}
