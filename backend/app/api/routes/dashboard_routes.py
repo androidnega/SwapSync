@@ -16,6 +16,7 @@ from app.models.customer import Customer
 from app.models.phone import Phone, PhoneStatus
 from app.models.pending_resale import PendingResale, PhoneSaleStatus
 from app.models.product_sale import ProductSale
+from app.models.product import Product
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
