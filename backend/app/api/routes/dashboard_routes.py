@@ -327,3 +327,84 @@ def get_dashboard_summary(
     
     return summary
 
+
+@router.get("/hub-profits")
+def get_hub_profits(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get detailed profit breakdown for each hub (Products, Swapping, Repairs)
+    Manager/CEO only
+    """
+    from app.models.product_sale import ProductSale
+    from app.models.repair_item_usage import RepairItemUsage
+    from app.models.repair_item import RepairItem
+    
+    if current_user.role not in [UserRole.CEO, UserRole.MANAGER]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managers can view hub profits"
+        )
+    
+    # PRODUCTS HUB PROFIT
+    # Profit = Total Revenue - Total Cost
+    product_sales = db.query(ProductSale).all()
+    products_revenue = sum(sale.total_amount for sale in product_sales)
+    products_cost = sum((sale.quantity * sale.unit_price) for sale in product_sales)  # Simplified
+    products_profit = products_revenue - products_cost
+    
+    # SWAPPING HUB PROFIT  
+    # Profit from completed swaps
+    swaps_profit = db.query(func.sum(Swap.profit_or_loss)).filter(
+        Swap.resale_status == ResaleStatus.SOLD
+    ).scalar() or 0.0
+    
+    # REPAIRER HUB PROFIT
+    # Profit from repairs = Service revenue + Items profit
+    # Service profit = service_cost (assuming 100% profit on service)
+    # Items profit = items sold in repairs (selling_price - cost_price) * quantity
+    
+    # Service revenue (100% profit)
+    service_revenue = db.query(func.sum(Repair.service_cost)).scalar() or 0.0
+    
+    # Items profit from repair items used
+    item_usages = db.query(RepairItemUsage).all()
+    items_revenue = 0.0
+    items_cost = 0.0
+    
+    for usage in item_usages:
+        repair_item = db.query(RepairItem).filter(RepairItem.id == usage.repair_item_id).first()
+        if repair_item:
+            items_revenue += usage.total_cost  # What customer paid
+            items_cost += repair_item.cost_price * usage.quantity  # What we paid
+    
+    repairs_profit = service_revenue + (items_revenue - items_cost)
+    
+    # TOTAL COMBINED PROFIT
+    total_profit = products_profit + swaps_profit + repairs_profit
+    
+    return {
+        "products_hub": {
+            "revenue": products_revenue,
+            "cost": products_cost,
+            "profit": products_profit
+        },
+        "swapping_hub": {
+            "profit": swaps_profit,
+            "note": "Profit from resold phones"
+        },
+        "repairer_hub": {
+            "service_revenue": service_revenue,
+            "items_revenue": items_revenue,
+            "items_cost": items_cost,
+            "items_profit": items_revenue - items_cost,
+            "total_profit": repairs_profit
+        },
+        "total_profit": total_profit,
+        "breakdown": {
+            "from_products": products_profit,
+            "from_swapping": swaps_profit,
+            "from_repairs": repairs_profit
+        }
+    }
