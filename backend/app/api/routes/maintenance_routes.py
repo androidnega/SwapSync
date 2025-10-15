@@ -18,7 +18,7 @@ from app.core.backup import (
 )
 from app.models.user import User, UserRole
 from app.models.customer import Customer
-from app.models.phone import Phone
+from app.models.phone import Phone, PhoneOwnershipHistory
 from app.models.swap import Swap
 from app.models.sale import Sale
 from app.models.repair import Repair
@@ -26,6 +26,7 @@ from app.models.activity_log import ActivityLog
 from app.models.invoice import Invoice
 from app.models.product import Product
 from app.models.product_sale import ProductSale
+from app.models.pending_resale import PendingResale
 from app.core.auth import get_current_active_admin
 
 router = APIRouter(prefix="/maintenance", tags=["Maintenance"])
@@ -338,8 +339,6 @@ def clear_customers(
 ):
     """Clear all customer data (also clears related sales, swaps, repairs, product sales)"""
     try:
-        from app.models.product_sale import ProductSale
-        
         count = db.query(Customer).count()
         
         # Delete all related records first (to avoid foreign key violations)
@@ -373,9 +372,6 @@ def clear_phones(
 ):
     """Clear all phone records (also clears ownership history, sales, swaps, pending resales)"""
     try:
-        from app.models.phone import PhoneOwnershipHistory
-        from app.models.product_sale import ProductSale
-        
         count = db.query(Phone).count()
         
         # Delete all related records first (to avoid foreign key violations)
