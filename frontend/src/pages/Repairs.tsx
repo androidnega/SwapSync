@@ -41,6 +41,7 @@ const Repairs: React.FC = () => {
   const [showItemModal, setShowItemModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [userRole, setUserRole] = useState<string>('');
+  const [itemSearchTerm, setItemSearchTerm] = useState<string>('');
   const [formData, setFormData] = useState({
     customer_id: '',
     customer_phone: '',
@@ -1385,35 +1386,66 @@ const Repairs: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Available Items */}
-                  <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
+                  {/* Search Input */}
+                  <div className="mb-2">
+                    <input
+                      type="text"
+                      placeholder="🔍 Search repair items by name or category..."
+                      value={itemSearchTerm}
+                      onChange={(e) => setItemSearchTerm(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                  </div>
+
+                  {/* Available Items Dropdown */}
+                  <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg bg-white">
                     {repairItems.filter(item => item.stock_quantity > 0).length === 0 ? (
                       <div className="p-3 text-sm text-gray-500 text-center">
                         No repair items in stock
                       </div>
                     ) : (
                       repairItems
-                        .filter(item => item.stock_quantity > 0 && !selectedItems.find(si => si.item_id === item.id))
+                        .filter(item => 
+                          item.stock_quantity > 0 && 
+                          !selectedItems.find(si => si.item_id === item.id) &&
+                          (itemSearchTerm === '' || 
+                           item.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||
+                           (item.category && item.category.toLowerCase().includes(itemSearchTerm.toLowerCase())))
+                        )
                         .map(item => (
                           <button
                             key={item.id}
                             type="button"
-                            onClick={() => handleAddItem(item)}
-                            className="w-full flex items-center justify-between p-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-left"
+                            onClick={() => {
+                              handleAddItem(item);
+                              setItemSearchTerm(''); // Clear search after selection
+                            }}
+                            className="w-full flex items-center justify-between p-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 text-left transition-colors"
                           >
                             <div className="flex-1">
                               <div className="text-sm font-medium text-gray-900">{item.name}</div>
                               {item.category && (
-                                <div className="text-xs text-gray-500">{item.category}</div>
+                                <div className="text-xs text-gray-500 mt-0.5">{item.category}</div>
                               )}
                             </div>
                             <div className="flex items-center gap-3">
-                              <span className="text-xs text-gray-500">{item.stock_quantity} in stock</span>
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{item.stock_quantity} in stock</span>
                               <span className="text-sm font-medium text-green-600">₵{item.selling_price.toFixed(2)}</span>
-                              <span className="text-blue-600 text-sm">+</span>
+                              <span className="text-blue-600 text-lg">+</span>
                             </div>
                           </button>
                         ))
+                    )}
+                    {repairItems.filter(item => 
+                      item.stock_quantity > 0 && 
+                      !selectedItems.find(si => si.item_id === item.id) &&
+                      (itemSearchTerm === '' || 
+                       item.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||
+                       (item.category && item.category.toLowerCase().includes(itemSearchTerm.toLowerCase())))
+                    ).length === 0 && itemSearchTerm !== '' && (
+                      <div className="p-3 text-sm text-gray-500 text-center">
+                        No items match "{itemSearchTerm}"
+                      </div>
                     )}
                   </div>
                 </div>
