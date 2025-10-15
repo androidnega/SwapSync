@@ -635,80 +635,84 @@ const Repairs: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 border-b border-gray-200">
-        <button
-          onClick={() => setFilterStatus('all')}
-          className={`px-4 py-2 font-medium flex items-center gap-2 ${
-            filterStatus === 'all'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          All Repairs
-          <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700">
-            {repairCounts.all}
-          </span>
-        </button>
-        <button
-          onClick={() => setFilterStatus('pending')}
-          className={`px-4 py-2 font-medium flex items-center gap-2 ${
-            filterStatus === 'pending'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Pending
-          <span className={`px-2 py-0.5 text-xs rounded-full ${
-            repairCounts.pending > 0 ? 'bg-yellow-200 text-yellow-800' : 'bg-gray-200 text-gray-500'
-          }`}>
-            {repairCounts.pending}
-          </span>
-        </button>
-        <button
-          onClick={() => setFilterStatus('in_progress')}
-          className={`px-4 py-2 font-medium flex items-center gap-2 ${
-            filterStatus === 'in_progress'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          In Progress
-          <span className={`px-2 py-0.5 text-xs rounded-full ${
-            repairCounts.in_progress > 0 ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-500'
-          }`}>
-            {repairCounts.in_progress}
-          </span>
-        </button>
-        <button
-          onClick={() => setFilterStatus('completed')}
-          className={`px-4 py-2 font-medium flex items-center gap-2 ${
-            filterStatus === 'completed'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Completed
-          <span className={`px-2 py-0.5 text-xs rounded-full ${
-            repairCounts.completed > 0 ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-500'
-          }`}>
-            {repairCounts.completed}
-          </span>
-        </button>
-        <button
-          onClick={() => setFilterStatus('delivered')}
-          className={`px-4 py-2 font-medium flex items-center gap-2 ${
-            filterStatus === 'delivered'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Delivered
-          <span className={`px-2 py-0.5 text-xs rounded-full ${
-            repairCounts.delivered > 0 ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-500'
-          }`}>
-            {repairCounts.delivered}
-          </span>
-        </button>
+      <div className="overflow-x-auto border-b border-gray-200 scrollbar-hide">
+        <div className="flex gap-1 md:gap-2 min-w-max">
+          <button
+            onClick={() => setFilterStatus('all')}
+            className={`px-2 md:px-4 py-2 font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-sm md:text-base ${
+              filterStatus === 'all'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className="hidden sm:inline">All Repairs</span>
+            <span className="sm:hidden">All</span>
+            <span className="px-1.5 md:px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700">
+              {repairCounts.all}
+            </span>
+          </button>
+          <button
+            onClick={() => setFilterStatus('pending')}
+            className={`px-2 md:px-4 py-2 font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-sm md:text-base ${
+              filterStatus === 'pending'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Pending
+            <span className={`px-1.5 md:px-2 py-0.5 text-xs rounded-full ${
+              repairCounts.pending > 0 ? 'bg-yellow-200 text-yellow-800' : 'bg-gray-200 text-gray-500'
+            }`}>
+              {repairCounts.pending}
+            </span>
+          </button>
+          <button
+            onClick={() => setFilterStatus('in_progress')}
+            className={`px-2 md:px-4 py-2 font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-sm md:text-base ${
+              filterStatus === 'in_progress'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className="hidden sm:inline">In Progress</span>
+            <span className="sm:hidden">Progress</span>
+            <span className={`px-1.5 md:px-2 py-0.5 text-xs rounded-full ${
+              repairCounts.in_progress > 0 ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-500'
+            }`}>
+              {repairCounts.in_progress}
+            </span>
+          </button>
+          <button
+            onClick={() => setFilterStatus('completed')}
+            className={`px-2 md:px-4 py-2 font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-sm md:text-base ${
+              filterStatus === 'completed'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Completed
+            <span className={`px-1.5 md:px-2 py-0.5 text-xs rounded-full ${
+              repairCounts.completed > 0 ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-500'
+            }`}>
+              {repairCounts.completed}
+            </span>
+          </button>
+          <button
+            onClick={() => setFilterStatus('delivered')}
+            className={`px-2 md:px-4 py-2 font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-sm md:text-base ${
+              filterStatus === 'delivered'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Delivered
+            <span className={`px-1.5 md:px-2 py-0.5 text-xs rounded-full ${
+              repairCounts.delivered > 0 ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-500'
+            }`}>
+              {repairCounts.delivered}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Desktop Table - Hidden on Mobile */}
