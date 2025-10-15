@@ -201,9 +201,14 @@ def get_dashboard_cards(
     
     # CEO & MANAGER - Profit/Stats cards
     if current_user.role in [UserRole.CEO, UserRole.MANAGER]:
-        # Total Profit from Swaps - Use PendingResale table
+        # Get staff IDs (manager + all their staff)
+        staff = db.query(User).filter(User.parent_user_id == current_user.id).all()
+        staff_ids = [current_user.id] + [s.id for s in staff]
+        
+        # Total Profit from Swaps - Use PendingResale table (filtered by staff)
         total_profit = db.query(func.sum(PendingResale.profit_amount)).filter(
-            PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD
+            PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD,
+            PendingResale.staff_id.in_(staff_ids)
         ).scalar() or 0.0
         
         cards.append({
@@ -215,8 +220,10 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # Total Sales Revenue
-        total_sales = db.query(func.sum(Sale.amount_paid)).scalar() or 0.0
+        # Total Sales Revenue (filtered by manager and their staff)
+        total_sales = db.query(func.sum(Sale.amount_paid)).filter(
+            Sale.created_by_user_id.in_(staff_ids)
+        ).scalar() or 0.0
         
         cards.append({
             "id": "total_sales_revenue",
@@ -224,11 +231,14 @@ def get_dashboard_cards(
             "value": f"₵{total_sales:.2f}",
             "icon": "faMoneyBillWave",
             "color": "green",
-            "visible_to": ["ceo"]
+            "visible_to": ["ceo", "manager"]
         })
         
-        # Total Repairs Revenue
-        total_repair_revenue = db.query(func.sum(Repair.cost)).scalar() or 0.0
+        # Total Repairs Revenue (filtered by manager and their staff)
+        total_repair_revenue = db.query(func.sum(Repair.price)).filter(
+            Repair.staff_id.in_(staff_ids),
+            Repair.status == 'delivered'
+        ).scalar() or 0.0
         
         cards.append({
             "id": "repair_revenue",
@@ -236,7 +246,7 @@ def get_dashboard_cards(
             "value": f"₵{total_repair_revenue:.2f}",
             "icon": "faTools",
             "color": "blue",
-            "visible_to": ["ceo"]
+            "visible_to": ["ceo", "manager"]
         })
     
     return {
