@@ -202,11 +202,11 @@ def get_manager_data(
     total_customers = db.query(Customer).filter(Customer.created_by_id.in_(staff_ids)).count()
     total_phones = db.query(Phone).filter(Phone.created_by_id.in_(staff_ids)).count()
     total_swaps = db.query(Swap).filter(Swap.staff_id.in_(staff_ids)).count()
-    total_sales = db.query(Sale).filter(Sale.staff_id.in_(staff_ids)).count()
+    total_sales = db.query(Sale).filter(Sale.created_by_user_id.in_(staff_ids)).count()
     total_repairs = db.query(Repair).filter(Repair.staff_id.in_(staff_ids)).count()
     
     # Revenue calculations
-    sales_revenue = db.query(func.sum(Sale.final_price)).filter(Sale.staff_id.in_(staff_ids)).scalar() or 0.0
+    sales_revenue = db.query(func.sum(Sale.amount_paid)).filter(Sale.created_by_user_id.in_(staff_ids)).scalar() or 0.0
     repair_revenue = db.query(func.sum(Repair.price)).filter(
         Repair.staff_id.in_(staff_ids),
         Repair.status == 'delivered'
