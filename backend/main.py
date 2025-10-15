@@ -110,21 +110,62 @@ ADDITIONAL_ORIGINS = [
     "https://www.digitstec.store",  # WWW variant
 ]
 
+# Merge with settings origins
+all_origins = list(set(settings.ALLOWED_ORIGINS + ADDITIONAL_ORIGINS))
+
 # Log CORS origins for debugging
 logger.info("🌐 CORS Allowed Origins:")
-all_origins = settings.ALLOWED_ORIGINS + ADDITIONAL_ORIGINS
-for origin in set(all_origins):  # Remove duplicates
+for origin in all_origins:
     logger.info(f"   ✅ {origin}")
+
+# Check if in production
+import os
+is_production = os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("VERCEL")
+
+if is_production:
+    logger.info("🌐 Production environment detected - using enhanced CORS")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(set(all_origins)),  # Remove duplicates
+    allow_origins=all_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
+
+# Additional middleware to FORCE CORS headers on all responses (Railway/production fix)
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+
+class ForceCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Get origin from request
+        origin = request.headers.get("origin", "https://swapsync.digitstec.store")
+        
+        # Determine allowed origin
+        if origin in all_origins:
+            allowed_origin = origin
+        elif "swapsync.digitstec.store" in origin:
+            allowed_origin = "https://swapsync.digitstec.store"
+        else:
+            allowed_origin = "https://swapsync.digitstec.store"
+        
+        # Process request
+        response = await call_next(request)
+        
+        # Force add CORS headers to response
+        response.headers["Access-Control-Allow-Origin"] = allowed_origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Expose-Headers"] = "*"
+        
+        return response
+
+# Add force CORS middleware (applies after CORSMiddleware as a fallback)
+app.add_middleware(ForceCORSMiddleware)
 
 # Import OTP routes
 from app.api.routes import otp_routes
@@ -208,8 +249,15 @@ async def options_handler(request: Request, path: str):
     # Get the origin from the request
     origin = request.headers.get("origin", "")
     
-    # Check if origin is allowed
-    allowed_origin = origin if origin in all_origins else all_origins[0]
+    # Check if origin is allowed, default to production frontend
+    if origin in all_origins:
+        allowed_origin = origin
+    elif "swapsync.digitstec.store" in origin:
+        allowed_origin = "https://swapsync.digitstec.store"
+    else:
+        allowed_origin = "https://swapsync.digitstec.store"  # Default to production frontend
+    
+    logger.info(f"🔍 OPTIONS request from origin: {origin} -> Responding with: {allowed_origin}")
     
     return JSONResponse(
         content={},
