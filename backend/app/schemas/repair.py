@@ -3,7 +3,13 @@ Pydantic schemas for Repair model
 """
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+
+
+class RepairItemUsed(BaseModel):
+    """Schema for repair items used in a repair"""
+    repair_item_id: int
+    quantity: int = Field(default=1, gt=0)
 
 
 class RepairCreate(BaseModel):
@@ -13,7 +19,10 @@ class RepairCreate(BaseModel):
     phone_description: str = Field(..., min_length=1, max_length=200)
     issue_description: str = Field(..., min_length=1, max_length=500)
     diagnosis: Optional[str] = Field(None, max_length=500)
-    cost: float = Field(..., gt=0)
+    service_cost: float = Field(default=0, ge=0)  # Labor/service cost
+    items_cost: float = Field(default=0, ge=0)  # Cost of repair items used
+    cost: float = Field(..., gt=0)  # Total cost (service_cost + items_cost)
+    repair_items: Optional[List[RepairItemUsed]] = Field(default=[])
 
 
 class RepairUpdate(BaseModel):

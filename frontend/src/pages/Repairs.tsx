@@ -47,9 +47,10 @@ const Repairs: React.FC = () => {
     customer_name: '',
     phone_description: '',
     issue: '',
-    cost: '',
+    service_cost: '',
     due_date: '',
   });
+  const [selectedItems, setSelectedItems] = useState<{item_id: number, quantity: number, name: string, price: number}[]>([]);
   const [itemFormData, setItemFormData] = useState({
     name: '',
     description: '',
@@ -73,10 +74,8 @@ const Repairs: React.FC = () => {
     fetchRepairs();
     fetchUserRole();
     fetchCustomers();
-    if (userRole === 'manager' || userRole === 'ceo') {
-      fetchRepairItems();
-    }
-  }, [userRole]);
+    fetchRepairItems(); // Fetch for all roles (repairers need to select items too)
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -227,6 +226,42 @@ const Repairs: React.FC = () => {
     setShowCustomerDropdown(false);
   };
 
+  const handleAddItem = (item: RepairItem) => {
+    const existing = selectedItems.find(i => i.item_id === item.id);
+    if (existing) {
+      setSelectedItems(selectedItems.map(i => 
+        i.item_id === item.id ? {...i, quantity: i.quantity + 1} : i
+      ));
+    } else {
+      setSelectedItems([...selectedItems, {
+        item_id: item.id,
+        quantity: 1,
+        name: item.name,
+        price: item.selling_price
+      }]);
+    }
+  };
+
+  const handleRemoveItem = (item_id: number) => {
+    setSelectedItems(selectedItems.filter(i => i.item_id !== item_id));
+  };
+
+  const handleItemQuantityChange = (item_id: number, quantity: number) => {
+    if (quantity <= 0) {
+      handleRemoveItem(item_id);
+    } else {
+      setSelectedItems(selectedItems.map(i => 
+        i.item_id === item_id ? {...i, quantity} : i
+      ));
+    }
+  };
+
+  const calculateTotalCost = () => {
+    const serviceCost = parseFloat(formData.service_cost) || 0;
+    const itemsCost = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return serviceCost + itemsCost;
+  };
+
   const filteredCustomers = customers.filter(c =>
     c.full_name.toLowerCase().includes(customerSearch.toLowerCase()) ||
     c.phone_number.includes(customerSearch)
@@ -242,10 +277,13 @@ const Repairs: React.FC = () => {
       return;
     }
 
-    // Validate cost
-    const costNum = parseFloat(formData.cost);
-    if (isNaN(costNum) || costNum <= 0) {
-      setMessage('❌ Please enter a valid cost greater than 0');
+    // Validate service cost
+    const serviceCost = parseFloat(formData.service_cost) || 0;
+    const itemsCost = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalCost = serviceCost + itemsCost;
+
+    if (totalCost <= 0) {
+      setMessage('❌ Please enter a service cost or select repair items');
       return;
     }
 
@@ -253,7 +291,13 @@ const Repairs: React.FC = () => {
       customer_id: parseInt(formData.customer_id),
       phone_description: formData.phone_description.trim(),
       issue_description: formData.issue.trim(),
-      cost: costNum,
+      service_cost: serviceCost,
+      items_cost: itemsCost,
+      cost: totalCost,
+      repair_items: selectedItems.map(item => ({
+        repair_item_id: item.item_id,
+        quantity: item.quantity
+      }))
     };
 
     // Add optional fields
@@ -281,9 +325,10 @@ const Repairs: React.FC = () => {
         customer_name: '', 
         phone_description: '', 
         issue: '', 
-        cost: '', 
+        service_cost: '', 
         due_date: '' 
       });
+      setSelectedItems([]);
       setSelectedCustomer(null);
       setCustomerSearch('');
       setEditingId(null);
@@ -347,9 +392,10 @@ const Repairs: React.FC = () => {
       customer_name: '', 
       phone_description: '', 
       issue: '', 
-      cost: '', 
+      service_cost: '', 
       due_date: '' 
     });
+    setSelectedItems([]);
     setSelectedCustomer(null);
     setCustomerSearch('');
     setEditingId(null);
@@ -1277,17 +1323,17 @@ const Repairs: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Repair Cost (₵) *
+                      Service Cost (₵)
                     </label>
                     <input
                       type="number"
                       step="0.01"
-                      value={formData.cost}
-                      onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                      required
-                      placeholder="e.g., 200"
+                      value={formData.service_cost}
+                      onChange={(e) => setFormData({ ...formData, service_cost: e.target.value })}
+                      placeholder="Labor/service charge"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Labor cost only</p>
                   </div>
                 </div>
                 
@@ -1303,6 +1349,91 @@ const Repairs: React.FC = () => {
                     placeholder="Describe the problem..."
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+
+                {/* Repair Items Selection */}
+                <div className="border-t border-gray-200 pt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Repair Items (Optional)
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">Select parts/components needed for this repair</p>
+                  
+                  {/* Selected Items */}
+                  {selectedItems.length > 0 && (
+                    <div className="mb-3 space-y-2">
+                      {selectedItems.map(item => (
+                        <div key={item.item_id} className="flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                          <span className="flex-1 text-sm font-medium text-gray-900">{item.name}</span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => handleItemQuantityChange(item.item_id, parseInt(e.target.value))}
+                            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                          />
+                          <span className="text-sm text-gray-600">×</span>
+                          <span className="w-20 text-sm font-medium text-green-600">₵{item.price.toFixed(2)}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item.item_id)}
+                            className="text-red-600 hover:text-red-800 text-sm"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Available Items */}
+                  <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
+                    {repairItems.filter(item => item.stock_quantity > 0).length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500 text-center">
+                        No repair items in stock
+                      </div>
+                    ) : (
+                      repairItems
+                        .filter(item => item.stock_quantity > 0 && !selectedItems.find(si => si.item_id === item.id))
+                        .map(item => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => handleAddItem(item)}
+                            className="w-full flex items-center justify-between p-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-left"
+                          >
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                              {item.category && (
+                                <div className="text-xs text-gray-500">{item.category}</div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs text-gray-500">{item.stock_quantity} in stock</span>
+                              <span className="text-sm font-medium text-green-600">₵{item.selling_price.toFixed(2)}</span>
+                              <span className="text-blue-600 text-sm">+</span>
+                            </div>
+                          </button>
+                        ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Cost Summary */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between text-gray-700">
+                      <span>Service Cost:</span>
+                      <span>₵{(parseFloat(formData.service_cost) || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-700">
+                      <span>Items Cost:</span>
+                      <span>₵{selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-blue-900 text-base pt-1 border-t border-blue-300">
+                      <span>Total Cost:</span>
+                      <span>₵{calculateTotalCost().toFixed(2)}</span>
+                    </div>
+                  </div>
                 </div>
                 
                 <div>

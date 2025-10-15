@@ -94,7 +94,7 @@ def create_repair(
     print(f"\n🔧 Creating repair - User: {current_user.username} (Role: {current_user.role.value})")
     print(f"   Customer ID: {repair.customer_id}")
     print(f"   Phone: {repair.phone_description}")
-    print(f"   Cost: {repair.cost}")
+    print(f"   Cost: {repair.cost} (Service: {repair.service_cost}, Items: {repair.items_cost})")
     
     # Verify customer exists
     customer = db.query(Customer).filter(Customer.id == repair.customer_id).first()
@@ -107,12 +107,57 @@ def create_repair(
     
     print(f"✅ Customer found: {customer.full_name}")
     
-    new_repair = Repair(**repair.model_dump(), created_at=datetime.utcnow())
+    # Extract repair_items before creating repair object
+    repair_items_data = repair.repair_items or []
+    repair_dict = repair.model_dump(exclude={'repair_items'})
+    
+    new_repair = Repair(**repair_dict, created_at=datetime.utcnow())
     new_repair.created_by_user_id = current_user.id  # Track who created this repair
     db.add(new_repair)
     db.flush()
     
     print(f"✅ Repair record created in database")
+    
+    # Process repair items if any
+    if repair_items_data:
+        from app.models.repair_item import RepairItem
+        from app.models.repair_item_usage import RepairItemUsage
+        
+        for item_data in repair_items_data:
+            # Get the repair item
+            repair_item = db.query(RepairItem).filter(
+                RepairItem.id == item_data['repair_item_id']
+            ).first()
+            
+            if not repair_item:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Repair item {item_data['repair_item_id']} not found"
+                )
+            
+            # Check stock
+            if repair_item.stock_quantity < item_data['quantity']:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Insufficient stock for {repair_item.name}. Available: {repair_item.stock_quantity}"
+                )
+            
+            # Create usage record
+            item_usage = RepairItemUsage(
+                repair_id=new_repair.id,
+                repair_item_id=repair_item.id,
+                quantity=item_data['quantity'],
+                unit_cost=repair_item.selling_price,
+                total_cost=repair_item.selling_price * item_data['quantity']
+            )
+            db.add(item_usage)
+            
+            # Deduct from stock
+            repair_item.stock_quantity -= item_data['quantity']
+            
+            print(f"✅ Added {item_data['quantity']}x {repair_item.name} to repair")
     
     # Generate unique ID and tracking code
     new_repair.generate_unique_id(db)
