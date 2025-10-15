@@ -98,19 +98,32 @@ async def shutdown_event():
     except Exception as e:
         logger.error(f"❌ Error stopping scheduler: {e}")
 
-# Configure CORS (with improved settings for development and local network)
+# Configure CORS (with improved settings for development, production, and local network)
+ADDITIONAL_ORIGINS = [
+    "http://localhost:5173", 
+    "http://127.0.0.1:5173",
+    "http://192.168.17.1:5173",  # Local network access
+    "http://192.168.17.1:8000",  # Backend on local network
+    "https://swapsync.digitstec.store",  # Production frontend
+    "https://api.digitstec.store",  # Production backend
+    "https://digitstec.store",  # Main domain
+    "https://www.digitstec.store",  # WWW variant
+]
+
+# Log CORS origins for debugging
+logger.info("🌐 CORS Allowed Origins:")
+all_origins = settings.ALLOWED_ORIGINS + ADDITIONAL_ORIGINS
+for origin in set(all_origins):  # Remove duplicates
+    logger.info(f"   ✅ {origin}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS + [
-        "http://localhost:5173", 
-        "http://127.0.0.1:5173",
-        "http://192.168.17.1:5173",  # Local network access
-        "http://192.168.17.1:8000",  # Backend on local network
-    ],
+    allow_origins=list(set(all_origins)),  # Remove duplicates
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 # Import OTP routes
@@ -190,15 +203,22 @@ async def root():
 
 
 @app.options("/{path:path}")
-async def options_handler(path: str):
+async def options_handler(request: Request, path: str):
     """Handle OPTIONS requests for CORS preflight"""
+    # Get the origin from the request
+    origin = request.headers.get("origin", "")
+    
+    # Check if origin is allowed
+    allowed_origin = origin if origin in all_origins else all_origins[0]
+    
     return JSONResponse(
         content={},
         headers={
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": allowed_origin,
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept",
             "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "3600",
         }
     )
 
