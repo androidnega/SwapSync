@@ -420,6 +420,10 @@ def delete_user(
             detail="User not found"
         )
     
+    # Delete user sessions first (to avoid NOT NULL constraint violation)
+    from app.models.user_session import UserSession
+    db.query(UserSession).filter(UserSession.user_id == user_id).delete()
+    
     db.delete(user)
     db.commit()
     

@@ -385,7 +385,11 @@ def delete_user(
         )
     
     try:
-        # Delete user (will cascade to related records based on model relationships)
+        # Delete user sessions first (to avoid NOT NULL constraint violation)
+        from app.models.user_session import UserSession
+        db.query(UserSession).filter(UserSession.user_id == user_id).delete()
+        
+        # Delete user (will cascade to other related records based on model relationships)
         db.delete(user_to_delete)
         db.commit()
     except Exception as e:
