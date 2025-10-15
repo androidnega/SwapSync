@@ -306,8 +306,8 @@ def clear_all_data(
         from app.models.repair_item_usage import RepairItemUsage
         
         # Clear all business data in proper order (respecting ALL foreign key constraints)
-        # Step 1: Break circular dependencies
-        db.query(Phone).update({"swapped_from_id": None})
+        # Step 1: Break circular dependencies and clear customer references
+        db.query(Phone).update({"swapped_from_id": None, "current_owner_id": None})
         
         # Step 2: Delete child records first
         db.query(RepairItemUsage).delete()  # References repairs
@@ -355,8 +355,8 @@ def clear_customers(
         count = db.query(Customer).count()
         
         # Delete all related records first (to avoid foreign key violations)
-        # Step 1: Clear phone foreign keys that reference swaps (circular dependency)
-        db.query(Phone).update({"swapped_from_id": None})
+        # Step 1: Clear phone foreign keys that reference swaps and customers
+        db.query(Phone).update({"swapped_from_id": None, "current_owner_id": None})
         
         # Step 2: Delete ownership history (references phones)
         db.query(PhoneOwnershipHistory).delete()
@@ -371,7 +371,7 @@ def clear_customers(
         db.query(Swap).delete()  # Delete swaps (now safe - phones.swapped_from_id cleared)
         db.query(Repair).delete()  # Delete repairs
         
-        # Step 5: Delete customers
+        # Step 5: Delete customers (now safe - phones.current_owner_id cleared)
         db.query(Customer).delete()
         db.commit()
         
@@ -399,8 +399,8 @@ def clear_phones(
         count = db.query(Phone).count()
         
         # Delete all related records first (to avoid foreign key violations)
-        # Step 1: Clear phone foreign keys that reference swaps (circular dependency)
-        db.query(Phone).update({"swapped_from_id": None})
+        # Step 1: Clear phone foreign keys that reference swaps and customers
+        db.query(Phone).update({"swapped_from_id": None, "current_owner_id": None})
         
         # Step 2: Delete records referencing phones
         db.query(PhoneOwnershipHistory).delete()  # Delete ownership history
