@@ -19,7 +19,6 @@ interface Product {
   specs: any;
   condition: string;
   imei: string | null;
-  is_swappable: boolean;
   is_active: boolean;
   is_available: boolean;
   profit_margin: number;
@@ -74,8 +73,7 @@ const Products: React.FC = () => {
     min_stock_level: '5',
     description: '',
     condition: 'New',
-    imei: '',
-    is_swappable: false
+    imei: ''
   });
 
   const [stockAdjustment, setStockAdjustment] = useState({
@@ -229,8 +227,7 @@ const Products: React.FC = () => {
       min_stock_level: product.min_stock_level ? product.min_stock_level.toString() : '5',
       description: product.description || '',
       condition: product.condition || 'New',
-      imei: product.imei || '',
-      is_swappable: product.is_swappable || false
+      imei: product.imei || ''
     });
     setEditingId(product.id);
     setShowModal(true);
@@ -286,8 +283,7 @@ const Products: React.FC = () => {
       min_stock_level: '5',
       description: '',
       condition: 'New',
-      imei: '',
-      is_swappable: false
+      imei: ''
     });
   };
 
@@ -871,20 +867,6 @@ const Products: React.FC = () => {
                       placeholder="For phone tracking"
                       disabled={userRole === 'shop_keeper'}
                     />
-                  </div>
-
-                  {/* Is Swappable */}
-                  <div className="col-span-2">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.is_swappable}
-                        onChange={(e) => setFormData({ ...formData, is_swappable: e.target.checked })}
-                        className="w-4 h-4 disabled:cursor-not-allowed"
-                        disabled={userRole === 'shop_keeper'}
-                      />
-                      <span className="text-sm font-medium text-gray-700">Available for swap transactions</span>
-                    </label>
                   </div>
 
                   {/* Description */}
