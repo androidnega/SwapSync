@@ -1238,18 +1238,25 @@ const Repairs: React.FC = () => {
 
       {/* Repair Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="p-3 md:p-4 border-b border-gray-200">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-800">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4" onClick={() => setShowModal(false)}>
+          <div className="bg-white rounded-lg w-full max-w-xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="p-3 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-base md:text-lg font-semibold text-gray-800">
                 {editingId ? 'Edit Repair' : 'New Repair'}
               </h2>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl"
+              >
+                ×
+              </button>
             </div>
-            <div className="overflow-y-auto p-3 md:p-4">
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="overflow-y-auto p-3">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {!editingId && (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Customer Phone Number *
@@ -1327,7 +1334,7 @@ const Repairs: React.FC = () => {
                   </>
                 )}
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Phone Description *
@@ -1338,7 +1345,7 @@ const Repairs: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, phone_description: e.target.value })}
                       required
                       placeholder="e.g., iPhone 12 Pro"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
@@ -1351,9 +1358,9 @@ const Repairs: React.FC = () => {
                       value={formData.service_cost}
                       onChange={(e) => setFormData({ ...formData, service_cost: e.target.value })}
                       placeholder="Labor/service charge"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Labor cost only</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Labor cost only</p>
                   </div>
                 </div>
                 
@@ -1367,20 +1374,20 @@ const Repairs: React.FC = () => {
                     required
                     rows={2}
                     placeholder="Describe the problem..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 {/* Repair Items Selection */}
-                <div className="border-t border-gray-200 pt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="border-t border-gray-200 pt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Repair Items (Optional)
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">Select parts/components needed for this repair</p>
+                  <p className="text-xs text-gray-500 mb-2">Select parts/components needed for this repair</p>
                   
                   {/* Selected Items */}
                   {selectedItems.length > 0 && (
-                    <div className="mb-3 space-y-2">
+                    <div className="mb-2 space-y-1.5">
                       {selectedItems.map(item => (
                         <div key={item.item_id} className="flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
                           <span className="flex-1 text-sm font-medium text-gray-900">{item.name}</span>
@@ -1475,8 +1482,8 @@ const Repairs: React.FC = () => {
                 </div>
 
                 {/* Cost Summary */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <div className="space-y-1 text-sm">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                  <div className="space-y-0.5 text-sm">
                     <div className="flex justify-between text-gray-700">
                       <span>Service Cost:</span>
                       <span>₵{(parseFloat(formData.service_cost) || 0).toFixed(2)}</span>
@@ -1500,22 +1507,22 @@ const Repairs: React.FC = () => {
                     type="datetime-local"
                     value={formData.due_date}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Expected completion date</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Expected completion date</p>
                 </div>
                 
-                <div className="flex gap-2 justify-end pt-4 border-t border-gray-200">
+                <div className="flex gap-2 justify-end pt-2 mt-2 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                    className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+                    className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
                   >
                     {editingId ? 'Update' : 'Create'}
                   </button>
