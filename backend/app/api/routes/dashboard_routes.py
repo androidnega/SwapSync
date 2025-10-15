@@ -263,9 +263,8 @@ def get_dashboard_cards(
         })
         
         # Total Discounts Applied (filtered by manager and their staff)
-        swap_discounts = db.query(func.sum(Swap.discount_amount)).filter(
-            Swap.staff_id.in_(staff_ids)
-        ).scalar() or 0.0
+        # Note: Swaps don't have staff_id, so we show all swap discounts
+        swap_discounts = db.query(func.sum(Swap.discount_amount)).scalar() or 0.0
         
         sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
             Sale.created_by_user_id.in_(staff_ids)
