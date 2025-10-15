@@ -168,7 +168,7 @@ const UserManagement: React.FC = () => {
     }
 
     try {
-      await api.delete(`/auth/users/${user.id}`);
+      await api.delete(`/staff/delete/${user.id}`);
       setMessage(`✅ User ${user.username} deleted successfully!`);
       fetchUsers();
       setTimeout(() => setMessage(''), 3000);
