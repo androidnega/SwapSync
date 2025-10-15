@@ -19,6 +19,17 @@ from app.models.pending_resale import PendingResale, PhoneSaleStatus
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
+@router.get("/test")
+def test_dashboard(current_user: User = Depends(get_current_user)):
+    """Test endpoint to verify dashboard access"""
+    return {
+        "user_id": current_user.id,
+        "username": current_user.username,
+        "role": current_user.role.value,
+        "message": "Dashboard access OK"
+    }
+
+
 @router.get("/cards")
 def get_dashboard_cards(
     db: Session = Depends(get_db),
