@@ -342,13 +342,20 @@ def clear_customers(
         count = db.query(Customer).count()
         
         # Delete all related records first (to avoid foreign key violations)
+        # Step 1: Clear phone foreign keys that reference swaps
+        db.query(Phone).update({"swapped_from_id": None})
+        
+        # Step 2: Delete ownership history (references phones)
+        db.query(PhoneOwnershipHistory).delete()
+        
+        # Step 3: Delete transaction records
         db.query(PendingResale).delete()  # Delete pending resales (references customers)
         db.query(ProductSale).delete()  # Delete product sales referencing customers
         db.query(Sale).delete()  # Delete phone sales
-        db.query(Swap).delete()  # Delete swaps
+        db.query(Swap).delete()  # Delete swaps (now safe - phones.swapped_from_id cleared)
         db.query(Repair).delete()  # Delete repairs
         
-        # Now delete customers
+        # Step 4: Delete customers
         db.query(Customer).delete()
         db.commit()
         
@@ -376,14 +383,18 @@ def clear_phones(
         count = db.query(Phone).count()
         
         # Delete all related records first (to avoid foreign key violations)
+        # Step 1: Clear phone foreign keys that reference swaps (circular dependency)
+        db.query(Phone).update({"swapped_from_id": None})
+        
+        # Step 2: Delete records referencing phones
         db.query(PhoneOwnershipHistory).delete()  # Delete ownership history
         db.query(PendingResale).delete()  # Delete pending resales
         db.query(ProductSale).delete()  # Delete product sales
         db.query(Sale).delete()  # Delete phone sales
-        db.query(Swap).delete()  # Delete swaps
+        db.query(Swap).delete()  # Delete swaps (now safe - swapped_from_id cleared)
         db.query(Repair).delete()  # Delete repairs
         
-        # Now delete phones
+        # Step 3: Delete phones
         db.query(Phone).delete()
         db.commit()
         
