@@ -17,8 +17,6 @@ interface Product {
   min_stock_level: number;
   description: string | null;
   specs: any;
-  condition: string;
-  imei: string | null;
   is_active: boolean;
   is_available: boolean;
   profit_margin: number;
@@ -71,9 +69,7 @@ const Products: React.FC = () => {
     discount_price: '',
     quantity: '0',
     min_stock_level: '5',
-    description: '',
-    condition: 'New',
-    imei: ''
+    description: ''
   });
 
   const [stockAdjustment, setStockAdjustment] = useState({
@@ -225,9 +221,7 @@ const Products: React.FC = () => {
       discount_price: product.discount_price?.toString() || '',
       quantity: product.quantity ? product.quantity.toString() : '0',
       min_stock_level: product.min_stock_level ? product.min_stock_level.toString() : '5',
-      description: product.description || '',
-      condition: product.condition || 'New',
-      imei: product.imei || ''
+      description: product.description || ''
     });
     setEditingId(product.id);
     setShowModal(true);
@@ -281,9 +275,7 @@ const Products: React.FC = () => {
       discount_price: '',
       quantity: '0',
       min_stock_level: '5',
-      description: '',
-      condition: 'New',
-      imei: ''
+      description: ''
     });
   };
 
@@ -839,34 +831,6 @@ const Products: React.FC = () => {
                       min="0"
                     />
                     <p className="text-xs text-gray-500 mt-1">Alert when stock falls below this level</p>
-                  </div>
-
-                  {/* Condition */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
-                    <select
-                      value={formData.condition}
-                      onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg p-2 disabled:bg-gray-50 disabled:cursor-not-allowed"
-                      disabled={userRole === 'shop_keeper'}
-                    >
-                      <option value="New">New</option>
-                      <option value="Used">Used</option>
-                      <option value="Refurbished">Refurbished</option>
-                    </select>
-                  </div>
-
-                  {/* IMEI (for phones only) */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">IMEI (Phones only)</label>
-                    <input
-                      type="text"
-                      value={formData.imei}
-                      onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg p-2 disabled:bg-gray-50 disabled:cursor-not-allowed"
-                      placeholder="For phone tracking"
-                      disabled={userRole === 'shop_keeper'}
-                    />
                   </div>
 
                   {/* Description */}
