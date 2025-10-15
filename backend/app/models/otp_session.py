@@ -15,7 +15,7 @@ class OTPSession(Base):
     user_id = Column(Integer, nullable=False)  # User requesting OTP
     status = Column(String(20), default="pending")  # pending, verified, expired, failed
     created_at = Column(DateTime, default=datetime.utcnow)
-    expires_at = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(minutes=5))
+    expires_at = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(minutes=10))
     verified_at = Column(DateTime, nullable=True)
     attempts = Column(Integer, default=0)  # Track failed attempts
     max_attempts = Column(Integer, default=3)  # Lock after 3 failures

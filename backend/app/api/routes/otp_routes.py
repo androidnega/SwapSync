@@ -145,13 +145,13 @@ async def request_otp(
     # Generate new OTP
     otp_code = OTPSession.generate_otp()
     
-    # Create OTP session
+    # Create OTP session (10 minutes expiration to account for SMS delays)
     otp_session = OTPSession(
         phone_number=user.phone_number,
         otp_code=otp_code,
         user_id=user.id,
         status="pending",
-        expires_at=datetime.utcnow() + timedelta(minutes=5),
+        expires_at=datetime.utcnow() + timedelta(minutes=10),
         ip_address=request.client.host if request.client else None
     )
     db.add(otp_session)
@@ -160,17 +160,10 @@ async def request_otp(
     
     # Send SMS
     try:
-        from app.core.sms import get_sms_sender_name
-        
-        # Determine manager for branding
-        manager_id = None
-        if user.is_manager:
-            manager_id = user.id
-        elif user.parent_user_id:
-            manager_id = user.parent_user_id
-        
-        company_name = get_sms_sender_name(manager_id, "SwapSync")
-        message = f"Your {company_name} login code is: {otp_code}\n\nValid for 5 minutes.\n\nDo not share this code with anyone."
+        # OTP login messages ALWAYS sent from "SwapSync" (not branded)
+        # This is a system-level security feature, not company-specific
+        company_name = "SwapSync"
+        message = f"Your SwapSync login code is: {otp_code}\n\nValid for 10 minutes.\n\nDo not share this code with anyone."
         
         print(f"\n{'='*60}")
         print(f"📱 OTP SMS SENDING")
@@ -222,7 +215,7 @@ async def request_otp(
         success=True,
         message=f"OTP code sent to {mask_phone_number(user.phone_number)}",
         phone_number_masked=mask_phone_number(user.phone_number),
-        expires_in=300,  # 5 minutes in seconds
+        expires_in=600,  # 10 minutes in seconds
         session_id=otp_session.id
     )
 
@@ -249,16 +242,48 @@ async def verify_otp(
         )
     
     # Find active OTP session
+    print(f"\n🔍 Looking for OTP session for user: {user.username} (ID: {user.id})")
+    
+    # Get all pending sessions for debugging
+    all_pending = db.query(OTPSession).filter(
+        OTPSession.user_id == user.id,
+        OTPSession.status == "pending"
+    ).all()
+    
+    print(f"   Found {len(all_pending)} pending OTP sessions")
+    for session in all_pending:
+        print(f"   Session ID: {session.id}, Code: {session.otp_code}, Created: {session.created_at}, Expires: {session.expires_at}")
+    
     otp_session = db.query(OTPSession).filter(
         OTPSession.user_id == user.id,
         OTPSession.status == "pending"
     ).order_by(OTPSession.created_at.desc()).first()
     
+    # Fallback: Check for any recent OTP (last 10 minutes) regardless of status
     if not otp_session:
+        print(f"   ⚠️ No pending session found, checking for recent OTP (last 10 min)...")
+        recent_otp = db.query(OTPSession).filter(
+            OTPSession.user_id == user.id,
+            OTPSession.created_at > datetime.utcnow() - timedelta(minutes=10)
+        ).order_by(OTPSession.created_at.desc()).first()
+        
+        if recent_otp:
+            print(f"   Found recent OTP: ID={recent_otp.id}, Status={recent_otp.status}, Code={recent_otp.otp_code}")
+            # Reset to pending if it was wrongly marked
+            if recent_otp.status in ["pending", "expired"] and not recent_otp.is_expired():
+                recent_otp.status = "pending"
+                db.commit()
+                otp_session = recent_otp
+                print(f"   ✅ Reset session {recent_otp.id} to pending")
+    
+    if not otp_session:
+        print(f"   ❌ No valid OTP session found!")
         return OTPVerifyResponse(
             success=False,
             message="No active OTP session. Please request a new code."
         )
+    
+    print(f"   ✅ Using session ID: {otp_session.id}, Code: {otp_session.otp_code}")
     
     # Check expiration (with detailed logging)
     current_time = datetime.utcnow()
@@ -291,11 +316,18 @@ async def verify_otp(
         )
     
     # Verify OTP code
+    print(f"\n🔐 OTP VERIFICATION:")
+    print(f"   Expected: {otp_session.otp_code}")
+    print(f"   Received: {verify_data.otp_code}")
+    print(f"   Match: {otp_session.otp_code == verify_data.otp_code}")
+    
     if otp_session.otp_code != verify_data.otp_code:
         otp_session.attempts += 1
         db.commit()
         
         remaining_attempts = otp_session.max_attempts - otp_session.attempts
+        
+        print(f"   ❌ Code mismatch! Attempts: {otp_session.attempts}/{otp_session.max_attempts}")
         
         if remaining_attempts > 0:
             return OTPVerifyResponse(
@@ -309,6 +341,8 @@ async def verify_otp(
                 success=False,
                 message="Too many failed attempts. Please request a new code."
             )
+    
+    print(f"   ✅ OTP code verified successfully!")
     
     # OTP verified successfully
     otp_session.status = "verified"
