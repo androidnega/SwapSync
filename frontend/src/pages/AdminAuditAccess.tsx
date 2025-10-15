@@ -59,16 +59,19 @@ const AdminAuditAccess: React.FC = () => {
       console.log('✅ Audit code validated:', validateResponse.data);
 
       // Fetch Manager data using staff admin/companies endpoint
-      const response = await api.get('/staff/admin/companies');
+      const [companiesResponse, businessStatsResponse] = await Promise.all([
+        api.get('/staff/admin/companies'),
+        api.get(`/staff/admin/company/${selectedManager.id}/business-stats`)
+      ]);
       
       // Find the manager's data
-      const managerCompany = response.data.companies?.find((c: any) => c.manager.id === selectedManager.id);
+      const managerCompany = companiesResponse.data.companies?.find((c: any) => c.manager.id === selectedManager.id);
       
       if (!managerCompany) {
         throw new Error('Manager data not found');
       }
 
-      // Format data to match expected structure
+      // Format data to match expected structure with real-time business stats
       const formattedData = {
         manager_info: {
           id: managerCompany.manager.id,
@@ -78,16 +81,7 @@ const AdminAuditAccess: React.FC = () => {
           created_at: managerCompany.manager.created_at,
           last_login: managerCompany.manager.last_login
         },
-        business_stats: {
-          total_customers: 0,  // Not available in staff endpoint
-          total_phones: 0,  
-          total_swaps: 0,   
-          total_sales: 0,   
-          total_repairs: 0, 
-          sales_revenue: 0.0,
-          repair_revenue: 0.0,
-          total_revenue: 0.0
-        },
+        business_stats: businessStatsResponse.data.business_stats,
         staff: managerCompany.staff.map((s: any) => ({
           id: s.id,
           username: s.username,

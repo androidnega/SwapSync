@@ -761,3 +761,72 @@ def toggle_sms_branding(
         "message": f"SMS branding {'enabled' if enabled else 'disabled'} for {manager.company_name or manager.username}",
         "sms_sender": manager.company_name if enabled else "SwapSync"
     }
+
+
+@router.get("/admin/company/{manager_id}/business-stats")
+def get_manager_business_stats(
+    manager_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get business statistics for a specific manager
+    - Only System Admin can view (after audit code validation)
+    - Returns real-time sales revenue, repair revenue, and other stats
+    """
+    from sqlalchemy import func
+    from app.models.customer import Customer
+    from app.models.phone import Phone
+    from app.models.swap import Swap
+    from app.models.sale import Sale
+    from app.models.repair import Repair
+    
+    if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only System Administrators can view business statistics"
+        )
+    
+    # Get the manager
+    manager = db.query(User).filter(
+        User.id == manager_id,
+        User.role.in_([UserRole.MANAGER, UserRole.CEO])
+    ).first()
+    
+    if not manager:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Manager not found"
+        )
+    
+    # Get Manager's staff
+    staff = db.query(User).filter(User.parent_user_id == manager_id).all()
+    staff_ids = [manager_id] + [s.id for s in staff]
+    
+    # Get business statistics
+    total_customers = db.query(Customer).filter(Customer.created_by_id.in_(staff_ids)).count()
+    total_phones = db.query(Phone).filter(Phone.created_by_id.in_(staff_ids)).count()
+    total_swaps = db.query(Swap).filter(Swap.staff_id.in_(staff_ids)).count()
+    total_sales = db.query(Sale).filter(Sale.staff_id.in_(staff_ids)).count()
+    total_repairs = db.query(Repair).filter(Repair.staff_id.in_(staff_ids)).count()
+    
+    # Revenue calculations
+    sales_revenue = db.query(func.sum(Sale.final_price)).filter(Sale.staff_id.in_(staff_ids)).scalar() or 0.0
+    repair_revenue = db.query(func.sum(Repair.price)).filter(
+        Repair.staff_id.in_(staff_ids),
+        Repair.status == 'delivered'
+    ).scalar() or 0.0
+    
+    return {
+        "manager_id": manager_id,
+        "business_stats": {
+            "total_customers": total_customers,
+            "total_phones": total_phones,
+            "total_swaps": total_swaps,
+            "total_sales": total_sales,
+            "total_repairs": total_repairs,
+            "sales_revenue": float(sales_revenue),
+            "repair_revenue": float(repair_revenue),
+            "total_revenue": float(sales_revenue + repair_revenue)
+        }
+    }
