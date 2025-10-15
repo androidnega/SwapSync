@@ -86,7 +86,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Staff Management', icon: faUsers, route: '/staff-management' },
     { name: 'Swapping Hub', icon: faExchangeAlt, route: '/swapping-hub' },
     { name: 'Products Hub', icon: faShoppingCart, route: '/products-hub' },
-    { name: 'Repairs', icon: faTools, route: '/repairs' },
+    { name: 'Repairer Hub', icon: faTools, route: '/repairs' },
     { name: 'Customers', icon: faUserCircle, route: '/customers' },
     { name: 'Reports', icon: faClipboardList, route: '/reports' },
     { name: 'Profit Reports', icon: faChartPie, route: '/profit-reports' },
@@ -104,7 +104,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Staff Management', icon: faUsers, route: '/staff-management' },
     { name: 'Swapping Hub', icon: faExchangeAlt, route: '/swapping-hub' },
     { name: 'Products Hub', icon: faShoppingCart, route: '/products-hub' },
-    { name: 'Repairs', icon: faTools, route: '/repairs' },
+    { name: 'Repairer Hub', icon: faTools, route: '/repairs' },
     { name: 'Customers', icon: faUserCircle, route: '/customers' },
     { name: 'Reports', icon: faClipboardList, route: '/reports' },
     { name: 'Profit Reports', icon: faChartPie, route: '/profit-reports' },
@@ -127,7 +127,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
   // 🔧 REPAIRER - Repairs & Maintenance
   repairer: [
     { name: 'Dashboard', icon: faChartLine, route: '/' },
-    { name: 'Repairs', icon: faTools, route: '/repairs' },
+    { name: 'Repair Services', icon: faTools, route: '/repairs' },
     { name: 'Customers', icon: faUserCircle, route: '/customers' },
     { name: 'Profile', icon: faUser, route: '/profile' }
   ]

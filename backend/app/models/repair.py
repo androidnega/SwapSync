@@ -29,7 +29,9 @@ class Repair(Base):
     diagnosis = Column(String, nullable=True)  # Detailed diagnosis/fault type
     
     # Pricing and status
-    cost = Column(Float, nullable=False)  # Repair cost
+    service_cost = Column(Float, nullable=False, default=0.0)  # Labor/service cost
+    items_cost = Column(Float, nullable=False, default=0.0)  # Cost of repair items used
+    cost = Column(Float, nullable=False)  # Total repair cost (service_cost + items_cost)
     status = Column(String, default="Pending")  # Pending, In Progress, Completed, Delivered
     
     # Timeline and notifications

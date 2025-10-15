@@ -20,11 +20,25 @@ interface Customer {
   email?: string;
 }
 
+interface RepairItem {
+  id: number;
+  name: string;
+  description?: string;
+  category?: string;
+  cost_price: number;
+  selling_price: number;
+  stock_quantity: number;
+  min_stock_level: number;
+}
+
 const Repairs: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'repairs' | 'items' | 'stats'>('repairs');
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [repairItems, setRepairItems] = useState<RepairItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showItemModal, setShowItemModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [userRole, setUserRole] = useState<string>('');
   const [formData, setFormData] = useState({
@@ -36,7 +50,17 @@ const Repairs: React.FC = () => {
     cost: '',
     due_date: '',
   });
+  const [itemFormData, setItemFormData] = useState({
+    name: '',
+    description: '',
+    category: '',
+    cost_price: '',
+    selling_price: '',
+    stock_quantity: '',
+    min_stock_level: '5',
+  });
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [message, setMessage] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -49,7 +73,10 @@ const Repairs: React.FC = () => {
     fetchRepairs();
     fetchUserRole();
     fetchCustomers();
-  }, []);
+    if (userRole === 'manager' || userRole === 'ceo') {
+      fetchRepairItems();
+    }
+  }, [userRole]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -96,6 +123,96 @@ const Repairs: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch customers:', error);
     }
+  };
+
+  const fetchRepairItems = async () => {
+    try {
+      const response = await api.get('/repair-items/');
+      setRepairItems(response.data);
+    } catch (error) {
+      console.error('Failed to fetch repair items:', error);
+    }
+  };
+
+  const handleItemSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage('');
+
+    const itemData = {
+      name: itemFormData.name,
+      description: itemFormData.description || null,
+      category: itemFormData.category || null,
+      cost_price: parseFloat(itemFormData.cost_price),
+      selling_price: parseFloat(itemFormData.selling_price),
+      stock_quantity: parseInt(itemFormData.stock_quantity),
+      min_stock_level: parseInt(itemFormData.min_stock_level),
+    };
+
+    try {
+      if (editingItemId) {
+        await api.put(`/repair-items/${editingItemId}`, itemData);
+        setMessage('✅ Repair item updated successfully!');
+      } else {
+        await api.post('/repair-items/', itemData);
+        setMessage('✅ Repair item added successfully!');
+      }
+      
+      setShowItemModal(false);
+      setItemFormData({
+        name: '',
+        description: '',
+        category: '',
+        cost_price: '',
+        selling_price: '',
+        stock_quantity: '',
+        min_stock_level: '5',
+      });
+      setEditingItemId(null);
+      fetchRepairItems();
+    } catch (error: any) {
+      console.error('Item submission error:', error);
+      const errorDetail = error.response?.data?.detail || error.message;
+      setMessage(`❌ Error: ${typeof errorDetail === 'object' ? JSON.stringify(errorDetail) : errorDetail}`);
+    }
+  };
+
+  const handleDeleteItem = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this repair item?')) return;
+
+    try {
+      await api.delete(`/repair-items/${id}`);
+      setMessage('✅ Repair item deleted successfully!');
+      fetchRepairItems();
+    } catch (error: any) {
+      setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const openItemModal = (item?: RepairItem) => {
+    if (item) {
+      setItemFormData({
+        name: item.name,
+        description: item.description || '',
+        category: item.category || '',
+        cost_price: item.cost_price.toString(),
+        selling_price: item.selling_price.toString(),
+        stock_quantity: item.stock_quantity.toString(),
+        min_stock_level: item.min_stock_level.toString(),
+      });
+      setEditingItemId(item.id);
+    } else {
+      setItemFormData({
+        name: '',
+        description: '',
+        category: '',
+        cost_price: '',
+        selling_price: '',
+        stock_quantity: '',
+        min_stock_level: '5',
+      });
+      setEditingItemId(null);
+    }
+    setShowItemModal(true);
   };
 
   const handleCustomerSelect = (customer: Customer) => {
@@ -304,17 +421,75 @@ const Repairs: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-800">Repairs Management</h1>
-        {(userRole === 'repairer' || userRole === 'shop_keeper') && (
-          <button
-            onClick={openNewModal}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
-          >
-            + New Repair
-          </button>
-        )}
-      </div>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            {userRole === 'manager' || userRole === 'ceo' ? 'Repairer Hub' : 'Repair Services'}
+          </h1>
+          {activeTab === 'repairs' && (userRole === 'repairer' || userRole === 'shop_keeper') && (
+            <button
+              onClick={openNewModal}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+            >
+              + New Repair
+            </button>
+          )}
+          {activeTab === 'items' && (userRole === 'manager' || userRole === 'ceo') && (
+            <button
+              onClick={() => openItemModal()}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
+            >
+              + Add Repair Item
+            </button>
+          )}
+        </div>
 
+        {/* Tabs - Only for Manager/CEO */}
+        {(userRole === 'manager' || userRole === 'ceo') && (
+          <div className="bg-white rounded-xl shadow-sm p-1 flex gap-1">
+            <button
+              onClick={() => setActiveTab('repairs')}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeTab === 'repairs'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span>🔧</span>
+                <span>All Repairs</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('items')}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeTab === 'items'
+                  ? 'bg-green-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span>📦</span>
+                <span>Repair Items Stock</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeTab === 'stats'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span>📊</span>
+                <span>Hub Stats</span>
+              </div>
+            </button>
+          </div>
+        )}
+
+      {/* ALL REPAIRS TAB */}
+      {activeTab === 'repairs' && (
+        <>
       {/* Manager Restriction Message */}
       {(userRole === 'manager' || userRole === 'ceo') && (
         <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6">
@@ -790,7 +965,212 @@ const Repairs: React.FC = () => {
         </div>
       )}
 
-      {/* Modal */}
+        </>
+      )}
+
+      {/* REPAIR ITEMS TAB */}
+      {activeTab === 'items' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">📦 Repair Items Inventory</h3>
+            <p className="text-gray-700">
+              Manage stock of repair items like phone screens, batteries, and other components. These items can be selected when booking repairs.
+            </p>
+          </div>
+
+          {/* Stock Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="text-sm text-gray-600 mb-1">Total Items</div>
+              <div className="text-3xl font-bold text-gray-900">{repairItems.length}</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="text-sm text-gray-600 mb-1">Total Stock Value</div>
+              <div className="text-3xl font-bold text-green-600">
+                ₵{repairItems.reduce((sum, item) => sum + (item.cost_price * item.stock_quantity), 0).toFixed(2)}
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="text-sm text-gray-600 mb-1">Low Stock Items</div>
+              <div className="text-3xl font-bold text-orange-600">
+                {repairItems.filter(item => item.stock_quantity <= item.min_stock_level).length}
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="text-sm text-gray-600 mb-1">Out of Stock</div>
+              <div className="text-3xl font-bold text-red-600">
+                {repairItems.filter(item => item.stock_quantity === 0).length}
+              </div>
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <div className="bg-white rounded-xl shadow overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost Price</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Selling Price</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {repairItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                      No repair items yet. Add your first item!
+                    </td>
+                  </tr>
+                ) : (
+                  repairItems.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-gray-900">{item.name}</div>
+                        {item.description && (
+                          <div className="text-sm text-gray-500">{item.description}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {item.category || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        ₵{item.cost_price.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-green-600">
+                        ₵{item.selling_price.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                          item.stock_quantity === 0
+                            ? 'bg-red-100 text-red-800'
+                            : item.stock_quantity <= item.min_stock_level
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {item.stock_quantity} units
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openItemModal(item)}
+                            className="text-blue-600 hover:text-blue-900 font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteItem(item.id)}
+                            className="text-red-600 hover:text-red-900 font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* HUB STATS TAB */}
+      {activeTab === 'stats' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">📊 Repairer Hub Statistics</h3>
+            <p className="text-gray-700">
+              Overview of repair services performance, revenue, and profit analytics.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="text-sm text-gray-600 mb-2">Total Repairs</div>
+              <div className="text-4xl font-bold text-blue-600 mb-2">{repairs.length}</div>
+              <div className="text-xs text-gray-500">All time</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="text-sm text-gray-600 mb-2">Total Revenue</div>
+              <div className="text-4xl font-bold text-green-600 mb-2">
+                ₵{repairs.reduce((sum, r) => sum + r.cost, 0).toFixed(2)}
+              </div>
+              <div className="text-xs text-gray-500">From repairs</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="text-sm text-gray-600 mb-2">Hub Profit</div>
+              <div className="text-4xl font-bold text-purple-600 mb-2">
+                ₵{(repairItems.reduce((sum, item) => 
+                  sum + ((item.selling_price - item.cost_price) * item.stock_quantity), 0
+                )).toFixed(2)}
+              </div>
+              <div className="text-xs text-gray-500">Potential from stock</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h4 className="font-semibold text-gray-900 mb-4">Repairs by Status</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Pending</span>
+                  <span className="font-semibold text-yellow-600">
+                    {repairs.filter(r => r.status.toLowerCase() === 'pending').length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">In Progress</span>
+                  <span className="font-semibold text-blue-600">
+                    {repairs.filter(r => r.status.toLowerCase().replace(/\s+/g, '_') === 'in_progress').length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Completed</span>
+                  <span className="font-semibold text-green-600">
+                    {repairs.filter(r => r.status.toLowerCase() === 'completed').length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Delivered</span>
+                  <span className="font-semibold text-purple-600">
+                    {repairs.filter(r => r.status.toLowerCase() === 'delivered').length}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h4 className="font-semibold text-gray-900 mb-4">Stock Alerts</h4>
+              <div className="space-y-3">
+                {repairItems.filter(item => item.stock_quantity <= item.min_stock_level).length === 0 ? (
+                  <p className="text-gray-500 text-sm">All items have sufficient stock ✅</p>
+                ) : (
+                  repairItems
+                    .filter(item => item.stock_quantity <= item.min_stock_level)
+                    .map(item => (
+                      <div key={item.id} className="flex justify-between items-center">
+                        <span className="text-gray-700">{item.name}</span>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                          item.stock_quantity === 0
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {item.stock_quantity} left
+                        </span>
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Repair Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
@@ -951,6 +1331,140 @@ const Repairs: React.FC = () => {
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
                   >
                     {editingId ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Repair Item Modal */}
+      {showItemModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowItemModal(false)}>
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 md:p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">
+                {editingItemId ? 'Edit Repair Item' : 'Add Repair Item'}
+              </h2>
+            </div>
+            <div className="overflow-y-auto p-4 md:p-6">
+              <form onSubmit={handleItemSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Item Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={itemFormData.name}
+                      onChange={(e) => setItemFormData({ ...itemFormData, name: e.target.value })}
+                      required
+                      placeholder="e.g., iPhone 12 Screen"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category
+                    </label>
+                    <input
+                      type="text"
+                      value={itemFormData.category}
+                      onChange={(e) => setItemFormData({ ...itemFormData, category: e.target.value })}
+                      placeholder="e.g., Screen, Battery, Charger"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={itemFormData.description}
+                    onChange={(e) => setItemFormData({ ...itemFormData, description: e.target.value })}
+                    rows={2}
+                    placeholder="Additional details about this item..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Cost Price (₵) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={itemFormData.cost_price}
+                      onChange={(e) => setItemFormData({ ...itemFormData, cost_price: e.target.value })}
+                      required
+                      placeholder="Your buying cost"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Selling Price (₵) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={itemFormData.selling_price}
+                      onChange={(e) => setItemFormData({ ...itemFormData, selling_price: e.target.value })}
+                      required
+                      placeholder="Customer price"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Stock Quantity *
+                    </label>
+                    <input
+                      type="number"
+                      value={itemFormData.stock_quantity}
+                      onChange={(e) => setItemFormData({ ...itemFormData, stock_quantity: e.target.value })}
+                      required
+                      placeholder="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Min Stock Level *
+                    </label>
+                    <input
+                      type="number"
+                      value={itemFormData.min_stock_level}
+                      onChange={(e) => setItemFormData({ ...itemFormData, min_stock_level: e.target.value })}
+                      required
+                      placeholder="5"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Alert when stock falls below this</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 justify-end pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setShowItemModal(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
+                  >
+                    {editingItemId ? 'Update' : 'Add Item'}
                   </button>
                 </div>
               </form>
