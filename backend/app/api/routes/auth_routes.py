@@ -420,9 +420,29 @@ def delete_user(
             detail="User not found"
         )
     
-    # Delete user sessions first (to avoid NOT NULL constraint violation)
+    # Import all models that have created_by_user_id references
     from app.models.user_session import UserSession
+    from app.models.product import StockMovement, Product
+    from app.models.phone import Phone
+    from app.models.repair import Repair
+    from app.models.sale import Sale
+    from app.models.product_sale import ProductSale
+    from app.models.category import Category
+    from app.models.brand import Brand
+    
+    # Delete user sessions first (to avoid NOT NULL constraint violation)
     db.query(UserSession).filter(UserSession.user_id == user_id).delete()
+    
+    # Set created_by_user_id to NULL in all records that reference this user
+    # This preserves the records while removing the user reference
+    db.query(StockMovement).filter(StockMovement.created_by_user_id == user_id).update({"created_by_user_id": None})
+    db.query(Product).filter(Product.created_by_user_id == user_id).update({"created_by_user_id": None})
+    db.query(Phone).filter(Phone.created_by_user_id == user_id).update({"created_by_user_id": None})
+    db.query(Repair).filter(Repair.created_by_user_id == user_id).update({"created_by_user_id": None})
+    db.query(Sale).filter(Sale.created_by_user_id == user_id).update({"created_by_user_id": None})
+    db.query(ProductSale).filter(ProductSale.created_by_user_id == user_id).update({"created_by_user_id": None})
+    db.query(Category).filter(Category.created_by_user_id == user_id).update({"created_by_user_id": None})
+    db.query(Brand).filter(Brand.created_by_user_id == user_id).update({"created_by_user_id": None})
     
     db.delete(user)
     db.commit()
