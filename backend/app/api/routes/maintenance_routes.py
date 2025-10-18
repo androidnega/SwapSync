@@ -633,26 +633,27 @@ def clear_users(
         )
         
         # Clear created_by references in other tables
-        db.query(Customer).filter(Customer.created_by_id.in_(user_ids)).update(
-            {Customer.created_by_id: None},
+        db.query(Customer).filter(Customer.created_by_user_id.in_(user_ids)).update(
+            {Customer.created_by_user_id: None},
             synchronize_session=False
         )
-        db.query(Phone).filter(Phone.created_by_id.in_(user_ids)).update(
-            {Phone.created_by_id: None},
+        db.query(Phone).filter(Phone.created_by_user_id.in_(user_ids)).update(
+            {Phone.created_by_user_id: None},
             synchronize_session=False
         )
-        db.query(Sale).filter(Sale.created_by_id.in_(user_ids)).update(
-            {Sale.created_by_id: None},
-            synchronize_session=False
-        )
-        db.query(Swap).filter(Swap.created_by_id.in_(user_ids)).update(
-            {Swap.created_by_id: None},
+        db.query(Sale).filter(Sale.created_by_user_id.in_(user_ids)).update(
+            {Sale.created_by_user_id: None},
             synchronize_session=False
         )
         
-        # Clear repairer assignments in repairs
-        db.query(Repair).filter(Repair.repairer_id.in_(user_ids)).update(
-            {Repair.repairer_id: None},
+        # Clear staff assignments in repairs
+        db.query(Repair).filter(Repair.staff_id.in_(user_ids)).update(
+            {Repair.staff_id: None},
+            synchronize_session=False
+        )
+        # Also clear created_by in repairs
+        db.query(Repair).filter(Repair.created_by_user_id.in_(user_ids)).update(
+            {Repair.created_by_user_id: None},
             synchronize_session=False
         )
         
