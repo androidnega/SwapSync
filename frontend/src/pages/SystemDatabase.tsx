@@ -241,16 +241,15 @@ const SystemDatabase: React.FC = () => {
   }
 
   const tables = [
-    { name: 'users', records: dbStats?.total_users || 4, size: '24 KB' },
-    { name: 'customers', records: dbStats?.total_customers || 0, size: '0 KB' },
-    { name: 'phones', records: dbStats?.total_phones || 0, size: '0 KB' },
-    { name: 'swaps', records: dbStats?.total_swaps || 0, size: '0 KB' },
-    { name: 'sales', records: dbStats?.total_sales || 0, size: '0 KB' },
-    { name: 'repairs', records: dbStats?.total_repairs || 0, size: '0 KB' },
-    { name: 'invoices', records: 0, size: '0 KB' },
-    { name: 'activity_logs', records: dbStats?.total_activities || 0, size: '8 KB' },
-    { name: 'sms_logs', records: 0, size: '0 KB' },
-    { name: 'phone_ownership_history', records: 0, size: '0 KB' }
+    { name: 'users', records: dbStats?.total_users || 0, size: 'N/A' },
+    { name: 'customers', records: dbStats?.total_customers || 0, size: 'N/A' },
+    { name: 'phones', records: dbStats?.total_phones || 0, size: 'N/A' },
+    { name: 'products', records: dbStats?.total_products || 0, size: 'N/A' },
+    { name: 'swaps', records: dbStats?.total_swaps || 0, size: 'N/A' },
+    { name: 'sales', records: dbStats?.total_sales || 0, size: 'N/A' },
+    { name: 'product_sales', records: dbStats?.total_product_sales || 0, size: 'N/A' },
+    { name: 'repairs', records: dbStats?.total_repairs || 0, size: 'N/A' },
+    { name: 'activity_logs', records: dbStats?.total_activities || 0, size: 'N/A' }
   ];
 
   const totalRecords = tables.reduce((sum, table) => sum + table.records, 0);
@@ -579,23 +578,37 @@ const SystemDatabase: React.FC = () => {
                   </div>
 
                   <div className="border border-gray-200 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Data Statistics</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">User Statistics</h3>
                     <div className="space-y-3">
-                      <div className="flex justify-between">
-                <span className="text-gray-600">Total Managers</span>
-                <span className="font-semibold">{dbStats?.total_managers || 1}</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600 font-medium">Total Users (All Roles)</span>
+                        <span className="font-bold text-lg text-blue-600">{dbStats?.total_users || 0}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Total Staff</span>
-                        <span className="font-semibold">{dbStats?.total_staff || 2}</span>
+                      <div className="h-px bg-gray-200 my-2"></div>
+                      <div className="flex justify-between items-center pl-4">
+                        <span className="text-gray-600 text-sm">└ Super Admins</span>
+                        <span className="font-semibold text-purple-600">{dbStats?.total_super_admins || 0}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Total Users</span>
-                        <span className="font-semibold">{dbStats?.total_users || 4}</span>
+                      <div className="flex justify-between items-center pl-4">
+                        <span className="text-gray-600 text-sm">└ Managers</span>
+                        <span className="font-semibold text-orange-600">{dbStats?.total_managers || 0}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center pl-4">
+                        <span className="text-gray-600 text-sm">└ Shop Keepers</span>
+                        <span className="font-semibold text-teal-600">{dbStats?.total_shop_keepers || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center pl-4">
+                        <span className="text-gray-600 text-sm">└ Repairers</span>
+                        <span className="font-semibold text-indigo-600">{dbStats?.total_repairers || 0}</span>
+                      </div>
+                      <div className="h-px bg-gray-200 my-2"></div>
+                      <div className="flex justify-between items-center">
                         <span className="text-gray-600">Active Users</span>
-                        <span className="font-semibold">{dbStats?.active_users || 4}</span>
+                        <span className="font-semibold text-green-600">{dbStats?.active_users || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Inactive Users</span>
+                        <span className="font-semibold text-red-600">{dbStats?.inactive_users || 0}</span>
                       </div>
                     </div>
                   </div>

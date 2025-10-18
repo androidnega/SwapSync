@@ -222,29 +222,46 @@ def get_system_stats(db: Session = Depends(get_db)):
     Get system-wide statistics for database page
     """
     try:
-        # User counts
+        # User counts by role
         total_users = db.query(User).count()
+        total_super_admins = db.query(User).filter(User.role.in_([UserRole.SUPER_ADMIN, UserRole.ADMIN])).count()
         total_managers = db.query(User).filter(User.role.in_([UserRole.MANAGER, UserRole.CEO])).count()
-        total_staff = db.query(User).filter(User.role.in_([UserRole.SHOP_KEEPER, UserRole.REPAIRER])).count()
+        total_shop_keepers = db.query(User).filter(User.role == UserRole.SHOP_KEEPER).count()
+        total_repairers = db.query(User).filter(User.role == UserRole.REPAIRER).count()
+        total_staff = total_shop_keepers + total_repairers
+        
+        # User status counts
         active_users = db.query(User).filter(User.is_active == 1).count()
+        inactive_users = db.query(User).filter(User.is_active == 0).count()
         
         # Data counts
         total_customers = db.query(Customer).count()
         total_phones = db.query(Phone).count()
+        total_products = db.query(Product).count()
         total_swaps = db.query(Swap).count()
         total_sales = db.query(Sale).count()
+        total_product_sales = db.query(ProductSale).count()
         total_repairs = db.query(Repair).count()
         total_activities = db.query(ActivityLog).count()
         
         return {
+            # User statistics
             "total_users": total_users,
+            "total_super_admins": total_super_admins,
             "total_managers": total_managers,
             "total_staff": total_staff,
+            "total_shop_keepers": total_shop_keepers,
+            "total_repairers": total_repairers,
             "active_users": active_users,
+            "inactive_users": inactive_users,
+            
+            # Data statistics
             "total_customers": total_customers,
             "total_phones": total_phones,
+            "total_products": total_products,
             "total_swaps": total_swaps,
             "total_sales": total_sales,
+            "total_product_sales": total_product_sales,
             "total_repairs": total_repairs,
             "total_activities": total_activities
         }
