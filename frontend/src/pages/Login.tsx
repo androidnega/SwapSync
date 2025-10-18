@@ -269,19 +269,19 @@ const Login: React.FC = () => {
                   onCancel={() => setLoginMethod('password')}
                 />
               )}
-            </div>
-            
-            {/* Copyright - Below card */}
-            <div className="mt-4 text-center">
-              <p className="text-xs text-gray-500">
-                © 2025 SwapSync v1.0.0 · Developed by{' '}
-                <a 
-                  href="tel:+233257940791" 
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Manuel
-                </a>
-              </p>
+              
+              {/* Copyright - Inside card */}
+              <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+                <p className="text-xs text-gray-500">
+                  © 2025 SwapSync v1.0.0 · Developed by{' '}
+                  <a 
+                    href="tel:+233257940791" 
+                    className="text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Manuel
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
         </div>
