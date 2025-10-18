@@ -162,9 +162,9 @@ const Login: React.FC = () => {
         />
       )}
       
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
         {/* Login Form - Centered */}
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md px-2">
           {/* Header */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
@@ -203,7 +203,7 @@ const Login: React.FC = () => {
               {loginMethod === 'password' ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm">
+                    <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm break-words">
                       {error}
                     </div>
                   )}
@@ -288,12 +288,12 @@ const Login: React.FC = () => {
             </div>
             
             {/* Copyright - Below card */}
-            <div className="mt-6 text-center">
-              <p className="text-xs text-gray-500">
+            <div className="mt-6 text-center px-4">
+              <p className="text-xs text-gray-500 break-words">
                 © 2025 SwapSync v1.0.0 · Developed by{' '}
                 <a 
                   href="tel:+233257940791" 
-                  className="text-gray-700 hover:text-blue-600 transition font-medium"
+                  className="text-gray-700 hover:text-blue-600 transition font-medium whitespace-nowrap"
                   style={{ textDecoration: 'none' }}
                 >
                   Manuel
