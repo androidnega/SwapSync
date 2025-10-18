@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import authService from '../services/authService';
 import { API_URL } from '../services/api';
 import OTPLogin from '../components/OTPLogin';
-import WelcomeToast from '../components/WelcomeToast';
+import { getTimeBasedGreeting } from '../services/ghanaianGreetings';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -25,12 +25,11 @@ const Login: React.FC = () => {
   });
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
-  const [showWelcomeToast, setShowWelcomeToast] = useState(false);
-  const [loggedInUser, setLoggedInUser] = useState<any>(null);
+  const [greeting, setGreeting] = useState({ twi: '', english: '', emoji: '' });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Check for session timeout
+  // Check for session timeout and get greeting
   useEffect(() => {
     const reason = searchParams.get('reason');
     if (reason === 'timeout') {
@@ -38,6 +37,10 @@ const Login: React.FC = () => {
       // Clear the query parameter
       window.history.replaceState({}, '', '/login');
     }
+    
+    // Get time-based greeting
+    const currentGreeting = getTimeBasedGreeting();
+    setGreeting(currentGreeting);
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,15 +52,9 @@ const Login: React.FC = () => {
       const response = await authService.login(username, password);
       console.log('Login successful:', response.user);
       
-      // Show welcome toast
-      setLoggedInUser(response.user);
-      setShowWelcomeToast(true);
-      
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        navigate('/');
-        window.location.reload(); // Reload to update auth state
-      }, 1500);
+      // Redirect to dashboard immediately
+      navigate('/');
+      window.location.reload(); // Reload to update auth state
     } catch (err: any) {
       console.error('Login failed:', err);
       setError(err.response?.data?.detail || 'Login failed. Please try again.');
@@ -152,21 +149,18 @@ const Login: React.FC = () => {
 
   return (
     <>
-      {/* Welcome Toast on Login Success */}
-      {showWelcomeToast && loggedInUser && (
-        <WelcomeToast
-          userName={loggedInUser.full_name || loggedInUser.username}
-          userRole={loggedInUser.role}
-          onClose={() => setShowWelcomeToast(false)}
-          duration={1500}
-        />
-      )}
-      
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
         {/* Login Form - Centered */}
         <div className="w-full max-w-md px-2">
-          {/* Header */}
-          <div className="text-center mb-8">
+          {/* Simple Welcome Greeting */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-6 py-4 shadow-sm mb-6">
+              <span className="text-3xl">{greeting.emoji}</span>
+              <div className="text-left">
+                <p className="text-lg font-semibold text-gray-900">{greeting.twi}</p>
+                <p className="text-sm text-gray-600">{greeting.english}</p>
+              </div>
+            </div>
             <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
             <p className="text-gray-600 mt-2">Login to continue to your account</p>
           </div>
@@ -272,15 +266,9 @@ const Login: React.FC = () => {
                     authService.setToken(token);
                     authService.setUser(user);
                     
-                    // Show welcome toast
-                    setLoggedInUser(user);
-                    setShowWelcomeToast(true);
-                    
-                    // Redirect to dashboard after a short delay
-                    setTimeout(() => {
-                      navigate('/');
-                      window.location.reload();
-                    }, 1500);
+                    // Redirect to dashboard immediately
+                    navigate('/');
+                    window.location.reload();
                   }}
                   onCancel={() => setLoginMethod('password')}
                 />
