@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../services/api';
 import axios from 'axios';
-import { getToken } from '../services/authService';
+import { getToken, getUser } from '../services/authService';
 import DashboardCard from '../components/DashboardCard';
 import Breadcrumb from '../components/Breadcrumb';
+import WelcomeBanner from '../components/WelcomeBanner';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle, faBell } from '@fortawesome/free-solid-svg-icons';
@@ -37,9 +38,14 @@ const RoleDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [outOfStockProducts, setOutOfStockProducts] = useState<Product[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Get current user from localStorage
+    const user = getUser();
+    setCurrentUser(user);
+    
     fetchDashboardData();
     fetchStockAlerts();
   }, []);
@@ -126,12 +132,21 @@ const RoleDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <Breadcrumb />
       <div className="p-4 md:p-6 lg:p-8 space-y-4 md:space-y-6">
+        {/* Ghanaian Welcome Banner */}
+        {currentUser && (
+          <WelcomeBanner 
+            userName={currentUser.full_name || currentUser.username}
+            userRole={currentUser.role}
+            userId={currentUser.id}
+          />
+        )}
+        
         {/* Header with Stock Alert Badge */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard Overview</h1>
             <p className="text-xs md:text-sm text-gray-600 mt-1">
-              Welcome! Here's your overview
+              Your business metrics at a glance
             </p>
           </div>
           

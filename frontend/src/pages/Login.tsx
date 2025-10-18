@@ -5,6 +5,7 @@ import swapsyncImage from '../assets/img/swapsyng.png';
 import repairImage from '../assets/img/repairman-uses-magnifier-tweezers-repair-damaged-smartphone-close-up-photo-disassembled-smartphone-scaled.jpg';
 import { API_URL } from '../services/api';
 import OTPLogin from '../components/OTPLogin';
+import WelcomeToast from '../components/WelcomeToast';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -26,6 +27,8 @@ const Login: React.FC = () => {
   });
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
+  const [showWelcomeToast, setShowWelcomeToast] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<any>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -48,13 +51,18 @@ const Login: React.FC = () => {
       const response = await authService.login(username, password);
       console.log('Login successful:', response.user);
       
-      // Redirect to dashboard
-      navigate('/');
-      window.location.reload(); // Reload to update auth state
+      // Show welcome toast
+      setLoggedInUser(response.user);
+      setShowWelcomeToast(true);
+      
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        navigate('/');
+        window.location.reload(); // Reload to update auth state
+      }, 1500);
     } catch (err: any) {
       console.error('Login failed:', err);
       setError(err.response?.data?.detail || 'Login failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
@@ -146,67 +154,24 @@ const Login: React.FC = () => {
 
   return (
     <>
+      {/* Welcome Toast on Login Success */}
+      {showWelcomeToast && loggedInUser && (
+        <WelcomeToast
+          userName={loggedInUser.full_name || loggedInUser.username}
+          userRole={loggedInUser.role}
+          onClose={() => setShowWelcomeToast(false)}
+          duration={1500}
+        />
+      )}
+      
       <div className="min-h-screen bg-gray-50 flex">
-        {/* Left Section - Image (Desktop Only) */}
-        <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-blue-600 to-purple-700">
+        {/* Hero Section - Image Only (Desktop Only) */}
+        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
           <img 
             src={repairImage} 
             alt="Phone Repair"
-            className="absolute inset-0 w-full h-full object-cover opacity-90"
+            className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 to-purple-900/80" />
-          
-          {/* Content Overlay */}
-          <div className="relative z-10 flex flex-col justify-center p-12 text-white">
-            <h1 className="text-5xl font-bold mb-6">SwapSync</h1>
-            <p className="text-xl mb-8 text-blue-100">
-              Complete Phone Shop Management System
-            </p>
-            
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg">📱</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Repair Management</h3>
-                  <p className="text-blue-100 text-sm">Track repairs with automatic SMS notifications</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg">🔄</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Swap & Sales</h3>
-                  <p className="text-blue-100 text-sm">Manage phone swaps and product sales seamlessly</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg">📊</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Analytics & Reports</h3>
-                  <p className="text-blue-100 text-sm">Real-time insights and automated reporting</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-12 pt-8 border-t border-white/20">
-              <p className="text-sm text-blue-100">
-                © 2025 SwapSync v1.0.0 · Developed by{' '}
-                <a 
-                  href="tel:+233257940791" 
-                  className="text-white hover:text-blue-200 transition font-medium underline"
-                >
-                  Manuel
-                </a>
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Right Section - Login Form */}
@@ -318,8 +283,16 @@ const Login: React.FC = () => {
                     onSuccess={(token, user) => {
                       authService.setToken(token);
                       authService.setUser(user);
-                      navigate('/');
-                      window.location.reload();
+                      
+                      // Show welcome toast
+                      setLoggedInUser(user);
+                      setShowWelcomeToast(true);
+                      
+                      // Redirect to dashboard after a short delay
+                      setTimeout(() => {
+                        navigate('/');
+                        window.location.reload();
+                      }, 1500);
                     }}
                     onCancel={() => setLoginMethod('password')}
                   />
