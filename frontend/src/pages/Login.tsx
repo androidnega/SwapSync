@@ -250,7 +250,7 @@ const Login: React.FC = () => {
                     {loading ? 'Logging in...' : 'Login'}
                   </button>
 
-                  <div className="text-center mt-3">
+                  <div className="text-center mt-2">
                     <button
                       type="button"
                       onClick={() => setShowResetModal(true)}
@@ -276,12 +276,9 @@ const Login: React.FC = () => {
             </div>
             
             {/* Copyright - Below card */}
-            <div className="mt-6 text-center">
+            <div className="mt-4 text-center">
               <p className="text-xs text-gray-500">
-                © 2025 SwapSync v1.0.0
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Developed by{' '}
+                © 2025 SwapSync v1.0.0 · Developed by{' '}
                 <a 
                   href="tel:+233257940791" 
                   className="text-blue-600 hover:text-blue-700 font-medium"
