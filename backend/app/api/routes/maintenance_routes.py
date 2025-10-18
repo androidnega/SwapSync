@@ -584,3 +584,95 @@ def clear_activities(
             detail=f"Failed to clear activities: {str(e)}"
         )
 
+
+@router.post("/clear-users")
+def clear_users(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Clear all user accounts except super admins
+    This will delete all Managers, Shop Keepers, and Repairers
+    Super Admin accounts are protected from deletion
+    """
+    try:
+        # Count users to be deleted (exclude super admins)
+        users_to_delete = db.query(User).filter(
+            User.role.notin_([UserRole.SUPER_ADMIN, UserRole.ADMIN])
+        ).all()
+        
+        count = len(users_to_delete)
+        
+        if count == 0:
+            return {
+                "success": True,
+                "message": "No users to delete (only super admins exist)",
+                "cleared_at": datetime.now().isoformat(),
+                "cleared_by": current_user.username,
+                "deleted_count": 0
+            }
+        
+        # Delete user sessions first (if they have foreign key references)
+        from app.models.user_session import UserSession
+        from app.models.otp_session import OTPSession
+        
+        # Get user IDs to delete
+        user_ids = [user.id for user in users_to_delete]
+        
+        # Clear related data
+        db.query(UserSession).filter(UserSession.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(OTPSession).filter(OTPSession.user_id.in_(user_ids)).delete(synchronize_session=False)
+        
+        # Clear activity logs created by these users
+        db.query(ActivityLog).filter(ActivityLog.user_id.in_(user_ids)).delete(synchronize_session=False)
+        
+        # Clear parent_user_id references (users created by deleted users)
+        db.query(User).filter(User.parent_user_id.in_(user_ids)).update(
+            {User.parent_user_id: None},
+            synchronize_session=False
+        )
+        
+        # Clear created_by references in other tables
+        db.query(Customer).filter(Customer.created_by_id.in_(user_ids)).update(
+            {Customer.created_by_id: None},
+            synchronize_session=False
+        )
+        db.query(Phone).filter(Phone.created_by_id.in_(user_ids)).update(
+            {Phone.created_by_id: None},
+            synchronize_session=False
+        )
+        db.query(Sale).filter(Sale.created_by_id.in_(user_ids)).update(
+            {Sale.created_by_id: None},
+            synchronize_session=False
+        )
+        db.query(Swap).filter(Swap.created_by_id.in_(user_ids)).update(
+            {Swap.created_by_id: None},
+            synchronize_session=False
+        )
+        
+        # Clear repairer assignments in repairs
+        db.query(Repair).filter(Repair.repairer_id.in_(user_ids)).update(
+            {Repair.repairer_id: None},
+            synchronize_session=False
+        )
+        
+        # Now delete the users
+        db.query(User).filter(
+            User.role.notin_([UserRole.SUPER_ADMIN, UserRole.ADMIN])
+        ).delete(synchronize_session=False)
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared {count} user accounts successfully (Super admins protected)",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username,
+            "deleted_count": count
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear users: {str(e)}"
+        )

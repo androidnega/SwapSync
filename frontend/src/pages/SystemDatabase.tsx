@@ -203,12 +203,26 @@ const SystemDatabase: React.FC = () => {
       sales: 'All sales records',
       repairs: 'All repair records',
       invoices: 'All invoices',
-      activities: 'All activity logs'
+      activities: 'All activity logs',
+      users: 'All user accounts (except Super Admins)'
     };
 
     const description = dataTypes[dataType as keyof typeof dataTypes];
-    if (!confirm(`⚠️ WARNING: This will permanently delete ${description}!\n\nContinue?`)) {
-      return;
+    
+    // Extra confirmation for users
+    if (dataType === 'users') {
+      if (!confirm(`⚠️ CRITICAL WARNING: This will permanently delete ${description}!\n\nThis includes:\n• All Managers\n• All Shop Keepers\n• All Repairers\n\nSuper Admin accounts will be protected.\n\nAre you absolutely sure?`)) {
+        return;
+      }
+      
+      // Second confirmation
+      if (!confirm(`⚠️ FINAL CONFIRMATION: Type "DELETE USERS" to confirm\n\nThis action cannot be undone!`)) {
+        return;
+      }
+    } else {
+      if (!confirm(`⚠️ WARNING: This will permanently delete ${description}!\n\nContinue?`)) {
+        return;
+      }
     }
 
     setMessage('');
@@ -698,6 +712,14 @@ const SystemDatabase: React.FC = () => {
                       >
                         <FontAwesomeIcon icon={faTrash} className="mr-2" />
                         Clear All Activity Logs
+                      </button>
+                      
+                      <button
+                        onClick={() => handleClearSpecificData('users')}
+                        className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition text-left"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        Clear All Users (Keep Admins)
                       </button>
                     </div>
                   </div>
