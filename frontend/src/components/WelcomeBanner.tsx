@@ -26,6 +26,20 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
   const [businessPhrase, setBusinessPhrase] = useState({ twi: '', english: '' });
   const [showTranslation, setShowTranslation] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Check if banner should be shown
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const dismissedDate = localStorage.getItem(`welcome_dismissed_${userId}`);
+    
+    // Show banner if not dismissed today
+    if (dismissedDate !== today) {
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+  }, [userId]);
 
   useEffect(() => {
     // Generate welcome message
@@ -46,7 +60,14 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
     setTimeout(() => setAnimateIn(true), 100);
   }, [userName, userRole, userId]);
 
-  if (!welcomeData) return null;
+  // Handle close banner
+  const handleClose = () => {
+    const today = new Date().toDateString();
+    localStorage.setItem(`welcome_dismissed_${userId}`, today);
+    setIsVisible(false);
+  };
+
+  if (!welcomeData || !isVisible) return null;
 
   // Get simple icon based on time of day
   const getTimeIcon = () => {
@@ -66,10 +87,21 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
 
   return (
     <div 
-      className={`bg-white border border-gray-200 rounded-lg p-4 md:p-5 shadow-sm transition-all duration-500 ${animateIn ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
+      className={`bg-white border border-gray-200 rounded-lg p-4 md:p-5 shadow-sm transition-all duration-500 relative ${animateIn ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
     >
+      {/* Close Button */}
+      <button
+        onClick={handleClose}
+        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+        title="Dismiss for today"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
       {/* Main Greeting */}
-      <div className="flex items-start gap-3 mb-3">
+      <div className="flex items-start gap-3 mb-3 pr-8">
         <span className="text-3xl md:text-4xl">
           {getTimeIcon()}
         </span>
