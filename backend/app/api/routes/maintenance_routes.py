@@ -657,6 +657,7 @@ def clear_users(
         # Clear created_by references in categories and brands
         from app.models.category import Category
         from app.models.brand import Brand
+        from app.models.product import StockMovement
         
         db.query(Category).filter(Category.created_by_user_id.in_(user_ids)).update(
             {Category.created_by_user_id: None},
@@ -664,6 +665,10 @@ def clear_users(
         )
         db.query(Brand).filter(Brand.created_by_user_id.in_(user_ids)).update(
             {Brand.created_by_user_id: None},
+            synchronize_session=False
+        )
+        db.query(StockMovement).filter(StockMovement.created_by_user_id.in_(user_ids)).update(
+            {StockMovement.created_by_user_id: None},
             synchronize_session=False
         )
         
