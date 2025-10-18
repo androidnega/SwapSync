@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import authService from '../services/authService';
-import swapsyncImage from '../assets/img/swapsyng.png';
-import repairImage from '../assets/img/repairman-uses-magnifier-tweezers-repair-damaged-smartphone-close-up-photo-disassembled-smartphone-scaled.jpg';
 import { API_URL } from '../services/api';
 import OTPLogin from '../components/OTPLogin';
 import WelcomeToast from '../components/WelcomeToast';
@@ -164,154 +162,143 @@ const Login: React.FC = () => {
         />
       )}
       
-      <div className="min-h-screen bg-gray-50 flex">
-        {/* Hero Section - Image Only (Desktop Only) */}
-        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-          <img 
-            src={repairImage} 
-            alt="Phone Repair"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        {/* Login Form - Centered */}
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
+            <p className="text-gray-600 mt-2">Login to continue to your account</p>
+          </div>
 
-        {/* Right Section - Login Form */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
-          <div className="w-full max-w-md">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-              <p className="text-gray-600 mt-2">Login to continue to your account</p>
-            </div>
+          {/* Login Form Card */}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="p-8">
+              {/* Login Method Toggle */}
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('password')}
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    loginMethod === 'password'
+                      ? 'bg-blue-600 text-white font-semibold'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('otp')}
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    loginMethod === 'otp'
+                      ? 'bg-blue-600 text-white font-semibold'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  SMS OTP
+                </button>
+              </div>
 
-            {/* Login Form Card - No Shadow, Wider */}
-            <div className="bg-white border border-gray-200 rounded-lg">
-              <div className="p-8">
-                {/* Login Method Toggle */}
-                <div className="flex items-center justify-center gap-4 mb-6">
-                  <button
-                    type="button"
-                    onClick={() => setLoginMethod('password')}
-                    className={`px-4 py-2 rounded-lg transition-all ${
-                      loginMethod === 'password'
-                        ? 'bg-blue-600 text-white font-semibold'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Password
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLoginMethod('otp')}
-                    className={`px-4 py-2 rounded-lg transition-all ${
-                      loginMethod === 'otp'
-                        ? 'bg-blue-600 text-white font-semibold'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    SMS OTP
-                  </button>
-                </div>
+              {loginMethod === 'password' ? (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm">
+                      {error}
+                    </div>
+                  )}
 
-                {loginMethod === 'password' ? (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {error && (
-                      <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm">
-                        {error}
-                      </div>
-                    )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                      placeholder="Enter your username"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={loading}
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Username
-                      </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
                       <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         required
-                        placeholder="Enter your username"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter your password"
+                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         disabled={loading}
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                          placeholder="Enter your password"
-                          className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          disabled={loading}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
-                          tabIndex={-1}
-                        >
-                          {showPassword ? '👁️' : '👁️‍🗨️'}
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading ? 'Logging in...' : 'Login'}
-                    </button>
-
-                    <div className="text-center mt-4">
                       <button
                         type="button"
-                        onClick={() => setShowResetModal(true)}
-                        className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                        tabIndex={-1}
                       >
-                        Forgot Password?
+                        {showPassword ? '👁️' : '👁️‍🗨️'}
                       </button>
                     </div>
-                  </form>
-                ) : (
-                  <OTPLogin
-                    onSuccess={(token, user) => {
-                      authService.setToken(token);
-                      authService.setUser(user);
-                      
-                      // Show welcome toast
-                      setLoggedInUser(user);
-                      setShowWelcomeToast(true);
-                      
-                      // Redirect to dashboard after a short delay
-                      setTimeout(() => {
-                        navigate('/');
-                        window.location.reload();
-                      }, 1500);
-                    }}
-                    onCancel={() => setLoginMethod('password')}
-                  />
-                )}
-              </div>
-              
-              {/* Mobile Copyright - Inside card */}
-              <div className="lg:hidden border-t border-gray-100 px-8 py-4 text-center">
-                <p className="text-xs text-gray-500">
-                  © 2025 SwapSync v1.0.0 · Developed by{' '}
-                  <a 
-                    href="tel:+233257940791" 
-                    className="text-gray-700 hover:text-blue-600 transition font-medium"
-                    style={{ textDecoration: 'none' }}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Manuel
-                  </a>
-                </p>
-              </div>
+                    {loading ? 'Logging in...' : 'Login'}
+                  </button>
+
+                  <div className="text-center mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowResetModal(true)}
+                      className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <OTPLogin
+                  onSuccess={(token, user) => {
+                    authService.setToken(token);
+                    authService.setUser(user);
+                    
+                    // Show welcome toast
+                    setLoggedInUser(user);
+                    setShowWelcomeToast(true);
+                    
+                    // Redirect to dashboard after a short delay
+                    setTimeout(() => {
+                      navigate('/');
+                      window.location.reload();
+                    }, 1500);
+                  }}
+                  onCancel={() => setLoginMethod('password')}
+                />
+              )}
+            </div>
+            
+            {/* Copyright - Below card */}
+            <div className="mt-6 text-center">
+              <p className="text-xs text-gray-500">
+                © 2025 SwapSync v1.0.0 · Developed by{' '}
+                <a 
+                  href="tel:+233257940791" 
+                  className="text-gray-700 hover:text-blue-600 transition font-medium"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Manuel
+                </a>
+              </p>
             </div>
           </div>
         </div>
