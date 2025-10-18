@@ -5,8 +5,16 @@ import {
   getBusinessPhrase,
   markUserLogin,
   isReturningUser,
-  WelcomeMessage
+  WelcomeMessage,
+  getTimeOfDay
 } from '../services/ghanaianGreetings';
+import { 
+  getTodayStats, 
+  getShopKeeperMessage, 
+  getRepairerMessage, 
+  getManagerMessage,
+  DailyStats 
+} from '../services/statsService';
 
 interface WelcomeBannerProps {
   userName: string;
@@ -27,6 +35,7 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
   const [showTranslation, setShowTranslation] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [stats, setStats] = useState<DailyStats | null>(null);
 
   // Check if banner should be shown
   useEffect(() => {
@@ -50,8 +59,8 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
     // Get day-specific motivation
     setDayMotivation(getDayMotivation());
     
-    // Get business phrase with user role for dynamic tips
-    setBusinessPhrase(getBusinessPhrase(userRole));
+    // Fetch real-time stats for dynamic tips
+    fetchStatsAndUpdateTips();
     
     // Mark this login
     markUserLogin(userId);
@@ -59,6 +68,26 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
     // Trigger animation
     setTimeout(() => setAnimateIn(true), 100);
   }, [userName, userRole, userId]);
+
+  const fetchStatsAndUpdateTips = async () => {
+    const todayStats = await getTodayStats();
+    setStats(todayStats);
+    
+    // Get dynamic business phrase based on role and real stats
+    const timeOfDay = getTimeOfDay();
+    let dynamicTip = getBusinessPhrase(userRole);
+    
+    // Override with real-time stats for specific roles
+    if (userRole === 'shop_keeper' && todayStats) {
+      dynamicTip = getShopKeeperMessage(todayStats, timeOfDay);
+    } else if (userRole === 'repairer' && todayStats) {
+      dynamicTip = getRepairerMessage(todayStats, timeOfDay);
+    } else if ((userRole === 'manager' || userRole === 'ceo') && todayStats) {
+      dynamicTip = getManagerMessage(todayStats, timeOfDay);
+    }
+    
+    setBusinessPhrase(dynamicTip);
+  };
 
   // Handle close banner
   const handleClose = () => {
@@ -109,6 +138,11 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
           <h1 className="text-lg md:text-xl font-semibold text-gray-900 mb-0.5">
             {welcomeData.greeting.twi}, {userName}!
           </h1>
+          {welcomeData.greeting.ahanta && (
+            <p className="text-xs text-blue-600 italic mb-0.5">
+              {welcomeData.greeting.ahanta}
+            </p>
+          )}
           <p className="text-xs md:text-sm text-gray-600">
             {welcomeData.greeting.english}
           </p>

@@ -5,6 +5,7 @@
 
 export interface Greeting {
   twi: string;
+  ahanta?: string;
   english: string;
   emoji: string;
 }
@@ -16,28 +17,28 @@ export interface WelcomeMessage {
 }
 
 /**
- * Time-based Twi greetings with English translations
+ * Time-based Twi & Ahanta greetings with English translations
  */
 const greetings = {
   morning: [
-    { twi: 'Maakye', english: 'Good morning', emoji: '🌅' },
-    { twi: 'Mema wo akye', english: 'I greet you this morning', emoji: '☀️' },
-    { twi: 'Ɛte sɛn? Maakye', english: 'How is it? Good morning', emoji: '🌄' },
+    { twi: 'Maakye', ahanta: 'Ɔkyre', english: 'Good morning', emoji: '🌅' },
+    { twi: 'Mema wo akye', ahanta: 'Ndze wo akyer', english: 'I greet you this morning', emoji: '☀️' },
+    { twi: 'Ɛte sɛn? Maakye', ahanta: 'Edziban? Ɔkyre', english: 'How is it? Good morning', emoji: '🌄' },
   ],
   afternoon: [
-    { twi: 'Maaha', english: 'Good afternoon', emoji: '☀️' },
-    { twi: 'Mema wo aha', english: 'I greet you this afternoon', emoji: '🌞' },
-    { twi: 'Ɛte sɛn? Maaha', english: 'How is it? Good afternoon', emoji: '☀️' },
+    { twi: 'Maaha', ahanta: 'Ndzeɛɛ', english: 'Good afternoon', emoji: '☀️' },
+    { twi: 'Mema wo aha', ahanta: 'Ndze wo ndzɛ', english: 'I greet you this afternoon', emoji: '🌞' },
+    { twi: 'Ɛte sɛn? Maaha', ahanta: 'Edziban? Ndzeɛɛ', english: 'How is it? Good afternoon', emoji: '☀️' },
   ],
   evening: [
-    { twi: 'Maadwo', english: 'Good evening', emoji: '🌆' },
-    { twi: 'Mema wo adwo', english: 'I greet you this evening', emoji: '🌇' },
-    { twi: 'Ɛte sɛn? Maadwo', english: 'How is it? Good evening', emoji: '🌃' },
+    { twi: 'Maadwo', ahanta: 'Mɛndzidwo', english: 'Good evening', emoji: '🌆' },
+    { twi: 'Mema wo adwo', ahanta: 'Ndze wo ndzidwo', english: 'I greet you this evening', emoji: '🌇' },
+    { twi: 'Ɛte sɛn? Maadwo', ahanta: 'Edziban? Mɛndzidwo', english: 'How is it? Good evening', emoji: '🌃' },
   ],
   night: [
-    { twi: 'Da yie', english: 'Good night / Sleep well', emoji: '🌙' },
-    { twi: 'Me kra wo da yie', english: 'I wish you goodnight', emoji: '✨' },
-    { twi: 'Ɔdɛɛfo da yie', english: 'Beloved one, sleep well', emoji: '🌟' },
+    { twi: 'Da yie', ahanta: 'Da ɔkɔlɔ', english: 'Good night / Sleep well', emoji: '🌙' },
+    { twi: 'Me kra wo da yie', ahanta: 'M'edze wo da ɔkɔlɔ', english: 'I wish you goodnight', emoji: '✨' },
+    { twi: 'Ɔdɛɛfo da yie', ahanta: 'Ɔdɔfo da ɔkɔlɔ', english: 'Beloved one, sleep well', emoji: '🌟' },
   ],
 };
 
@@ -66,17 +67,17 @@ const welcomeMessages = {
 };
 
 /**
- * Motivational phrases in Twi
+ * Motivational phrases in Twi & Ahanta
  */
 const motivationalPhrases = [
-  { twi: 'Wobɛyɛ yie!', english: 'You will do well!' },
-  { twi: 'Hwɛ wo ho yie', english: 'Take care of yourself' },
-  { twi: 'Nyame ne wo ho', english: 'God is with you' },
-  { twi: 'Kɔ so!', english: 'Keep going!' },
-  { twi: 'Di nkonim', english: 'Be victorious' },
-  { twi: 'Ɛbɛyɛ yie', english: 'It will be well' },
-  { twi: 'Gye wo ho di', english: 'Believe in yourself' },
-  { twi: 'Nya anigye', english: 'Have joy' },
+  { twi: 'Wobɛyɛ yie!', ahanta: 'Wo bɛyɛ kɔlɔ!', english: 'You will do well!' },
+  { twi: 'Hwɛ wo ho yie', ahanta: 'Bisa wo naano kɔlɔ', english: 'Take care of yourself' },
+  { twi: 'Nyame ne wo ho', ahanta: 'Nyamenle ne wo naano', english: 'God is with you' },
+  { twi: 'Kɔ so!', ahanta: 'Koɔ ye!', english: 'Keep going!' },
+  { twi: 'Di nkonim', ahanta: 'Bo kunyin', english: 'Be victorious' },
+  { twi: 'Ɛbɛyɛ yie', ahanta: 'E bɛyɛ kɔlɔ', english: 'It will be well' },
+  { twi: 'Gye wo ho di', ahanta: 'Dwene wo naano', english: 'Believe in yourself' },
+  { twi: 'Nya anigye', ahanta: 'Nya asɛmbɔ', english: 'Have joy' },
 ];
 
 /**

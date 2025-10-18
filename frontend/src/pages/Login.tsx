@@ -152,12 +152,15 @@ const Login: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
         {/* Login Form - Centered */}
         <div className="w-full max-w-lg px-2">
-          {/* Twi Greeting Header */}
+          {/* Twi & Ahanta Greeting Header */}
           <div className="text-center mb-8">
             <div className="flex flex-col items-center gap-2">
               <span className="text-5xl">{greeting.emoji}</span>
               <h2 className="text-3xl font-bold text-gray-900">{greeting.twi}</h2>
-              <p className="text-gray-600 text-base">{greeting.english}</p>
+              {greeting.ahanta && (
+                <p className="text-base text-blue-600 italic">{greeting.ahanta}</p>
+              )}
+              <p className="text-gray-600 text-sm">{greeting.english}</p>
             </div>
           </div>
 
