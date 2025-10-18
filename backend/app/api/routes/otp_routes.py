@@ -363,7 +363,7 @@ async def verify_otp(
             "username": user.username,
             "email": user.email,
             "full_name": user.full_name,
-            "role": user.role,
+            "role": user.role.value,  # Convert enum to string
             "company_name": user.company_name,
             "phone_number": mask_phone_number(user.phone_number)
         },
