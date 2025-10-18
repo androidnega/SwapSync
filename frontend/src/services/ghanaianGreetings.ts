@@ -192,6 +192,9 @@ export function generateDashboardWelcome(userName: string, userRole: string, isR
     greeting,
     message,
     timeOfDay,
+    motivation,
+    day_motivation: getDayMotivation(),
+    business_phrase: getBusinessPhrase(userRole), // Pass role for dynamic tips
   };
 }
 
@@ -258,34 +261,151 @@ export function isReturningUser(userId: string | number): boolean {
 }
 
 /**
- * Ghanaian business phrases for different times
+ * Role-based business tips (dynamic based on user privilege)
  */
-export function getBusinessPhrase(): { twi: string; english: string } {
+const roleBasedTips = {
+  shop_keeper: {
+    morning: [
+      { twi: 'Kyerɛ wo customers adwuma pa', english: 'Show your customers good service today' },
+      { twi: 'Twerɛ wo aguade nyinaa', english: 'Record all your sales properly' },
+      { twi: 'Hwɛ wo stock na sua nea aka', english: 'Check your stock and know what remains' },
+    ],
+    afternoon: [
+      { twi: 'Kɔ so kyerɛ customers saa adwuma', english: 'Continue showing customers great service' },
+      { twi: 'Monhwɛ aguade a woayɛ ɛnnɛ', english: 'Review the sales you\'ve made today' },
+      { twi: 'Twerɛ resale biara a ɛwɔ hɔ', english: 'Record any resales available' },
+    ],
+    evening: [
+      { twi: 'Kan wo aguade a woayɛ ɛnnɛ', english: 'Count the sales you made today' },
+      { twi: 'Yɛ balance na sua nea woanya', english: 'Do your balance and know your profit' },
+      { twi: 'Siesie shop na kɔ fie', english: 'Organize the shop and go home' },
+    ],
+    night: [
+      { twi: 'Da yie, ɔkyena yɛbɛtɔn pii', english: 'Sleep well, tomorrow we\'ll sell more' },
+      { twi: 'Menya nhyɛso ɛnnɛ ho', english: 'Plan for tomorrow' },
+    ],
+  },
+  manager: {
+    morning: [
+      { twi: 'Hwɛ wo adwumayɛfoɔ sɛ wɔreyɛ adwuma', english: 'Monitor your staff to ensure they\'re working' },
+      { twi: 'Hwɛ reports nyinaa ɛnnɛ', english: 'Check all reports today' },
+      { twi: 'Yɛ nkontoaho a ɛho hia', english: 'Make necessary calculations' },
+    ],
+    afternoon: [
+      { twi: 'Sua sɛnea aguade rekɔ so', english: 'Monitor how business is progressing' },
+      { twi: 'Boa wo staff sɛ wohia', english: 'Help your staff if needed' },
+      { twi: 'Check stock levels pɛpɛɛpɛ', english: 'Check stock levels carefully' },
+    ],
+    evening: [
+      { twi: 'Review ɛnnɛ wiase', english: 'Review today\'s business' },
+      { twi: 'Sua wo profit margins', english: 'Know your profit margins' },
+      { twi: 'Plan ɔkyena adwuma', english: 'Plan tomorrow\'s work' },
+    ],
+    night: [
+      { twi: 'Hwɛ final reports na kɔ fie', english: 'Check final reports and go home' },
+    ],
+  },
+  ceo: {
+    morning: [
+      { twi: 'Hwɛ wo business statistics', english: 'Check your business statistics' },
+      { twi: 'Sua profit trends ɛnnɛ', english: 'Know profit trends today' },
+      { twi: 'Monitor all departments', english: 'Monitor all departments' },
+    ],
+    afternoon: [
+      { twi: 'Review aguade nyinaa', english: 'Review all business operations' },
+      { twi: 'Sua sika a ɛwɔ system mu', english: 'Know money in the system' },
+    ],
+    evening: [
+      { twi: 'Check daily performance', english: 'Check daily performance' },
+      { twi: 'Sua nea ɛkɔ yie ne nea ɛnyɛ yie', english: 'Know what went well and what didn\'t' },
+    ],
+    night: [
+      { twi: 'Plan business strategies', english: 'Plan business strategies' },
+    ],
+  },
+  repairer: {
+    morning: [
+      { twi: 'Hwɛ repairs a aka', english: 'Check pending repairs' },
+      { twi: 'Yɛ repairs pɛpɛɛpɛ', english: 'Do repairs carefully' },
+      { twi: 'Kyerɛ customers sɛ repairs bɛba', english: 'Inform customers when repairs will be ready' },
+    ],
+    afternoon: [
+      { twi: 'Kɔ so yɛ repairs', english: 'Continue doing repairs' },
+      { twi: 'Twerɛ parts a wode di dwuma', english: 'Record parts you use' },
+    ],
+    evening: [
+      { twi: 'Kan repairs a woayɛ ɛnnɛ', english: 'Count repairs you completed today' },
+      { twi: 'Frɛ customers ma wɔnbɛgye', english: 'Call customers to come collect' },
+    ],
+    night: [
+      { twi: 'Plan ɔkyena repairs', english: 'Plan tomorrow\'s repairs' },
+    ],
+  },
+  admin: {
+    morning: [
+      { twi: 'Hwɛ system status', english: 'Check system status' },
+      { twi: 'Monitor all users', english: 'Monitor all users' },
+    ],
+    afternoon: [
+      { twi: 'Sua sɛnea system rekɔ so', english: 'Know how system is performing' },
+    ],
+    evening: [
+      { twi: 'Check activity logs', english: 'Check activity logs' },
+    ],
+    night: [
+      { twi: 'System maintenance bɛyɛ', english: 'Do system maintenance' },
+    ],
+  },
+  super_admin: {
+    morning: [
+      { twi: 'Monitor platform nyinaa', english: 'Monitor entire platform' },
+    ],
+    afternoon: [
+      { twi: 'Sua all companies performance', english: 'Know all companies performance' },
+    ],
+    evening: [
+      { twi: 'Review platform analytics', english: 'Review platform analytics' },
+    ],
+    night: [
+      { twi: 'Plan platform updates', english: 'Plan platform updates' },
+    ],
+  },
+};
+
+/**
+ * Get dynamic business phrase based on role and time
+ */
+export function getBusinessPhrase(userRole?: string): { twi: string; english: string } {
   const timeOfDay = getTimeOfDay();
   
-  const phrases = {
+  // Get role-specific tips if role is provided
+  if (userRole) {
+    const roleKey = userRole.toLowerCase() as keyof typeof roleBasedTips;
+    if (roleBasedTips[roleKey] && roleBasedTips[roleKey][timeOfDay]) {
+      return getRandomItem(roleBasedTips[roleKey][timeOfDay]);
+    }
+  }
+  
+  // Fallback to general phrases if role not found
+  const generalPhrases = {
     morning: [
       { twi: 'Ɛnnɛ bɛyɛ da pa!', english: 'Today will be a good day!' },
       { twi: 'Yɛn aguade bɛkɔ yie ɛnnɛ', english: 'Our business will go well today' },
-      { twi: 'Yɛnfiri aseɛ nkonimdie mu', english: 'Let\'s start in victory' },
     ],
     afternoon: [
       { twi: 'Yɛn adwuma rekɔ so yie', english: 'Our work is going well' },
       { twi: 'Yɛnkɔ so', english: 'Let\'s continue' },
-      { twi: 'Awia yi yɛ yi bɛkɔ yie', english: 'This afternoon will go well' },
     ],
     evening: [
       { twi: 'Yɛayɛ adwuma pa ɛnnɛ', english: 'We\'ve done good work today' },
       { twi: 'Yɛda Nyame ase', english: 'We thank God' },
-      { twi: 'Ɛnnɛ kɔɔ yie', english: 'Today went well' },
     ],
     night: [
       { twi: 'Yɛn wiase yɛ', english: 'We are done' },
-      { twi: 'Ɛnnɛ adwuma aba nʼawieeɛ', english: 'Today\'s work has ended' },
       { twi: 'Kɔ fie na kɔhome', english: 'Go home and rest' },
     ],
   };
   
-  return getRandomItem(phrases[timeOfDay]);
+  return getRandomItem(generalPhrases[timeOfDay]);
 }
 
