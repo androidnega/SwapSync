@@ -13,7 +13,7 @@ from app.models.user import User
 from app.models.sale import Sale
 from app.models.product_sale import ProductSale
 from app.models.swap import Swap
-from app.models.repair import Repair, RepairStatus
+from app.models.repair import Repair
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
@@ -95,23 +95,23 @@ async def get_today_stats(
             if current_user.role.value == 'repairer':
                 stats["repairs_pending"] = db.query(Repair).filter(
                     Repair.assigned_to == current_user.id,
-                    Repair.status.in_([RepairStatus.PENDING, RepairStatus.IN_PROGRESS])
+                    Repair.status.in_(['Pending', 'In Progress'])
                 ).count()
                 
                 # Completed today
                 stats["repairs_completed"] = db.query(Repair).filter(
                     Repair.assigned_to == current_user.id,
-                    Repair.status == RepairStatus.COMPLETED,
+                    Repair.status == 'Completed',
                     func.date(Repair.completion_date) == today
                 ).count()
             else:
                 # Manager/CEO see all repairs
                 stats["repairs_pending"] = db.query(Repair).filter(
-                    Repair.status.in_([RepairStatus.PENDING, RepairStatus.IN_PROGRESS])
+                    Repair.status.in_(['Pending', 'In Progress'])
                 ).count()
                 
                 stats["repairs_completed"] = db.query(Repair).filter(
-                    Repair.status == RepairStatus.COMPLETED,
+                    Repair.status == 'Completed',
                     func.date(Repair.completion_date) == today
                 ).count()
         
