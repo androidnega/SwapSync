@@ -151,32 +151,32 @@ const Login: React.FC = () => {
     <>
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
         {/* Login Form - Centered */}
-        <div className="w-full max-w-md px-2">
-          {/* Simple Welcome Greeting */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-6 py-4 shadow-sm mb-6">
-              <span className="text-3xl">{greeting.emoji}</span>
+        <div className="w-full max-w-lg px-2">
+          {/* Simple Welcome Greeting - No Card */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-3 mb-4">
+              <span className="text-4xl">{greeting.emoji}</span>
               <div className="text-left">
-                <p className="text-lg font-semibold text-gray-900">{greeting.twi}</p>
+                <p className="text-xl font-semibold text-gray-900">{greeting.twi}</p>
                 <p className="text-sm text-gray-600">{greeting.english}</p>
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-            <p className="text-gray-600 mt-2">Login to continue to your account</p>
+            <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
+            <p className="text-gray-600 mt-1 text-sm">Login to continue to your account</p>
           </div>
 
           {/* Login Form Card */}
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-            <div className="p-8">
-              {/* Login Method Toggle */}
-              <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="p-6">
+              {/* Login Method Toggle - Tab Style */}
+              <div className="flex items-center justify-center gap-8 mb-6 border-b border-gray-200 pb-3">
                 <button
                   type="button"
                   onClick={() => setLoginMethod('password')}
-                  className={`px-4 py-2 rounded-lg transition-all ${
+                  className={`text-sm font-medium transition-all pb-2 border-b-2 ${
                     loginMethod === 'password'
-                      ? 'bg-blue-600 text-white font-semibold'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'text-blue-600 border-blue-600'
+                      : 'text-gray-500 border-transparent hover:text-gray-700'
                   }`}
                 >
                   Password
@@ -184,10 +184,10 @@ const Login: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setLoginMethod('otp')}
-                  className={`px-4 py-2 rounded-lg transition-all ${
+                  className={`text-sm font-medium transition-all pb-2 border-b-2 ${
                     loginMethod === 'otp'
-                      ? 'bg-blue-600 text-white font-semibold'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'text-blue-600 border-blue-600'
+                      : 'text-gray-500 border-transparent hover:text-gray-700'
                   }`}
                 >
                   SMS OTP
@@ -195,15 +195,15 @@ const Login: React.FC = () => {
               </div>
 
               {loginMethod === 'password' ? (
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
                   {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm break-words">
+                    <div className="bg-red-50 border border-red-200 text-red-800 p-2.5 rounded text-sm break-words">
                       {error}
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Username
                     </label>
                     <input
@@ -212,13 +212,13 @@ const Login: React.FC = () => {
                       onChange={(e) => setUsername(e.target.value)}
                       required
                       placeholder="Enter your username"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       disabled={loading}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Password
                     </label>
                     <div className="relative">
@@ -228,13 +228,13 @@ const Login: React.FC = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         placeholder="Enter your password"
-                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         disabled={loading}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
                         tabIndex={-1}
                       >
                         {showPassword ? '👁️' : '👁️‍🗨️'}
@@ -245,12 +245,12 @@ const Login: React.FC = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                   >
                     {loading ? 'Logging in...' : 'Login'}
                   </button>
 
-                  <div className="text-center mt-4">
+                  <div className="text-center mt-3">
                     <button
                       type="button"
                       onClick={() => setShowResetModal(true)}
@@ -276,13 +276,15 @@ const Login: React.FC = () => {
             </div>
             
             {/* Copyright - Below card */}
-            <div className="mt-6 text-center px-4">
-              <p className="text-xs text-gray-500 break-words">
-                © 2025 SwapSync v1.0.0 · Developed by{' '}
+            <div className="mt-6 text-center">
+              <p className="text-xs text-gray-500">
+                © 2025 SwapSync v1.0.0
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Developed by{' '}
                 <a 
                   href="tel:+233257940791" 
-                  className="text-gray-700 hover:text-blue-600 transition font-medium whitespace-nowrap"
-                  style={{ textDecoration: 'none' }}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Manuel
                 </a>
