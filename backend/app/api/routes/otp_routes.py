@@ -351,7 +351,7 @@ async def verify_otp(
     
     # Generate access token
     access_token = create_access_token(
-        data={"sub": user.username, "role": user.role}
+        data={"sub": user.username, "role": user.role.value}
     )
     
     return OTPVerifyResponse(
