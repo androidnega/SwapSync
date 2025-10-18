@@ -152,17 +152,13 @@ const Login: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
         {/* Login Form - Centered */}
         <div className="w-full max-w-lg px-2">
-          {/* Simple Welcome Greeting - No Card */}
+          {/* Twi Greeting Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-3 mb-4">
-              <span className="text-4xl">{greeting.emoji}</span>
-              <div className="text-left">
-                <p className="text-xl font-semibold text-gray-900">{greeting.twi}</p>
-                <p className="text-sm text-gray-600">{greeting.english}</p>
-              </div>
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-5xl">{greeting.emoji}</span>
+              <h2 className="text-3xl font-bold text-gray-900">{greeting.twi}</h2>
+              <p className="text-gray-600 text-base">{greeting.english}</p>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
-            <p className="text-gray-600 mt-1 text-sm">Login to continue to your account</p>
           </div>
 
           {/* Login Form Card */}
