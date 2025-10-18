@@ -645,6 +645,27 @@ def clear_users(
             {Sale.created_by_user_id: None},
             synchronize_session=False
         )
+        db.query(Product).filter(Product.created_by_user_id.in_(user_ids)).update(
+            {Product.created_by_user_id: None},
+            synchronize_session=False
+        )
+        db.query(ProductSale).filter(ProductSale.created_by_user_id.in_(user_ids)).update(
+            {ProductSale.created_by_user_id: None},
+            synchronize_session=False
+        )
+        
+        # Clear created_by references in categories and brands
+        from app.models.category import Category
+        from app.models.brand import Brand
+        
+        db.query(Category).filter(Category.created_by_user_id.in_(user_ids)).update(
+            {Category.created_by_user_id: None},
+            synchronize_session=False
+        )
+        db.query(Brand).filter(Brand.created_by_user_id.in_(user_ids)).update(
+            {Brand.created_by_user_id: None},
+            synchronize_session=False
+        )
         
         # Clear staff assignments in repairs
         db.query(Repair).filter(Repair.staff_id.in_(user_ids)).update(
@@ -656,6 +677,22 @@ def clear_users(
             {Repair.created_by_user_id: None},
             synchronize_session=False
         )
+        
+        # Clear staff_id in invoices
+        db.query(Invoice).filter(Invoice.staff_id.in_(user_ids)).update(
+            {Invoice.staff_id: None},
+            synchronize_session=False
+        )
+        
+        # Clear attending_staff_id in pending resales
+        db.query(PendingResale).filter(PendingResale.attending_staff_id.in_(user_ids)).update(
+            {PendingResale.attending_staff_id: None},
+            synchronize_session=False
+        )
+        
+        # Clear audit codes for deleted users
+        from app.models.audit_code import AuditCode
+        db.query(AuditCode).filter(AuditCode.user_id.in_(user_ids)).delete(synchronize_session=False)
         
         # Now delete the users
         db.query(User).filter(
