@@ -420,8 +420,9 @@ def delete_user(
             detail="User not found"
         )
     
-    # Import all models that have created_by_user_id references
+    # Import all models that have user references
     from app.models.user_session import UserSession
+    from app.models.otp_session import OTPSession
     from app.models.product import StockMovement, Product
     from app.models.phone import Phone
     from app.models.repair import Repair
@@ -429,12 +430,39 @@ def delete_user(
     from app.models.product_sale import ProductSale
     from app.models.category import Category
     from app.models.brand import Brand
+    from app.models.audit_code import AuditCode
+    from app.models.activity_log import ActivityLog
+    from app.models.pending_resale import PendingResale
+    from app.models.invoice import Invoice
     
     # Delete user sessions first (to avoid NOT NULL constraint violation)
     db.query(UserSession).filter(UserSession.user_id == user_id).delete()
     
+    # Delete OTP sessions
+    db.query(OTPSession).filter(OTPSession.user_id == user_id).delete()
+    
+    # Delete audit codes (they have NOT NULL constraint on user_id)
+    db.query(AuditCode).filter(AuditCode.user_id == user_id).delete()
+    
+    # Delete activity logs (they have NOT NULL constraint on user_id)
+    db.query(ActivityLog).filter(ActivityLog.user_id == user_id).delete()
+    
+    # Set parent_user_id to NULL for staff members created by this user
+    db.query(User).filter(User.parent_user_id == user_id).update({"parent_user_id": None})
+    
+    # Set attending_staff_id to NULL in pending resales
+    db.query(PendingResale).filter(PendingResale.attending_staff_id == user_id).update({"attending_staff_id": None})
+    
+    # Set staff_id to NULL in repairs
+    db.query(Repair).filter(Repair.staff_id == user_id).update({"staff_id": None})
+    
+    # Set staff_id to NULL in invoices
+    db.query(Invoice).filter(Invoice.staff_id == user_id).update({"staff_id": None})
+    
     # Set created_by_user_id to NULL in all records that reference this user
     # This preserves the records while removing the user reference
+    from app.models.customer import Customer
+    db.query(Customer).filter(Customer.created_by_user_id == user_id).update({"created_by_user_id": None})
     db.query(StockMovement).filter(StockMovement.created_by_user_id == user_id).update({"created_by_user_id": None})
     db.query(Product).filter(Product.created_by_user_id == user_id).update({"created_by_user_id": None})
     db.query(Phone).filter(Phone.created_by_user_id == user_id).update({"created_by_user_id": None})
