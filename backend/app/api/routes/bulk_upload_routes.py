@@ -269,13 +269,19 @@ async def bulk_upload_products(
     db: Session = Depends(get_db)
 ):
     """Upload products in bulk from Excel file"""
+    print(f"📤 Starting bulk upload: {file.filename} by {current_user.username}")
+    
     if not file.filename.endswith(('.xlsx', '.xls')):
         raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xls) are allowed")
     
     try:
         # Read Excel file
+        print(f"📖 Reading Excel file: {file.filename}")
         contents = await file.read()
+        print(f"📊 File size: {len(contents)} bytes")
+        
         df = pd.read_excel(io.BytesIO(contents))
+        print(f"✅ Excel parsed successfully. Rows: {len(df)}, Columns: {list(df.columns)}")
         
         # Validate required columns
         required_columns = ['name', 'category', 'cost_price', 'selling_price', 'quantity']
@@ -386,10 +392,21 @@ async def bulk_upload_products(
         
     except HTTPException:
         raise
+    except pd.errors.EmptyDataError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Excel file is empty or corrupted")
     except Exception as e:
         db.rollback()
         import traceback
         error_detail = traceback.format_exc()
         print(f"❌ Bulk upload error: {error_detail}")
-        raise HTTPException(status_code=500, detail=f"Failed to process file: {str(e)}")
+        
+        # Get more detailed error info
+        error_msg = str(e) if str(e) else "Unknown error occurred"
+        error_type = type(e).__name__
+        
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to process file ({error_type}): {error_msg}. Check server logs for details."
+        )
 
