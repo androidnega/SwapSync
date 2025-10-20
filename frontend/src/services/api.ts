@@ -160,7 +160,15 @@ export const bulkUploadAPI = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
+  uploadProducts: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/bulk-upload/products', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
   getPhoneTemplate: () => `${API_BASE_URL}/bulk-upload/phones/template`,
+  getProductTemplate: () => `${API_BASE_URL}/bulk-upload/products/template`,
 };
 
 // Maintenance API
