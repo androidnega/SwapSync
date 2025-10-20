@@ -204,10 +204,16 @@ const POSSystem: React.FC = () => {
         setMessage('❌ Please enter customer name and phone');
         return;
       }
+      // Validate phone number (must be 10-15 characters)
+      const cleanPhone = newCustomer.phone_number.replace(/\s+/g, ''); // Remove spaces
+      if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+        setMessage('❌ Phone number must be between 10-15 digits');
+        return;
+      }
       customerData = {
         customer_id: null,
         customer_name: newCustomer.full_name,
-        customer_phone: newCustomer.phone_number
+        customer_phone: cleanPhone
       };
     } else {
       // Walk-in customer
@@ -216,11 +222,39 @@ const POSSystem: React.FC = () => {
         setMessage('❌ Phone number is required');
         return;
       }
+      // Validate phone number (must be 10-15 characters)
+      const cleanPhone = phone.replace(/\s+/g, ''); // Remove spaces
+      if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+        setMessage('❌ Phone number must be between 10-15 digits');
+        return;
+      }
       customerData = {
         customer_id: null,
         customer_name: 'Walk-in Customer',
-        customer_phone: phone
+        customer_phone: cleanPhone
       };
+    }
+
+    // Validate cart items
+    if (cart.length === 0) {
+      setMessage('❌ Cart is empty. Please add items to cart');
+      return;
+    }
+
+    // Validate each cart item
+    for (const item of cart) {
+      if (item.quantity <= 0) {
+        setMessage(`❌ Invalid quantity for ${item.product.name}`);
+        return;
+      }
+      if (item.unit_price <= 0) {
+        setMessage(`❌ Invalid price for ${item.product.name}`);
+        return;
+      }
+      if (item.discount_amount < 0) {
+        setMessage(`❌ Invalid discount for ${item.product.name}`);
+        return;
+      }
     }
 
     setLoading(true);
@@ -235,11 +269,11 @@ const POSSystem: React.FC = () => {
           product_id: item.product.id,
           quantity: item.quantity,
           unit_price: item.unit_price,
-          discount_amount: item.discount_amount
+          discount_amount: item.discount_amount || 0 // Ensure default 0 if undefined
         })),
-        overall_discount: overallDiscount,
+        overall_discount: overallDiscount || 0, // Ensure default 0 if undefined
         payment_method: paymentMethod,
-        notes: notes
+        notes: notes || null // Ensure null if empty
       };
 
       const response = await posSaleAPI.create(saleData);
