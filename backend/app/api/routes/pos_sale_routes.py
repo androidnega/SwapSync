@@ -360,33 +360,14 @@ def list_pos_sales(
             detail=f"Access denied. Your role ({current_user.role.value}) cannot view POS sales."
         )
     
-    # Only include POS sales that have valid items (products still exist)
-    from app.models.pos_sale import POSSaleItem
-    from app.models.product import Product
-    
-    # Get POS sales that have at least one item with a valid product
-    valid_sale_ids_query = db.query(POSSaleItem.pos_sale_id).join(
-        Product, Product.id == POSSaleItem.product_id
-    ).filter(
-        Product.is_active == True
-    ).distinct()
-    
-    # Get the list of valid sale IDs
-    valid_sale_ids = [row[0] for row in valid_sale_ids_query.all()]
-    
-    # If no valid sales exist, return empty list
-    if not valid_sale_ids:
-        return []
-    
-    query = db.query(POSSale).filter(
-        POSSale.id.in_(valid_sale_ids)
-    ).order_by(POSSale.created_at.desc())
+    # Start with base query
+    query = db.query(POSSale).order_by(POSSale.created_at.desc())
     
     # Shop keepers only see their own sales
     if current_user.role == UserRole.SHOP_KEEPER:
         query = query.filter(POSSale.created_by_user_id == current_user.id)
     
-    # Date filtering
+    # Date filtering FIRST (before product check)
     if start_date:
         try:
             start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
@@ -432,35 +413,8 @@ def get_pos_sales_summary(
             detail=f"Access denied. Your role ({current_user.role.value}) cannot view POS summary."
         )
     
-    # Only include POS sales that have valid items (products still exist)
-    from app.models.pos_sale import POSSaleItem
-    from app.models.product import Product
-    
-    # Get POS sales that have at least one item with a valid product
-    valid_sale_ids_query = db.query(POSSaleItem.pos_sale_id).join(
-        Product, Product.id == POSSaleItem.product_id
-    ).filter(
-        Product.is_active == True
-    ).distinct()
-    
-    # Get the list of valid sale IDs
-    valid_sale_ids = [row[0] for row in valid_sale_ids_query.all()]
-    
-    # If no valid sales exist, return empty summary
-    if not valid_sale_ids:
-        return POSSaleSummary(
-            total_transactions=0,
-            total_revenue=0.0,
-            total_profit=0.0,
-            total_items_sold=0,
-            average_transaction_value=0.0,
-            sales_by_payment_method={},
-            top_selling_products=[]
-        )
-    
-    query = db.query(POSSale).filter(
-        POSSale.id.in_(valid_sale_ids)
-    )
+    # Get all POS sales (regardless of product status)
+    query = db.query(POSSale)
     
     # Shop keepers only see their own sales
     if current_user.role == UserRole.SHOP_KEEPER:
