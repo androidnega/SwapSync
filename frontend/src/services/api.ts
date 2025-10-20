@@ -163,6 +163,20 @@ export const bulkUploadAPI = {
   getPhoneTemplate: () => `${API_BASE_URL}/bulk-upload/phones/template`,
 };
 
+// Maintenance API
+export const maintenanceAPI = {
+  clearPosSales: () => api.post('/maintenance/clear-pos-sales'),
+  clearAllData: () => api.post('/maintenance/clear-all-data'),
+  clearCustomers: () => api.post('/maintenance/clear-customers'),
+  clearPhones: () => api.post('/maintenance/clear-phones'),
+  clearSwaps: () => api.post('/maintenance/clear-swaps'),
+  clearSales: () => api.post('/maintenance/clear-sales'),
+  clearRepairs: () => api.post('/maintenance/clear-repairs'),
+  clearInvoices: () => api.post('/maintenance/clear-invoices'),
+  clearActivities: () => api.post('/maintenance/clear-activities'),
+  getStats: () => api.get('/maintenance/stats'),
+};
+
 // Export API_URL for direct fetch calls
 export { API_BASE_URL as API_URL };
 

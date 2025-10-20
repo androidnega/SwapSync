@@ -321,6 +321,8 @@ def clear_all_data(
     """
     try:
         from app.models.repair_item_usage import RepairItemUsage
+        from app.models.pos_sale import POSSale, POSSaleItem
+        from app.models.product import StockMovement
         
         # Clear all business data in proper order (respecting ALL foreign key constraints)
         # Step 1: Break circular dependencies and clear customer references
@@ -330,8 +332,11 @@ def clear_all_data(
         db.query(RepairItemUsage).delete()  # References repairs
         db.query(PhoneOwnershipHistory).delete()  # References phones
         db.query(Invoice).delete()  # References customers/sales/swaps/repairs
+        db.query(POSSaleItem).delete()  # References POS sales
+        db.query(StockMovement).delete()  # References products
         
         # Step 3: Delete transaction records
+        db.query(POSSale).delete()  # POS sales
         db.query(PendingResale).delete()
         db.query(ProductSale).delete()
         db.query(Repair).delete()
@@ -350,7 +355,7 @@ def clear_all_data(
         
         return {
             "success": True,
-            "message": "All business data cleared successfully",
+            "message": "All business data cleared successfully (including POS sales)",
             "cleared_at": datetime.now().isoformat(),
             "cleared_by": current_user.username
         }
@@ -599,6 +604,64 @@ def clear_activities(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to clear activities: {str(e)}"
+        )
+
+
+@router.post("/clear-pos-sales")
+def clear_pos_sales(
+    current_user: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Clear all POS sales data (transactions, items, and related product sales)
+    WARNING: This will permanently delete all POS transaction history!
+    """
+    try:
+        from app.models.pos_sale import POSSale, POSSaleItem
+        from app.models.product import StockMovement
+        
+        # Count before deletion
+        pos_sales_count = db.query(POSSale).count()
+        pos_items_count = db.query(POSSaleItem).count()
+        product_sales_count = db.query(ProductSale).count()
+        stock_movements_count = db.query(StockMovement).filter(
+            StockMovement.reference_type == "pos_sale"
+        ).count()
+        
+        # Delete in correct order (due to foreign keys)
+        # 1. Delete POS sale items first
+        db.query(POSSaleItem).delete()
+        
+        # 2. Delete POS sales
+        db.query(POSSale).delete()
+        
+        # 3. Delete product sales (all of them, not just POS-related)
+        db.query(ProductSale).delete()
+        
+        # 4. Delete stock movements related to POS sales
+        db.query(StockMovement).filter(
+            StockMovement.reference_type == "pos_sale"
+        ).delete()
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared {pos_sales_count} POS sales, {pos_items_count} items, {product_sales_count} product sales, and {stock_movements_count} stock movements",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username,
+            "details": {
+                "pos_sales": pos_sales_count,
+                "pos_items": pos_items_count,
+                "product_sales": product_sales_count,
+                "stock_movements": stock_movements_count
+            }
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear POS sales: {str(e)}"
         )
 
 

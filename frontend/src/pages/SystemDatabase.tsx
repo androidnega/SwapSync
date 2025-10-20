@@ -204,6 +204,7 @@ const SystemDatabase: React.FC = () => {
       repairs: 'All repair records',
       invoices: 'All invoices',
       activities: 'All activity logs',
+      'pos-sales': 'All POS sales transactions',
       users: 'All user accounts (except Super Admins)'
     };
 
@@ -725,6 +726,14 @@ const SystemDatabase: React.FC = () => {
                       >
                         <FontAwesomeIcon icon={faTrash} className="mr-2" />
                         Clear All Activity Logs
+                      </button>
+                      
+                      <button
+                        onClick={() => handleClearSpecificData('pos-sales')}
+                        className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition text-left"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        Clear All POS Sales
                       </button>
                       
                       <button
