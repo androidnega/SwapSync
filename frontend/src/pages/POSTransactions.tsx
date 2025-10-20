@@ -10,7 +10,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faReceipt, faShoppingCart, faTachometerAlt, faUsers,
   faMoneyBillWave, faCreditCard, faMobileAlt, faMoneyBill,
-  faCalendar, faSearch, faFileInvoice
+  faCalendar, faSearch, faFileInvoice, faDownload, faFilePdf,
+  faFileCsv, faFileAlt, faChartBar, faFilter
 } from '@fortawesome/free-solid-svg-icons';
 import POSThermalReceipt from '../components/POSThermalReceipt';
 
@@ -54,9 +55,22 @@ const POSTransactions: React.FC = () => {
   const [companyName, setCompanyName] = useState('Your Shop');
   const [message, setMessage] = useState('');
   
+  // Tabs
+  const [activeTab, setActiveTab] = useState<'transactions' | 'reports'>('transactions');
+  
+  // Filters
   const [filterPayment, setFilterPayment] = useState<string>('all');
-  const [filterDate, setFilterDate] = useState<string>('today'); // Default to today
+  const [filterDate, setFilterDate] = useState<string>('today');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Report filters
+  const [reportType, setReportType] = useState<'daily' | 'range' | 'month' | 'year'>('daily');
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [reportYear, setReportYear] = useState(new Date().getFullYear().toString());
+  const [reportData, setReportData] = useState<POSSale[]>([]);
 
   useEffect(() => {
     loadData();
@@ -87,6 +101,241 @@ const POSTransactions: React.FC = () => {
   const viewReceipt = (sale: POSSale) => {
     setSelectedSale(sale);
     setShowReceipt(true);
+  };
+
+  const generateReport = async () => {
+    setLoading(true);
+    try {
+      let start_date = '';
+      let end_date = '';
+
+      switch (reportType) {
+        case 'daily':
+          start_date = reportDate;
+          end_date = reportDate;
+          break;
+        case 'range':
+          start_date = startDate;
+          end_date = endDate;
+          break;
+        case 'month':
+          const [year, month] = reportMonth.split('-');
+          start_date = `${year}-${month}-01`;
+          const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+          end_date = `${year}-${month}-${lastDay}`;
+          break;
+        case 'year':
+          start_date = `${reportYear}-01-01`;
+          end_date = `${reportYear}-12-31`;
+          break;
+      }
+
+      const salesRes = await posSaleAPI.getAll({ 
+        limit: 5000,
+        start_date,
+        end_date
+      });
+      setReportData(salesRes.data);
+      setMessage(`✅ Report generated: ${salesRes.data.length} transactions found`);
+    } catch (error: any) {
+      console.error('Failed to generate report:', error);
+      setMessage('❌ Failed to generate report');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportToPDF = () => {
+    const reportStats = calculateReportStats();
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Sales Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+          h2 { color: #1e40af; margin-top: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #eff6ff; color: #1e40af; }
+          .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+          .stat-card { background: #f0f9ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 8px; }
+          .stat-label { font-size: 12px; color: #1e40af; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #1e3a8a; }
+          @media print { button { display: none; } }
+        </style>
+      </head>
+      <body>
+        <h1>${companyName} - Sales Report</h1>
+        <p><strong>Report Type:</strong> ${reportType.toUpperCase()}</p>
+        <p><strong>Period:</strong> ${getReportPeriodLabel()}</p>
+        <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        
+        <h2>Summary</h2>
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-label">Total Transactions</div>
+            <div class="stat-value">${reportStats.totalTransactions}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value">₵${reportStats.totalRevenue.toFixed(2)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Items Sold</div>
+            <div class="stat-value">${reportStats.totalItems}</div>
+          </div>
+        </div>
+
+        <h2>Transactions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Transaction ID</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Payment</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${reportData.map(sale => `
+              <tr>
+                <td>${formatDate(sale.created_at)}</td>
+                <td>${sale.transaction_id}</td>
+                <td>${sale.customer_name}</td>
+                <td>${sale.items_count} items (${sale.total_quantity} units)</td>
+                <td>${sale.payment_method.toUpperCase()}</td>
+                <td>₵${sale.total_amount.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <h2>Item Details</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${reportData.flatMap(sale => 
+              sale.items.map(item => `
+                <tr>
+                  <td>${sale.transaction_id}</td>
+                  <td>${item.product_name}${item.product_brand ? ` (${item.product_brand})` : ''}</td>
+                  <td>${item.quantity}</td>
+                  <td>₵${item.unit_price.toFixed(2)}</td>
+                  <td>₵${item.subtotal.toFixed(2)}</td>
+                </tr>
+              `)
+            ).join('')}
+          </tbody>
+        </table>
+
+        <button onclick="window.print()" style="margin-top: 20px; padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer;">Print Report</button>
+      </body>
+      </html>
+    `;
+    
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  const exportToCSV = () => {
+    let csv = 'Date,Transaction ID,Customer,Phone,Items Count,Total Quantity,Payment Method,Amount\n';
+    
+    reportData.forEach(sale => {
+      csv += `"${formatDate(sale.created_at)}","${sale.transaction_id}","${sale.customer_name}","${sale.customer_phone}",${sale.items_count},${sale.total_quantity},"${sale.payment_method}",${sale.total_amount}\n`;
+    });
+
+    csv += '\n\nItem Details\n';
+    csv += 'Transaction ID,Product,Brand,Quantity,Unit Price,Discount,Subtotal\n';
+    
+    reportData.forEach(sale => {
+      sale.items.forEach(item => {
+        csv += `"${sale.transaction_id}","${item.product_name}","${item.product_brand || ''}",${item.quantity},${item.unit_price},${item.discount_amount},${item.subtotal}\n`;
+      });
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sales_report_${getReportPeriodLabel().replace(/\s+/g, '_')}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const exportToTXT = () => {
+    const reportStats = calculateReportStats();
+    let txt = `${companyName} - Sales Report\n`;
+    txt += `${'='.repeat(50)}\n\n`;
+    txt += `Report Type: ${reportType.toUpperCase()}\n`;
+    txt += `Period: ${getReportPeriodLabel()}\n`;
+    txt += `Generated: ${new Date().toLocaleString()}\n\n`;
+    
+    txt += `SUMMARY\n`;
+    txt += `${'-'.repeat(50)}\n`;
+    txt += `Total Transactions: ${reportStats.totalTransactions}\n`;
+    txt += `Total Revenue: ₵${reportStats.totalRevenue.toFixed(2)}\n`;
+    txt += `Items Sold: ${reportStats.totalItems}\n`;
+    txt += `Average Transaction: ₵${reportStats.avgTransaction.toFixed(2)}\n\n`;
+
+    txt += `TRANSACTIONS\n`;
+    txt += `${'-'.repeat(50)}\n\n`;
+    
+    reportData.forEach((sale, index) => {
+      txt += `${index + 1}. ${sale.transaction_id}\n`;
+      txt += `   Date: ${formatDate(sale.created_at)}\n`;
+      txt += `   Customer: ${sale.customer_name} (${sale.customer_phone})\n`;
+      txt += `   Payment: ${sale.payment_method.toUpperCase()}\n`;
+      txt += `   Items:\n`;
+      sale.items.forEach(item => {
+        txt += `     - ${item.product_name}${item.product_brand ? ` (${item.product_brand})` : ''}: ${item.quantity} x ₵${item.unit_price.toFixed(2)} = ₵${item.subtotal.toFixed(2)}\n`;
+      });
+      txt += `   Total: ₵${sale.total_amount.toFixed(2)}\n\n`;
+    });
+
+    const blob = new Blob([txt], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sales_report_${getReportPeriodLabel().replace(/\s+/g, '_')}.txt`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const calculateReportStats = () => {
+    const totalTransactions = reportData.length;
+    const totalRevenue = reportData.reduce((sum, sale) => sum + sale.total_amount, 0);
+    const totalItems = reportData.reduce((sum, sale) => sum + sale.total_quantity, 0);
+    const avgTransaction = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
+    return { totalTransactions, totalRevenue, totalItems, avgTransaction };
+  };
+
+  const getReportPeriodLabel = () => {
+    switch (reportType) {
+      case 'daily':
+        return reportDate;
+      case 'range':
+        return `${startDate} to ${endDate}`;
+      case 'month':
+        return reportMonth;
+      case 'year':
+        return reportYear;
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -161,17 +410,48 @@ const POSTransactions: React.FC = () => {
         <p className="text-gray-600 mt-1">View your sales history and transaction details</p>
       </div>
 
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-200">
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab('transactions')}
+            className={`px-6 py-3 font-medium transition-colors ${
+              activeTab === 'transactions'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FontAwesomeIcon icon={faReceipt} className="mr-2" />
+            Transactions
+          </button>
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`px-6 py-3 font-medium transition-colors ${
+              activeTab === 'reports'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FontAwesomeIcon icon={faChartBar} className="mr-2" />
+            Reports
+          </button>
+        </div>
+      </div>
+
       {/* Message */}
       {message && (
         <div className={`mb-4 p-4 rounded-lg ${
-          message.includes('✅') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+          message.includes('✅') ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
         }`}>
           {message}
         </div>
       )}
 
-      {/* Today's Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      {/* Tab Content */}
+      {activeTab === 'transactions' && (
+        <>
+          {/* Today's Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="bg-green-50 border border-green-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
             <FontAwesomeIcon icon={faMoneyBillWave} className="text-3xl text-green-600" />
@@ -404,6 +684,269 @@ const POSTransactions: React.FC = () => {
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {/* Reports Tab */}
+      {activeTab === 'reports' && (
+        <div className="space-y-6">
+          {/* Report Type Selection */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FontAwesomeIcon icon={faFilter} className="text-blue-600" />
+              Generate Report
+            </h2>
+            
+            {/* Report Type Buttons */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <button
+                onClick={() => setReportType('daily')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'daily'
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300'
+                }`}
+              >
+                <FontAwesomeIcon icon={faCalendar} className="mb-2 text-xl" />
+                <div className="font-medium">Daily</div>
+              </button>
+              <button
+                onClick={() => setReportType('range')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'range'
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300'
+                }`}
+              >
+                <FontAwesomeIcon icon={faCalendar} className="mb-2 text-xl" />
+                <div className="font-medium">Date Range</div>
+              </button>
+              <button
+                onClick={() => setReportType('month')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'month'
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300'
+                }`}
+              >
+                <FontAwesomeIcon icon={faCalendar} className="mb-2 text-xl" />
+                <div className="font-medium">Monthly</div>
+              </button>
+              <button
+                onClick={() => setReportType('year')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'year'
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300'
+                }`}
+              >
+                <FontAwesomeIcon icon={faCalendar} className="mb-2 text-xl" />
+                <div className="font-medium">Yearly</div>
+              </button>
+            </div>
+
+            {/* Date Inputs Based on Report Type */}
+            <div className="mb-6">
+              {reportType === 'daily' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
+                  <input
+                    type="date"
+                    value={reportDate}
+                    onChange={(e) => setReportDate(e.target.value)}
+                    className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              )}
+
+              {reportType === 'range' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {reportType === 'month' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Month</label>
+                  <input
+                    type="month"
+                    value={reportMonth}
+                    onChange={(e) => setReportMonth(e.target.value)}
+                    className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              )}
+
+              {reportType === 'year' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Year</label>
+                  <input
+                    type="number"
+                    value={reportYear}
+                    onChange={(e) => setReportYear(e.target.value)}
+                    min="2020"
+                    max="2099"
+                    className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Generate Button */}
+            <button
+              onClick={generateReport}
+              disabled={loading}
+              className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 flex items-center justify-center gap-2"
+            >
+              <FontAwesomeIcon icon={faChartBar} />
+              {loading ? 'Generating...' : 'Generate Report'}
+            </button>
+          </div>
+
+          {/* Report Results */}
+          {reportData.length > 0 && (
+            <>
+              {/* Report Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <FontAwesomeIcon icon={faReceipt} className="text-2xl text-blue-600" />
+                    <span className="text-sm text-blue-600">Transactions</span>
+                  </div>
+                  <div className="text-3xl font-bold text-blue-800">{calculateReportStats().totalTransactions}</div>
+                </div>
+
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <FontAwesomeIcon icon={faMoneyBillWave} className="text-2xl text-green-600" />
+                    <span className="text-sm text-green-600">Total Revenue</span>
+                  </div>
+                  <div className="text-3xl font-bold text-green-800">{formatCurrency(calculateReportStats().totalRevenue)}</div>
+                </div>
+
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <FontAwesomeIcon icon={faShoppingCart} className="text-2xl text-purple-600" />
+                    <span className="text-sm text-purple-600">Items Sold</span>
+                  </div>
+                  <div className="text-3xl font-bold text-purple-800">{calculateReportStats().totalItems}</div>
+                </div>
+
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <FontAwesomeIcon icon={faTachometerAlt} className="text-2xl text-orange-600" />
+                    <span className="text-sm text-orange-600">Avg Transaction</span>
+                  </div>
+                  <div className="text-3xl font-bold text-orange-800">{formatCurrency(calculateReportStats().avgTransaction)}</div>
+                </div>
+              </div>
+
+              {/* Export Buttons */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FontAwesomeIcon icon={faDownload} className="text-blue-600" />
+                  Export Report
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <button
+                    onClick={exportToPDF}
+                    className="px-6 py-3 bg-red-50 border border-red-200 text-red-700 rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-2"
+                  >
+                    <FontAwesomeIcon icon={faFilePdf} />
+                    Export as PDF
+                  </button>
+                  <button
+                    onClick={exportToCSV}
+                    className="px-6 py-3 bg-green-50 border border-green-200 text-green-700 rounded-lg hover:bg-green-100 transition flex items-center justify-center gap-2"
+                  >
+                    <FontAwesomeIcon icon={faFileCsv} />
+                    Export as CSV
+                  </button>
+                  <button
+                    onClick={exportToTXT}
+                    className="px-6 py-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                  >
+                    <FontAwesomeIcon icon={faFileAlt} />
+                    Export as TXT
+                  </button>
+                </div>
+              </div>
+
+              {/* Report Data Table */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Transaction Details</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left p-3 font-semibold text-gray-700">Date</th>
+                        <th className="text-left p-3 font-semibold text-gray-700">Transaction ID</th>
+                        <th className="text-left p-3 font-semibold text-gray-700">Customer</th>
+                        <th className="text-left p-3 font-semibold text-gray-700">Items</th>
+                        <th className="text-left p-3 font-semibold text-gray-700">Payment</th>
+                        <th className="text-right p-3 font-semibold text-gray-700">Amount</th>
+                        <th className="text-center p-3 font-semibold text-gray-700">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportData.map(sale => (
+                        <tr key={sale.id} className="border-b hover:bg-gray-50">
+                          <td className="p-3 text-sm">{formatDate(sale.created_at)}</td>
+                          <td className="p-3 text-sm font-medium text-blue-600">{sale.transaction_id}</td>
+                          <td className="p-3 text-sm">
+                            <div>{sale.customer_name}</div>
+                            <div className="text-xs text-gray-500">{sale.customer_phone}</div>
+                          </td>
+                          <td className="p-3 text-sm">{sale.items_count} items ({sale.total_quantity} units)</td>
+                          <td className="p-3 text-sm">
+                            <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">
+                              {sale.payment_method.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="p-3 text-sm font-semibold text-right text-green-600">{formatCurrency(sale.total_amount)}</td>
+                          <td className="p-3 text-center">
+                            <button
+                              onClick={() => viewReceipt(sale)}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* No Report Data */}
+          {reportData.length === 0 && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
+              <FontAwesomeIcon icon={faChartBar} className="text-4xl text-gray-400 mb-4" />
+              <p className="text-gray-600">Select a report type and generate to view results</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Receipt Modal */}
       {showReceipt && selectedSale && (
