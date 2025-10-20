@@ -211,6 +211,11 @@ const POSSystem: React.FC = () => {
 
   // Complete Sale
   const completeSale = async () => {
+    // Prevent multiple submissions
+    if (loading) {
+      return;
+    }
+
     if (cart.length === 0) {
       setMessage('❌ Cart is empty');
       return;
