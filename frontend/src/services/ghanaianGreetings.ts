@@ -37,7 +37,7 @@ const greetings = {
   ],
   night: [
     { twi: 'Da yie', ahanta: 'Da ɔkɔlɔ', english: 'Good night / Sleep well', emoji: '🌙' },
-    { twi: 'Me kra wo da yie', ahanta: 'M\'edze wo da ɔkɔlɔ', english: 'I wish you goodnight', emoji: '✨' },
+    { twi: 'Me kra wo da yie', ahanta: 'Medze wo da ɔkɔlɔ', english: 'I wish you goodnight', emoji: '✨' },
     { twi: 'Ɔdɛɛfo da yie', ahanta: 'Ɔdɔfo da ɔkɔlɔ', english: 'Beloved one, sleep well', emoji: '🌟' },
   ],
 };
