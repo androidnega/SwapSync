@@ -104,9 +104,30 @@ def create_pos_sale(
     # Only shopkeepers can record sales
     require_shopkeeper(current_user)
     
-    # Verify customer if provided
+    # Verify customer if provided, or create/get walk-in customer
     customer = None
-    if sale.customer_id:
+    actual_customer_id = sale.customer_id
+    
+    if not actual_customer_id:
+        # Create or get the default "Walk-In Customer" for sales without customer records
+        walk_in_customer = db.query(Customer).filter(
+            Customer.phone_number == "0000000000",
+            Customer.full_name == "Walk-In Customer"
+        ).first()
+        
+        if not walk_in_customer:
+            # Create the walk-in customer record
+            walk_in_customer = Customer(
+                full_name="Walk-In Customer",
+                phone_number="0000000000",
+                email=None
+            )
+            db.add(walk_in_customer)
+            db.flush()
+        
+        actual_customer_id = walk_in_customer.id
+        customer = walk_in_customer
+    else:
         customer = db.query(Customer).filter(Customer.id == sale.customer_id).first()
         if not customer:
             raise HTTPException(
@@ -169,7 +190,7 @@ def create_pos_sale(
     # Create POS sale record
     db_pos_sale = POSSale(
         transaction_id=transaction_id,
-        customer_id=sale.customer_id,
+        customer_id=actual_customer_id,  # Use actual_customer_id instead of sale.customer_id
         customer_name=sale.customer_name,
         customer_phone=sale.customer_phone,
         customer_email=sale.customer_email,
@@ -196,7 +217,7 @@ def create_pos_sale(
         
         # Create product sale record
         db_product_sale = ProductSale(
-            customer_id=sale.customer_id,
+            customer_id=actual_customer_id,  # Use actual_customer_id instead of sale.customer_id
             product_id=product.id,
             quantity=item.quantity,
             unit_price=item.unit_price,
