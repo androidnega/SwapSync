@@ -183,39 +183,104 @@ async def download_products_template(
     current_user: User = Depends(require_role(['manager', 'ceo'])),
     db: Session = Depends(get_db)
 ):
-    """Download Excel template for bulk product upload with actual categories from database"""
+    """Download Excel template with 100 sample products ready to use"""
     # Get actual categories from database
     from app.models.category import Category
     categories = db.query(Category).limit(10).all()
     
-    # Create sample data using actual categories
-    if categories:
-        # Use first two categories for samples
-        cat1 = categories[0].name if len(categories) > 0 else 'General'
-        cat2 = categories[1].name if len(categories) > 1 else cat1
+    # Define product categories and sample products
+    product_samples = [
+        # Phone Accessories (30 items)
+        *[('iPhone 13 Case', 'Phone Accessories', 'Apple', 'Silicone protective case', 25.00, 40.00, 100, 10),
+          ('iPhone 14 Case', 'Phone Accessories', 'Apple', 'Leather protective case', 30.00, 50.00, 80, 10),
+          ('Samsung S23 Case', 'Phone Accessories', 'Samsung', 'Clear protective case', 20.00, 35.00, 90, 10),
+          ('Phone Ring Holder', 'Phone Accessories', '', 'Universal ring stand', 3.00, 8.00, 200, 20),
+          ('Pop Socket', 'Phone Accessories', '', 'Phone grip holder', 4.00, 10.00, 150, 20),
+          ('Phone Lanyard', 'Phone Accessories', '', 'Adjustable neck strap', 5.00, 12.00, 100, 15),
+          ('Car Phone Mount', 'Phone Accessories', '', 'Dashboard mount', 15.00, 30.00, 60, 10),
+          ('Waterproof Phone Pouch', 'Phone Accessories', '', 'IPX8 waterproof bag', 8.00, 18.00, 80, 15),
+          ('Phone Armband', 'Phone Accessories', '', 'Sport running armband', 6.00, 15.00, 70, 10),
+          ('Selfie Stick', 'Phone Accessories', '', 'Bluetooth selfie stick', 12.00, 25.00, 50, 10)],
         
-        data = {
-            'name': ['Sample Product 1', 'Sample Product 2'],
-            'category': [cat1, cat2],
-            'brand': ['', ''],
-            'description': ['Sample product description', 'Another sample product'],
-            'cost_price': [30.00, 120.00],
-            'selling_price': [45.00, 180.00],
-            'quantity': [50, 35],
-            'min_stock_level': [10, 10]
-        }
-    else:
-        # No categories exist, create basic template
-        data = {
-            'name': ['Sample Product 1', 'Sample Product 2'],
-            'category': ['CREATE_CATEGORY_FIRST', 'CREATE_CATEGORY_FIRST'],
-            'brand': ['', ''],
-            'description': ['Sample product description', 'Another sample product'],
-            'cost_price': [30.00, 120.00],
-            'selling_price': [45.00, 180.00],
-            'quantity': [50, 35],
-            'min_stock_level': [10, 10]
-        }
+        *[('Tempered Glass Screen', 'Screen Protectors', '', f'For iPhone {i}', 5.00, 12.00, 200, 30) for i in range(11, 16)],
+        *[('Tempered Glass Screen', 'Screen Protectors', '', f'For Samsung S{i}', 5.00, 12.00, 180, 30) for i in range(20, 25)],
+        
+        # Chargers & Cables (25 items)
+        *[('USB-C Cable 1m', 'Cables', 'Anker', 'Fast charging cable', 8.00, 15.00, 200, 20),
+          ('USB-C Cable 2m', 'Cables', 'Anker', 'Fast charging cable', 10.00, 18.00, 150, 20),
+          ('Lightning Cable 1m', 'Cables', 'Apple', 'Original MFi certified', 15.00, 30.00, 100, 15),
+          ('Lightning Cable 2m', 'Cables', 'Apple', 'Original MFi certified', 18.00, 35.00, 80, 15),
+          ('Micro USB Cable', 'Cables', '', 'Universal charging cable', 5.00, 10.00, 250, 30),
+          ('3-in-1 Charging Cable', 'Cables', '', 'USB-C, Lightning, Micro', 12.00, 22.00, 120, 20),
+          ('Magnetic Charging Cable', 'Cables', '', 'Fast charge magnetic', 15.00, 28.00, 90, 15),
+          ('Coiled Charging Cable', 'Cables', '', 'Retractable cable', 10.00, 20.00, 100, 15)],
+        
+        *[('Fast Charger 20W', 'Chargers', 'Anker', 'USB-C PD charger', 20.00, 40.00, 100, 15),
+          ('Fast Charger 30W', 'Chargers', 'Anker', 'Dual USB-C charger', 30.00, 55.00, 80, 10),
+          ('Fast Charger 65W', 'Chargers', 'Anker', 'GaN III charger', 45.00, 80.00, 50, 10),
+          ('Wireless Charger', 'Chargers', 'Samsung', '15W fast wireless', 25.00, 45.00, 70, 10),
+          ('Car Charger', 'Chargers', '', 'Dual USB car charger', 12.00, 25.00, 90, 15),
+          ('Multi-Port Charger', 'Chargers', '', '6-port USB hub', 35.00, 65.00, 40, 10)],
+        
+        *[('Power Bank 10000mAh', 'Power Banks', 'Anker', 'Compact portable charger', 35.00, 60.00, 80, 10),
+          ('Power Bank 20000mAh', 'Power Banks', 'Anker', 'High capacity charger', 55.00, 95.00, 60, 10),
+          ('Power Bank 30000mAh', 'Power Banks', 'Anker', 'Ultra high capacity', 75.00, 130.00, 40, 8),
+          ('Solar Power Bank', 'Power Banks', '', 'Solar charging 20000mAh', 45.00, 85.00, 50, 10),
+          ('Wireless Power Bank', 'Power Banks', '', '10000mAh wireless', 40.00, 70.00, 55, 10)],
+        
+        # Audio Accessories (15 items)
+        *[('AirPods Pro', 'Earbuds', 'Apple', 'Active noise cancelling', 180.00, 280.00, 40, 5),
+          ('AirPods 3rd Gen', 'Earbuds', 'Apple', 'Spatial audio', 140.00, 220.00, 50, 5),
+          ('Galaxy Buds Pro', 'Earbuds', 'Samsung', 'ANC earbuds', 130.00, 200.00, 45, 5),
+          ('Xiaomi Earbuds', 'Earbuds', 'Xiaomi', 'Budget wireless earbuds', 25.00, 45.00, 100, 10),
+          ('JBL Earbuds', 'Earbuds', 'JBL', 'Sport earbuds', 50.00, 85.00, 70, 10),
+          ('Wired Earphones', 'Earbuds', '', 'Universal 3.5mm', 5.00, 12.00, 200, 30),
+          ('USB-C Earphones', 'Earbuds', '', 'Digital earphones', 8.00, 18.00, 150, 20)],
+        
+        *[('Bluetooth Speaker', 'Speakers', 'JBL', 'Portable waterproof', 60.00, 110.00, 50, 8),
+          ('Mini Speaker', 'Speakers', '', 'Pocket speaker', 15.00, 30.00, 100, 15),
+          ('Soundbar', 'Speakers', 'Samsung', 'TV soundbar 2.1', 120.00, 200.00, 30, 5)],
+        
+        # Storage & Memory (10 items)
+        *[('USB Flash Drive 32GB', 'Storage', 'SanDisk', 'USB 3.0 flash drive', 8.00, 15.00, 150, 20),
+          ('USB Flash Drive 64GB', 'Storage', 'SanDisk', 'USB 3.0 flash drive', 12.00, 22.00, 120, 20),
+          ('USB Flash Drive 128GB', 'Storage', 'SanDisk', 'USB 3.0 flash drive', 18.00, 32.00, 100, 15),
+          ('MicroSD Card 64GB', 'Storage', 'Samsung', 'Class 10 memory card', 10.00, 20.00, 200, 25),
+          ('MicroSD Card 128GB', 'Storage', 'Samsung', 'Class 10 memory card', 18.00, 32.00, 150, 20),
+          ('MicroSD Card 256GB', 'Storage', 'Samsung', 'Class 10 memory card', 30.00, 55.00, 100, 15),
+          ('Card Reader', 'Storage', '', 'USB-C card reader', 8.00, 18.00, 80, 15),
+          ('External SSD 500GB', 'Storage', 'Samsung', 'Portable SSD', 70.00, 120.00, 40, 8),
+          ('External HDD 1TB', 'Storage', 'Seagate', 'Portable hard drive', 50.00, 85.00, 50, 10)],
+        
+        # Phone Holders & Stands (5 items)
+        *[('Phone Stand Desktop', 'Phone Stands', '', 'Adjustable desk stand', 10.00, 20.00, 100, 15),
+          ('Folding Phone Stand', 'Phone Stands', '', 'Portable foldable', 8.00, 16.00, 120, 20),
+          ('Charging Dock', 'Phone Stands', '', 'Charging stand', 15.00, 28.00, 80, 12),
+          ('Tablet Stand', 'Phone Stands', '', 'Universal tablet holder', 18.00, 35.00, 70, 10)],
+    ]
+    
+    # Unpack into columns
+    names, cats, brands, descs, costs, prices, qtys, mins = [], [], [], [], [], [], [], []
+    for item in product_samples[:100]:  # Limit to 100 items
+        names.append(item[0])
+        cats.append(item[1])
+        brands.append(item[2])
+        descs.append(item[3])
+        costs.append(item[4])
+        prices.append(item[5])
+        qtys.append(item[6])
+        mins.append(item[7])
+    
+    data = {
+        'name': names,
+        'category': cats,
+        'brand': brands,
+        'description': descs,
+        'cost_price': costs,
+        'selling_price': prices,
+        'quantity': qtys,
+        'min_stock_level': mins
+    }
     
     df = pd.DataFrame(data)
     
@@ -224,33 +289,65 @@ async def download_products_template(
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Products')
         
-        # Add instructions sheet with available categories
-        category_names = [cat.name for cat in categories] if categories else ['No categories found - create categories first!']
+        # Add instructions sheet
         instructions_data = {
             'Column': ['name', 'category', 'brand', 'description', 'cost_price', 'selling_price', 'quantity', 'min_stock_level'],
             'Required': ['Yes', 'Yes', 'No', 'No', 'Yes', 'Yes', 'Yes', 'No'],
             'Description': [
                 'Product name',
-                f"Category name (Available: {', '.join(category_names[:5])}...)",
+                'Category name (auto-creates if not exists)',
                 'Brand name (optional)',
                 'Product description (optional)',
                 'Cost price in GH₵',
                 'Selling price in GH₵',
                 'Available quantity',
                 'Minimum stock level for alerts (optional, defaults to 10)'
+            ],
+            'Example': [
+                'iPhone 13 Case',
+                'Phone Accessories',
+                'Apple',
+                'Silicone protective case',
+                '25.00',
+                '40.00',
+                '100',
+                '10'
             ]
         }
         instructions_df = pd.DataFrame(instructions_data)
         instructions_df.to_excel(writer, index=False, sheet_name='Instructions')
         
-        # Add available categories sheet
-        if categories:
-            categories_data = {
-                'Available Categories': [cat.name for cat in categories],
-                'Description': [cat.description or 'No description' for cat in categories]
-            }
-            categories_df = pd.DataFrame(categories_data)
-            categories_df.to_excel(writer, index=False, sheet_name='Available Categories')
+        # Add info sheet
+        info_data = {
+            'Information': [
+                '✅ This template contains 100 ready-to-use sample products',
+                '✅ You can edit any product details as needed',
+                '✅ Categories are AUTO-CREATED if they don\'t exist',
+                '✅ Delete rows you don\'t need',
+                '✅ Add more rows if you need more products',
+                '✅ Prices are in Ghana Cedis (GH₵)',
+                '',
+                'Categories included:',
+                '- Phone Accessories (cases, holders, mounts)',
+                '- Screen Protectors',
+                '- Cables (USB-C, Lightning, Micro USB)',
+                '- Chargers (fast chargers, wireless)',
+                '- Power Banks (10000-30000mAh)',
+                '- Earbuds (Apple, Samsung, JBL, etc)',
+                '- Speakers',
+                '- Storage (USB drives, SD cards, SSDs)',
+                '- Phone Stands',
+                '',
+                'Tips:',
+                '- Change prices to match your costs',
+                '- Adjust quantities to your stock',
+                '- Edit product names and descriptions',
+                '- Use your own brand names',
+                '- All categories will be created automatically!'
+            ]
+        }
+        info_df = pd.DataFrame(info_data)
+        info_df.to_excel(writer, index=False, sheet_name='How To Use')
     
     output.seek(0)
     
