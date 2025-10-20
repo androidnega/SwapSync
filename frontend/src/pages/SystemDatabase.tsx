@@ -164,27 +164,19 @@ const SystemDatabase: React.FC = () => {
   };
 
   const handleClearAllData = async () => {
-    const confirmText = 'CLEAR ALL DATA';
-    const userInput = prompt(
-      `⚠️ WARNING: This will permanently delete ALL data from the system!\n\n` +
-      `This includes:\n` +
-      `• All customers\n` +
-      `• All phones\n` +
-      `• All swaps\n` +
-      `• All sales\n` +
-      `• All repairs\n` +
-      `• All invoices\n` +
-      `• All activity logs\n\n` +
-      `Type "${confirmText}" to confirm this action:`
-    );
+    // Simple double confirmation instead of typing text
+    if (!confirm(`⚠️ WARNING: This will permanently delete ALL data from the system!\n\nThis includes:\n• All customers\n• All phones\n• All swaps\n• All sales\n• All repairs\n• All invoices\n• All activity logs\n\nAre you absolutely sure?`)) {
+      return;
+    }
 
-    if (userInput !== confirmText) {
-      setMessage('❌ Data clearing cancelled. Confirmation text did not match.');
+    // Second confirmation
+    if (!confirm(`⚠️ FINAL CONFIRMATION\n\nThis action CANNOT be undone!\n\nClick OK to proceed with deleting ALL data.`)) {
+      setMessage('❌ Data clearing cancelled.');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
-    setMessage('');
+    setMessage('🔄 Clearing all data...');
     try {
       await api.post('/maintenance/clear-all-data');
       setMessage('✅ All data cleared successfully! The system has been reset.');
@@ -210,23 +202,24 @@ const SystemDatabase: React.FC = () => {
 
     const description = dataTypes[dataType as keyof typeof dataTypes];
     
-    // Extra confirmation for users
+    // Extra confirmation for users (critical action)
     if (dataType === 'users') {
       if (!confirm(`⚠️ CRITICAL WARNING: This will permanently delete ${description}!\n\nThis includes:\n• All Managers\n• All Shop Keepers\n• All Repairers\n\nSuper Admin accounts will be protected.\n\nAre you absolutely sure?`)) {
         return;
       }
       
-      // Second confirmation
-      if (!confirm(`⚠️ FINAL CONFIRMATION: Type "DELETE USERS" to confirm\n\nThis action cannot be undone!`)) {
+      // Second confirmation for users
+      if (!confirm(`⚠️ FINAL CONFIRMATION\n\nClick OK to DELETE ALL USERS (except Super Admins).\n\nThis action CANNOT be undone!`)) {
         return;
       }
     } else {
+      // Simple confirmation for other data types
       if (!confirm(`⚠️ WARNING: This will permanently delete ${description}!\n\nContinue?`)) {
         return;
       }
     }
 
-    setMessage('');
+    setMessage('🔄 Clearing data...');
     try {
       await api.post(`/maintenance/clear-${dataType}`);
       setMessage(`✅ ${description} cleared successfully!`);
