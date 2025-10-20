@@ -1,4 +1,6 @@
-FORCE DEPLOY - Version 4.1
-Timestamp: 2025-01-11T17:05:00Z
-Build: force-deploy-v4.1
+FORCE DEPLOY - Version 5.0
+Timestamp: 2025-10-20T15:30:00Z
+Build: force-deploy-v5.0-fix-build-error
 Action: Force Vercel to deploy latest commit
+Reason: Fixed Vite build error in ghanaianGreetings.ts and allowed admin login during maintenance
+Commit: 2956e8f

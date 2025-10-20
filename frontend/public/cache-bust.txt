@@ -1,2 +1,4 @@
-%date%
-%time%
+Cache Bust: 2025-10-20T15:30:00Z
+Build Version: 5.0.0
+Last Update: Fixed build error and maintenance mode
+Commit: 2956e8f
