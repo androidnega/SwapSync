@@ -365,13 +365,21 @@ def list_pos_sales(
     from app.models.product import Product
     
     # Get POS sales that have at least one item with a valid product
-    valid_sale_ids = db.query(POSSaleItem.pos_sale_id).join(Product).filter(
-        Product.id == POSSaleItem.product_id,
+    valid_sale_ids_query = db.query(POSSaleItem.pos_sale_id).join(
+        Product, Product.id == POSSaleItem.product_id
+    ).filter(
         Product.is_active == True
-    ).distinct().subquery()
+    ).distinct()
+    
+    # Get the list of valid sale IDs
+    valid_sale_ids = [row[0] for row in valid_sale_ids_query.all()]
+    
+    # If no valid sales exist, return empty list
+    if not valid_sale_ids:
+        return []
     
     query = db.query(POSSale).filter(
-        POSSale.id.in_(db.query(valid_sale_ids.c.pos_sale_id))
+        POSSale.id.in_(valid_sale_ids)
     ).order_by(POSSale.created_at.desc())
     
     # Shop keepers only see their own sales
@@ -429,13 +437,29 @@ def get_pos_sales_summary(
     from app.models.product import Product
     
     # Get POS sales that have at least one item with a valid product
-    valid_sale_ids = db.query(POSSaleItem.pos_sale_id).join(Product).filter(
-        Product.id == POSSaleItem.product_id,
+    valid_sale_ids_query = db.query(POSSaleItem.pos_sale_id).join(
+        Product, Product.id == POSSaleItem.product_id
+    ).filter(
         Product.is_active == True
-    ).distinct().subquery()
+    ).distinct()
+    
+    # Get the list of valid sale IDs
+    valid_sale_ids = [row[0] for row in valid_sale_ids_query.all()]
+    
+    # If no valid sales exist, return empty summary
+    if not valid_sale_ids:
+        return POSSaleSummary(
+            total_transactions=0,
+            total_revenue=0.0,
+            total_profit=0.0,
+            total_items_sold=0,
+            average_transaction_value=0.0,
+            sales_by_payment_method={},
+            top_selling_products=[]
+        )
     
     query = db.query(POSSale).filter(
-        POSSale.id.in_(db.query(valid_sale_ids.c.pos_sale_id))
+        POSSale.id.in_(valid_sale_ids)
     )
     
     # Shop keepers only see their own sales
