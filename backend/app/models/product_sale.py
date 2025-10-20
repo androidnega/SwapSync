@@ -17,7 +17,7 @@ class ProductSale(Base):
     id = Column(Integer, primary_key=True, index=True)
     
     # Customer & Product Info
-    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
+    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=True)  # Nullable for walk-in customers
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     
     # Sale Details
