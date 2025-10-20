@@ -110,26 +110,44 @@ def create_pos_sale(
     
     if not actual_customer_id:
         # Create or get the default "Walk-In Customer" for sales without customer records
-        walk_in_customer = db.query(Customer).filter(
-            Customer.full_name == "Walk-In Customer"
-        ).first()
-        
-        if not walk_in_customer:
-            # Create the walk-in customer record
-            walk_in_customer = Customer(
-                full_name="Walk-In Customer",
-                phone_number="0000000000",
-                email=None
-            )
-            db.add(walk_in_customer)
-            db.flush()  # Get the ID
+        try:
+            # First, try to find existing walk-in customer
+            walk_in_customer = db.query(Customer).filter(
+                Customer.full_name == "Walk-In Customer"
+            ).first()
             
-            # Generate unique ID
-            walk_in_customer.generate_unique_id(db)
-            db.flush()
-        
-        actual_customer_id = walk_in_customer.id
-        customer = walk_in_customer
+            if not walk_in_customer:
+                print("📝 Creating Walk-In Customer record...")
+                # Create the walk-in customer record
+                walk_in_customer = Customer(
+                    full_name="Walk-In Customer",
+                    phone_number="0000000000",
+                    email=None
+                )
+                db.add(walk_in_customer)
+                db.flush()  # Get the ID
+                
+                # Generate unique ID
+                try:
+                    walk_in_customer.generate_unique_id(db)
+                    db.flush()
+                except Exception as e:
+                    print(f"⚠️ Could not generate unique_id: {e}")
+                    # Continue anyway, unique_id is nullable
+                
+                print(f"✅ Walk-In Customer created with ID: {walk_in_customer.id}")
+            
+            actual_customer_id = walk_in_customer.id
+            customer = walk_in_customer
+            
+        except Exception as e:
+            print(f"❌ Error creating/getting Walk-In Customer: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create walk-in customer: {str(e)}"
+            )
     else:
         customer = db.query(Customer).filter(Customer.id == sale.customer_id).first()
         if not customer:
