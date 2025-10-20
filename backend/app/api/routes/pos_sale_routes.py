@@ -342,6 +342,8 @@ def create_pos_sale(
 def list_pos_sales(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    start_date: str = Query(None, description="Start date in YYYY-MM-DD format"),
+    end_date: str = Query(None, description="End date in YYYY-MM-DD format"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -363,6 +365,29 @@ def list_pos_sales(
     # Shop keepers only see their own sales
     if current_user.role == UserRole.SHOP_KEEPER:
         query = query.filter(POSSale.created_by_user_id == current_user.id)
+    
+    # Date filtering
+    if start_date:
+        try:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(POSSale.created_at >= start_datetime)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid start_date format. Use YYYY-MM-DD"
+            )
+    
+    if end_date:
+        try:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+            # Add one day to include the entire end date
+            end_datetime = end_datetime.replace(hour=23, minute=59, second=59)
+            query = query.filter(POSSale.created_at <= end_datetime)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid end_date format. Use YYYY-MM-DD"
+            )
     
     sales = query.offset(skip).limit(limit).all()
     

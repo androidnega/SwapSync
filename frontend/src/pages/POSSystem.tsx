@@ -113,21 +113,27 @@ const POSSystem: React.FC = () => {
 
   const loadTodayStats = async () => {
     try {
-      // Get today's POS sales summary
-      const summaryRes = await posSaleAPI.getSummary();
-      const summary = summaryRes.data;
+      // Get today's POS sales only
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const salesRes = await posSaleAPI.getAll({ 
+        limit: 1000,
+        start_date: today,
+        end_date: today
+      });
+      
+      const todaySales = salesRes.data || [];
+      
+      // Calculate today's stats only
+      const soldToday = todaySales.reduce((sum, sale) => sum + sale.total_quantity, 0);
+      const amountRecorded = todaySales.reduce((sum, sale) => sum + sale.total_amount, 0);
       
       // Calculate total items in stock
       const totalItemsInStock = products.reduce((sum, product) => sum + product.quantity, 0);
       
-      // Get today's sales (filter by today)
-      const today = new Date().toDateString();
-      const todaySales = summary.total_transactions; // This will be filtered by the API
-      
       setTodayStats({
         totalItemsInStock,
-        soldToday: summary.total_items_sold,
-        amountRecorded: summary.total_revenue
+        soldToday,
+        amountRecorded
       });
     } catch (error) {
       console.error('Failed to load today stats:', error);
@@ -388,6 +394,7 @@ const POSSystem: React.FC = () => {
       setShowReceipt(true);
       clearCart();
       loadData(); // Reload products to update stock
+      loadTodayStats(); // Refresh today's stats
     } catch (error: any) {
       console.error('Failed to complete sale:', error);
       setMessage(`❌ ${error.response?.data?.detail || 'Failed to complete sale'}`);
