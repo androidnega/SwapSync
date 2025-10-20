@@ -295,14 +295,10 @@ async def bulk_upload_products(
         # Get categories mapping
         from app.models.category import Category
         categories = db.query(Category).all()
-        
-        if not categories:
-            raise HTTPException(
-                status_code=400,
-                detail="No categories found in database. Please create at least one category before uploading products."
-            )
-        
         category_map = {cat.name: cat.id for cat in categories}
+        
+        # Track auto-created categories
+        new_categories_created = []
         
         # Process each row
         added_products = []
@@ -314,16 +310,26 @@ async def bulk_upload_products(
                 if pd.isna(row['name']) or str(row['name']).strip() == '':
                     continue
                 
-                # Get category_id
+                # Get or create category
                 category_name = str(row['category']).strip()
                 category_id = category_map.get(category_name)
+                
                 if not category_id:
-                    errors.append({
-                        'row': index + 2,
-                        'product': str(row['name']),
-                        'error': f"Category '{category_name}' not found. Available: {', '.join(list(category_map.keys())[:5])}"
-                    })
-                    continue
+                    # Auto-create category if it doesn't exist
+                    print(f"🆕 Auto-creating category: {category_name}")
+                    new_category = Category(
+                        name=category_name,
+                        description=f"Auto-created from bulk upload",
+                        created_by_user_id=current_user.id
+                    )
+                    db.add(new_category)
+                    db.flush()  # Get the ID
+                    
+                    # Add to map for future rows
+                    category_map[category_name] = new_category.id
+                    category_id = new_category.id
+                    new_categories_created.append(category_name)
+                    print(f"✅ Category created: {category_name} (ID: {category_id})")
                 
                 # Validate numeric fields
                 try:
@@ -381,13 +387,21 @@ async def bulk_upload_products(
                 detail=f"No products added. Errors: {errors[0]['error']}"
             )
         
+        # Build success message
+        message_parts = [f"Successfully added {len(added_products)} products."]
+        if new_categories_created:
+            message_parts.append(f"Created {len(new_categories_created)} new categories: {', '.join(new_categories_created)}")
+        if len(errors) > 0:
+            message_parts.append(f"{len(errors)} rows had errors.")
+        
         return {
             'success': True,
             'added': len(added_products),
             'errors': len(errors),
             'products': added_products,
+            'new_categories': new_categories_created,
             'error_details': errors,
-            'message': f"Successfully added {len(added_products)} products. {len(errors)} errors."
+            'message': ' '.join(message_parts)
         }
         
     except HTTPException:
