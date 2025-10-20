@@ -918,7 +918,7 @@ def generate_manager_manual() -> BytesIO:
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fff7ed')]),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
     ]))
-    story.append(features_table))
+    story.append(features_table)
     
     # Best Practices
     story.append(PageBreak())
