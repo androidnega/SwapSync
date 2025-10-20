@@ -1,0 +1,11 @@
+FORCE DEPLOY - Version 6.0
+Timestamp: 2025-10-20T18:00:00Z
+Build: force-deploy-v6.0-fix-405-errors
+Action: Force backend deployment with POS and products fixes
+Reason: Fixed 405 errors on products and POS sales endpoints
+Commits: f1382b8, 824828f
+Changes:
+- Products endpoint now allows shop_keeper role
+- POS sales endpoints now allow shop_keeper role with own-sales filtering
+- All permission checks added explicitly
+

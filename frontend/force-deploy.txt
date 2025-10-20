@@ -1,6 +1,11 @@
-FORCE DEPLOY - Version 5.0
-Timestamp: 2025-10-20T15:30:00Z
-Build: force-deploy-v5.0-fix-build-error
-Action: Force Vercel to deploy latest commit
-Reason: Fixed Vite build error in ghanaianGreetings.ts and allowed admin login during maintenance
-Commit: 2956e8f
+FORCE DEPLOY - Version 6.0
+Timestamp: 2025-10-20T18:00:00Z
+Build: force-deploy-v6.0-pos-system-complete
+Action: Force Vercel to deploy latest POS system changes
+Reason: Complete POS system with role separation and transaction history
+Commit: 7b712f9, f1382b8, 824828f
+Features:
+- POS System for shop keepers
+- POS Monitor for managers
+- My Transactions for shop keepers
+- All permission fixes applied
