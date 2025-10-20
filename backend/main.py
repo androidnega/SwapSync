@@ -141,6 +141,22 @@ from starlette.responses import Response
 
 class ForceCORSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        # Handle OPTIONS preflight requests immediately
+        if request.method == "OPTIONS":
+            origin = request.headers.get("origin", "https://swapsync.digitstec.store")
+            allowed_origin = origin if origin in all_origins else "https://swapsync.digitstec.store"
+            
+            return Response(
+                status_code=200,
+                headers={
+                    "Access-Control-Allow-Origin": allowed_origin,
+                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Max-Age": "3600"
+                }
+            )
+        
         # Get origin from request
         origin = request.headers.get("origin", "https://swapsync.digitstec.store")
         
