@@ -111,7 +111,6 @@ def create_pos_sale(
     if not actual_customer_id:
         # Create or get the default "Walk-In Customer" for sales without customer records
         walk_in_customer = db.query(Customer).filter(
-            Customer.phone_number == "0000000000",
             Customer.full_name == "Walk-In Customer"
         ).first()
         
@@ -123,6 +122,10 @@ def create_pos_sale(
                 email=None
             )
             db.add(walk_in_customer)
+            db.flush()  # Get the ID
+            
+            # Generate unique ID
+            walk_in_customer.generate_unique_id(db)
             db.flush()
         
         actual_customer_id = walk_in_customer.id
