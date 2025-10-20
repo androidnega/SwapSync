@@ -5,6 +5,7 @@ import { getToken, getUser } from '../services/authService';
 import DashboardCard from '../components/DashboardCard';
 import Breadcrumb from '../components/Breadcrumb';
 import WelcomeBanner from '../components/WelcomeBanner';
+import TrainingManualDownload from '../components/TrainingManualDownload';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle, faBell } from '@fortawesome/free-solid-svg-icons';
@@ -133,6 +134,17 @@ const RoleDashboard: React.FC = () => {
             userRole={currentUser.role}
             userId={currentUser.id}
           />
+        )}
+        
+        {/* Training Manual Download - Role-Specific */}
+        {currentUser && currentUser.role === 'shop_keeper' && (
+          <TrainingManualDownload role="shopkeeper" />
+        )}
+        {currentUser && (currentUser.role === 'manager' || currentUser.role === 'ceo') && (
+          <TrainingManualDownload role="manager" />
+        )}
+        {currentUser && currentUser.role === 'repairer' && (
+          <TrainingManualDownload role="repairer" />
         )}
         
         {/* Header with Stock Alert Badge */}

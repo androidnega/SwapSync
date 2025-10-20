@@ -185,6 +185,14 @@ export const maintenanceAPI = {
   getStats: () => api.get('/maintenance/stats'),
 };
 
+// Training API
+export const trainingAPI = {
+  getShopkeeperManual: () => `${API_BASE_URL}/training/shopkeeper-manual`,
+  getManagerManual: () => `${API_BASE_URL}/training/manager-manual`,
+  getRepairerManual: () => `${API_BASE_URL}/training/repairer-manual`,
+  listAvailableManuals: () => api.get('/training/all-manuals'),
+};
+
 // Export API_URL for direct fetch calls
 export { API_BASE_URL as API_URL };
 
