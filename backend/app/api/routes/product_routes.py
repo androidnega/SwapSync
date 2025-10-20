@@ -424,9 +424,22 @@ def delete_product(
     
     # Delete all related records first
     try:
-        # Delete POS sale items
-        from app.models.pos_sale import POSSaleItem
+        # Delete POS sale items and their parent sales
+        from app.models.pos_sale import POSSaleItem, POSSale
+        pos_sale_items = db.query(POSSaleItem).filter(POSSaleItem.product_id == product_id).all()
+        
+        # Get the POS sale IDs that will be affected
+        affected_sale_ids = [item.pos_sale_id for item in pos_sale_items]
+        
+        # Delete the POS sale items
         db.query(POSSaleItem).filter(POSSaleItem.product_id == product_id).delete()
+        
+        # Delete POS sales that become empty (no items left)
+        for sale_id in affected_sale_ids:
+            remaining_items = db.query(POSSaleItem).filter(POSSaleItem.pos_sale_id == sale_id).count()
+            if remaining_items == 0:
+                # Delete the empty POS sale
+                db.query(POSSale).filter(POSSale.id == sale_id).delete()
         
         # Delete product sales
         from app.models.product_sale import ProductSale

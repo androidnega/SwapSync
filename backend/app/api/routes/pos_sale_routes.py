@@ -360,7 +360,19 @@ def list_pos_sales(
             detail=f"Access denied. Your role ({current_user.role.value}) cannot view POS sales."
         )
     
-    query = db.query(POSSale).order_by(POSSale.created_at.desc())
+    # Only include POS sales that have valid items (products still exist)
+    from app.models.pos_sale import POSSaleItem
+    from app.models.product import Product
+    
+    # Get POS sales that have at least one item with a valid product
+    valid_sale_ids = db.query(POSSaleItem.pos_sale_id).join(Product).filter(
+        Product.id == POSSaleItem.product_id,
+        Product.is_active == True
+    ).distinct().subquery()
+    
+    query = db.query(POSSale).filter(
+        POSSale.id.in_(db.query(valid_sale_ids.c.pos_sale_id))
+    ).order_by(POSSale.created_at.desc())
     
     # Shop keepers only see their own sales
     if current_user.role == UserRole.SHOP_KEEPER:
@@ -412,7 +424,19 @@ def get_pos_sales_summary(
             detail=f"Access denied. Your role ({current_user.role.value}) cannot view POS summary."
         )
     
-    query = db.query(POSSale)
+    # Only include POS sales that have valid items (products still exist)
+    from app.models.pos_sale import POSSaleItem
+    from app.models.product import Product
+    
+    # Get POS sales that have at least one item with a valid product
+    valid_sale_ids = db.query(POSSaleItem.pos_sale_id).join(Product).filter(
+        Product.id == POSSaleItem.product_id,
+        Product.is_active == True
+    ).distinct().subquery()
+    
+    query = db.query(POSSale).filter(
+        POSSale.id.in_(db.query(valid_sale_ids.c.pos_sale_id))
+    )
     
     # Shop keepers only see their own sales
     if current_user.role == UserRole.SHOP_KEEPER:
