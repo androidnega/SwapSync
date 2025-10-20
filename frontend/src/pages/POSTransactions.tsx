@@ -172,37 +172,37 @@ const POSTransactions: React.FC = () => {
 
       {/* Today's Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
-            <FontAwesomeIcon icon={faMoneyBillWave} className="text-3xl opacity-80" />
-            <span className="text-sm opacity-80">Today's Sales</span>
+            <FontAwesomeIcon icon={faMoneyBillWave} className="text-3xl text-green-600" />
+            <span className="text-sm text-green-600">Today's Sales</span>
           </div>
-          <div className="text-3xl font-bold">{formatCurrency(todayRevenue)}</div>
-          <div className="text-sm opacity-80 mt-2">
+          <div className="text-3xl font-bold text-green-800">{formatCurrency(todayRevenue)}</div>
+          <div className="text-sm text-green-600 mt-2">
             {todayTransactions} transactions today
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
-            <FontAwesomeIcon icon={faShoppingCart} className="text-3xl opacity-80" />
-            <span className="text-sm opacity-80">Items Sold Today</span>
+            <FontAwesomeIcon icon={faShoppingCart} className="text-3xl text-blue-600" />
+            <span className="text-sm text-blue-600">Items Sold Today</span>
           </div>
-          <div className="text-3xl font-bold">{todayItems}</div>
-          <div className="text-sm opacity-80 mt-2">
+          <div className="text-3xl font-bold text-blue-800">{todayItems}</div>
+          <div className="text-sm text-blue-600 mt-2">
             Across all transactions
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
-            <FontAwesomeIcon icon={faTachometerAlt} className="text-3xl opacity-80" />
-            <span className="text-sm opacity-80">Avg Transaction</span>
+            <FontAwesomeIcon icon={faTachometerAlt} className="text-3xl text-purple-600" />
+            <span className="text-sm text-purple-600">Avg Transaction</span>
           </div>
-          <div className="text-3xl font-bold">
+          <div className="text-3xl font-bold text-purple-800">
             {todayTransactions > 0 ? formatCurrency(todayRevenue / todayTransactions) : '₵0.00'}
           </div>
-          <div className="text-sm opacity-80 mt-2">
+          <div className="text-sm text-purple-600 mt-2">
             Per sale today
           </div>
         </div>
@@ -211,7 +211,7 @@ const POSTransactions: React.FC = () => {
       {/* Overall Summary */}
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Payment Methods</h2>
             <div className="space-y-3">
               {Object.entries(summary.sales_by_payment_method).map(([method, amount]) => (
@@ -237,7 +237,7 @@ const POSTransactions: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Top Products</h2>
             <div className="space-y-2">
               {summary.top_selling_products.slice(0, 5).map((product, index) => (
@@ -255,7 +255,7 @@ const POSTransactions: React.FC = () => {
       )}
 
       {/* Transactions List */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-800">Transaction History</h2>
           <button

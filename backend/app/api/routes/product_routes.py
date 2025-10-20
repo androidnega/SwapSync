@@ -405,7 +405,8 @@ def delete_product(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Delete (deactivate) a product (Manager ONLY)
+    Delete a product and all related records (Manager ONLY)
+    This will permanently delete the product and all its transaction history
     """
     # Only managers can delete products
     require_manager(current_user)
@@ -418,22 +419,44 @@ def delete_product(
             detail=f"Product with ID {product_id} not found"
         )
     
-    # Soft delete (deactivate)
-    product.is_active = False
-    product.is_available = False
-    product.updated_at = datetime.utcnow()
+    product_name = product.name
+    product_sku = product.sku
     
-    db.commit()
-    
-    # Log activity
-    log_activity(
-        db=db,
-        user=current_user,
-        action=f"deactivated product",
-        module="products",
-        target_id=product.id,
-        details=f"{product.name} - SKU: {product.sku}"
-    )
-    
-    return {"message": f"Product '{product.name}' has been deactivated successfully"}
+    # Delete all related records first
+    try:
+        # Delete POS sale items
+        from app.models.pos_sale import POSSaleItem
+        db.query(POSSaleItem).filter(POSSaleItem.product_id == product_id).delete()
+        
+        # Delete product sales
+        from app.models.product_sale import ProductSale
+        db.query(ProductSale).filter(ProductSale.product_id == product_id).delete()
+        
+        # Delete stock movements
+        from app.models.product import StockMovement
+        db.query(StockMovement).filter(StockMovement.product_id == product_id).delete()
+        
+        # Delete the product itself
+        db.delete(product)
+        
+        db.commit()
+        
+        # Log activity
+        log_activity(
+            db=db,
+            user=current_user,
+            action=f"deleted product and all related records",
+            module="products",
+            target_id=product_id,
+            details=f"{product_name} - SKU: {product_sku} (permanently deleted)"
+        )
+        
+        return {"message": f"Product '{product_name}' and all related records have been permanently deleted"}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete product: {str(e)}"
+        )
 

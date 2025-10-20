@@ -97,10 +97,41 @@ const POSSystem: React.FC = () => {
   // UI state
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [message, setMessage] = useState('');
+  
+  // Stats for dashboard
+  const [todayStats, setTodayStats] = useState({
+    totalItemsInStock: 0,
+    soldToday: 0,
+    amountRecorded: 0
+  });
 
   useEffect(() => {
     loadData();
+    loadTodayStats();
   }, []);
+
+  const loadTodayStats = async () => {
+    try {
+      // Get today's POS sales summary
+      const summaryRes = await posSaleAPI.getSummary();
+      const summary = summaryRes.data;
+      
+      // Calculate total items in stock
+      const totalItemsInStock = products.reduce((sum, product) => sum + product.quantity, 0);
+      
+      // Get today's sales (filter by today)
+      const today = new Date().toDateString();
+      const todaySales = summary.total_transactions; // This will be filtered by the API
+      
+      setTodayStats({
+        totalItemsInStock,
+        soldToday: summary.total_items_sold,
+        amountRecorded: summary.total_revenue
+      });
+    } catch (error) {
+      console.error('Failed to load today stats:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -443,49 +474,36 @@ const POSSystem: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Actions for Shopkeepers */}
-      <div className="mb-6 bg-white rounded-lg shadow-md p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-          <FontAwesomeIcon icon={faCalculator} className="text-blue-600" />
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button
-            onClick={() => setOverallDiscount(0)}
-            className="p-3 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition text-center"
-          >
-            <FontAwesomeIcon icon={faCalculator} className="text-blue-600 mb-1" />
-            <div className="text-sm font-medium text-blue-800">Clear Discount</div>
-          </button>
-          <button
-            onClick={() => setPaymentMethod('cash')}
-            className={`p-3 border rounded-lg transition text-center ${
-              paymentMethod === 'cash' 
-                ? 'bg-green-100 border-green-300 text-green-800' 
-                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-            }`}
-          >
-            <FontAwesomeIcon icon={faMoneyBill} className="text-green-600 mb-1" />
-            <div className="text-sm font-medium">Cash Payment</div>
-          </button>
-          <button
-            onClick={() => setCustomerType('walkin')}
-            className={`p-3 border rounded-lg transition text-center ${
-              customerType === 'walkin' 
-                ? 'bg-blue-100 border-blue-300 text-blue-800' 
-                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-            }`}
-          >
-            <FontAwesomeIcon icon={faUser} className="text-blue-600 mb-1" />
-            <div className="text-sm font-medium">Walk-in Customer</div>
-          </button>
-          <button
-            onClick={clearCart}
-            className="p-3 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition text-center"
-          >
-            <FontAwesomeIcon icon={faTrash} className="text-red-600 mb-1" />
-            <div className="text-sm font-medium text-red-800">Clear Cart</div>
-          </button>
+      {/* Today's Stats Dashboard */}
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-600">Total Items in Stock</p>
+              <p className="text-2xl font-bold text-blue-800">{todayStats.totalItemsInStock}</p>
+            </div>
+            <FontAwesomeIcon icon={faShoppingBag} className="text-blue-500 text-2xl" />
+          </div>
+        </div>
+        
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-600">Sold Today</p>
+              <p className="text-2xl font-bold text-green-800">{todayStats.soldToday}</p>
+            </div>
+            <FontAwesomeIcon icon={faShoppingCart} className="text-green-500 text-2xl" />
+          </div>
+        </div>
+        
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-purple-600">Amount Recorded</p>
+              <p className="text-2xl font-bold text-purple-800">₵{todayStats.amountRecorded.toFixed(2)}</p>
+            </div>
+            <FontAwesomeIcon icon={faMoneyBillWave} className="text-purple-500 text-2xl" />
+          </div>
         </div>
       </div>
 
@@ -501,7 +519,7 @@ const POSSystem: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Products Section (Left) */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <FontAwesomeIcon icon={faShoppingBag} />
@@ -733,7 +751,7 @@ const POSSystem: React.FC = () => {
 
         {/* Cart & Checkout Section (Right) */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
               <FontAwesomeIcon icon={faShoppingCart} />
               Cart ({cart.length})

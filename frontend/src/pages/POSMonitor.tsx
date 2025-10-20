@@ -156,48 +156,48 @@ const POSMonitor: React.FC = () => {
       {/* Summary Cards */}
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-2">
-              <FontAwesomeIcon icon={faMoneyBillWave} className="text-3xl opacity-80" />
-              <span className="text-sm opacity-80">Total Revenue</span>
+              <FontAwesomeIcon icon={faMoneyBillWave} className="text-3xl text-green-600" />
+              <span className="text-sm text-green-600">Total Revenue</span>
             </div>
-            <div className="text-3xl font-bold">{formatCurrency(summary.total_revenue)}</div>
-            <div className="text-sm opacity-80 mt-2">
+            <div className="text-3xl font-bold text-green-800">{formatCurrency(summary.total_revenue)}</div>
+            <div className="text-sm text-green-600 mt-2">
               {summary.total_transactions} transactions
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-2">
-              <FontAwesomeIcon icon={faChartLine} className="text-3xl opacity-80" />
-              <span className="text-sm opacity-80">Total Profit</span>
+              <FontAwesomeIcon icon={faChartLine} className="text-3xl text-blue-600" />
+              <span className="text-sm text-blue-600">Total Profit</span>
             </div>
-            <div className="text-3xl font-bold">{formatCurrency(summary.total_profit)}</div>
-            <div className="text-sm opacity-80 mt-2">
+            <div className="text-3xl font-bold text-blue-800">{formatCurrency(summary.total_profit)}</div>
+            <div className="text-sm text-blue-600 mt-2">
               {summary.total_transactions > 0 
                 ? `Avg: ${formatCurrency(summary.total_profit / summary.total_transactions)}`
                 : 'No sales yet'}
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-2">
-              <FontAwesomeIcon icon={faShoppingCart} className="text-3xl opacity-80" />
-              <span className="text-sm opacity-80">Items Sold</span>
+              <FontAwesomeIcon icon={faShoppingCart} className="text-3xl text-purple-600" />
+              <span className="text-sm text-purple-600">Items Sold</span>
             </div>
-            <div className="text-3xl font-bold">{summary.total_items_sold}</div>
-            <div className="text-sm opacity-80 mt-2">
+            <div className="text-3xl font-bold text-purple-800">{summary.total_items_sold}</div>
+            <div className="text-sm text-purple-600 mt-2">
               Across all transactions
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-2">
-              <FontAwesomeIcon icon={faTachometerAlt} className="text-3xl opacity-80" />
-              <span className="text-sm opacity-80">Avg Transaction</span>
+              <FontAwesomeIcon icon={faTachometerAlt} className="text-3xl text-orange-600" />
+              <span className="text-sm text-orange-600">Avg Transaction</span>
             </div>
-            <div className="text-3xl font-bold">{formatCurrency(summary.average_transaction_value)}</div>
-            <div className="text-sm opacity-80 mt-2">
+            <div className="text-3xl font-bold text-orange-800">{formatCurrency(summary.average_transaction_value)}</div>
+            <div className="text-sm text-orange-600 mt-2">
               Per sale
             </div>
           </div>
@@ -207,7 +207,7 @@ const POSMonitor: React.FC = () => {
       {/* Payment Method Breakdown */}
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Payment Methods</h2>
             <div className="space-y-3">
               {Object.entries(summary.sales_by_payment_method).map(([method, amount]) => (
@@ -233,7 +233,7 @@ const POSMonitor: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Top Selling Products</h2>
             <div className="space-y-2">
               {summary.top_selling_products.slice(0, 5).map((product, index) => (
@@ -251,7 +251,7 @@ const POSMonitor: React.FC = () => {
       )}
 
       {/* Filters and Transactions List */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-800">Recent Transactions</h2>
           <button
