@@ -14,7 +14,7 @@ from app.models.pos_sale import POSSale, POSSaleItem
 from app.models.product_sale import ProductSale
 from app.models.product import Product, StockMovement
 from app.models.customer import Customer
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.pos_sale import POSSaleCreate, POSSaleResponse, POSItemResponse, POSSaleSummary
 from app.core.sms import get_sms_service, get_sms_sender_name
 from app.core.activity_logger import log_activity
@@ -303,10 +303,26 @@ def list_pos_sales(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """List all POS sales"""
-    sales = db.query(POSSale).order_by(
-        POSSale.created_at.desc()
-    ).offset(skip).limit(limit).all()
+    """
+    List POS sales
+    - Shop keepers see only their own sales
+    - Managers/CEOs see all sales
+    """
+    # Allow shop keepers, managers, and admins
+    allowed_roles = [UserRole.SHOP_KEEPER, UserRole.MANAGER, UserRole.CEO, UserRole.ADMIN, UserRole.SUPER_ADMIN]
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Your role ({current_user.role.value}) cannot view POS sales."
+        )
+    
+    query = db.query(POSSale).order_by(POSSale.created_at.desc())
+    
+    # Shop keepers only see their own sales
+    if current_user.role == UserRole.SHOP_KEEPER:
+        query = query.filter(POSSale.created_by_user_id == current_user.id)
+    
+    sales = query.offset(skip).limit(limit).all()
     
     return sales
 
@@ -316,8 +332,26 @@ def get_pos_sales_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get POS sales summary statistics"""
-    sales = db.query(POSSale).all()
+    """
+    Get POS sales summary statistics
+    - Shop keepers see only their own sales summary
+    - Managers/CEOs see all sales summary
+    """
+    # Allow shop keepers, managers, and admins
+    allowed_roles = [UserRole.SHOP_KEEPER, UserRole.MANAGER, UserRole.CEO, UserRole.ADMIN, UserRole.SUPER_ADMIN]
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Your role ({current_user.role.value}) cannot view POS summary."
+        )
+    
+    query = db.query(POSSale)
+    
+    # Shop keepers only see their own sales
+    if current_user.role == UserRole.SHOP_KEEPER:
+        query = query.filter(POSSale.created_by_user_id == current_user.id)
+    
+    sales = query.all()
     
     total_transactions = len(sales)
     total_revenue = sum(s.total_amount for s in sales)
@@ -365,12 +399,31 @@ def get_pos_sale(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get a specific POS sale by ID"""
-    sale = db.query(POSSale).filter(POSSale.id == sale_id).first()
+    """
+    Get a specific POS sale by ID
+    - Shop keepers can only view their own sales
+    - Managers/CEOs can view all sales
+    """
+    # Allow shop keepers, managers, and admins
+    allowed_roles = [UserRole.SHOP_KEEPER, UserRole.MANAGER, UserRole.CEO, UserRole.ADMIN, UserRole.SUPER_ADMIN]
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Your role ({current_user.role.value}) cannot view POS sales."
+        )
+    
+    query = db.query(POSSale).filter(POSSale.id == sale_id)
+    
+    # Shop keepers can only view their own sales
+    if current_user.role == UserRole.SHOP_KEEPER:
+        query = query.filter(POSSale.created_by_user_id == current_user.id)
+    
+    sale = query.first()
+    
     if not sale:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"POS sale with ID {sale_id} not found"
+            detail=f"POS sale with ID {sale_id} not found or you don't have access"
         )
     
     return sale
@@ -382,12 +435,31 @@ def resend_pos_receipt(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Resend SMS receipt for a POS sale"""
-    sale = db.query(POSSale).filter(POSSale.id == sale_id).first()
+    """
+    Resend SMS receipt for a POS sale
+    - Shop keepers can only resend their own sales
+    - Managers/CEOs can resend any sale
+    """
+    # Allow shop keepers, managers, and admins
+    allowed_roles = [UserRole.SHOP_KEEPER, UserRole.MANAGER, UserRole.CEO, UserRole.ADMIN, UserRole.SUPER_ADMIN]
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Your role ({current_user.role.value}) cannot resend receipts."
+        )
+    
+    query = db.query(POSSale).filter(POSSale.id == sale_id)
+    
+    # Shop keepers can only resend their own sales
+    if current_user.role == UserRole.SHOP_KEEPER:
+        query = query.filter(POSSale.created_by_user_id == current_user.id)
+    
+    sale = query.first()
+    
     if not sale:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"POS sale with ID {sale_id} not found"
+            detail=f"POS sale with ID {sale_id} not found or you don't have access"
         )
     
     # Prepare items for SMS
