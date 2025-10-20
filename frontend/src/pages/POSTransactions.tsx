@@ -83,7 +83,8 @@ const POSTransactions: React.FC = () => {
       const salesRes = await posSaleAPI.getAll({ limit: 500 });
       setSales(salesRes.data);
       
-      // Fetch summary using posSaleAPI service
+      // Fetch summary for ALL TIME (to show payment methods and top products from all sales)
+      // But the frontend will filter to show today's stats separately
       const summaryRes = await posSaleAPI.getSummary();
       setSummary(summaryRes.data);
       
@@ -488,47 +489,80 @@ const POSTransactions: React.FC = () => {
         </div>
       </div>
 
-      {/* Overall Summary */}
+      {/* Overall Summary - Based on Today's Sales Only */}
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Payment Methods</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Payment Methods (Today)</h2>
             <div className="space-y-3">
-              {Object.entries(summary.sales_by_payment_method).map(([method, amount]) => (
-                <div key={method} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FontAwesomeIcon 
-                      icon={
-                        method === 'cash' ? faMoneyBill :
-                        method === 'card' ? faCreditCard :
-                        faMobileAlt
-                      } 
-                      className={
-                        method === 'cash' ? 'text-green-600' :
-                        method === 'card' ? 'text-blue-600' :
-                        'text-purple-600'
-                      }
-                    />
-                    <span className="capitalize">{method.replace('_', ' ')}</span>
-                  </div>
-                  <span className="font-bold text-gray-800">{formatCurrency(amount)}</span>
-                </div>
-              ))}
+              {(() => {
+                // Calculate today's payment methods from filtered sales
+                const todayPayments: { [key: string]: number } = {};
+                todayStats.forEach(sale => {
+                  if (!todayPayments[sale.payment_method]) {
+                    todayPayments[sale.payment_method] = 0;
+                  }
+                  todayPayments[sale.payment_method] += sale.total_amount;
+                });
+                
+                return Object.entries(todayPayments).length > 0 ? (
+                  Object.entries(todayPayments).map(([method, amount]) => (
+                    <div key={method} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FontAwesomeIcon 
+                          icon={
+                            method === 'cash' ? faMoneyBill :
+                            method === 'card' ? faCreditCard :
+                            faMobileAlt
+                          } 
+                          className={
+                            method === 'cash' ? 'text-green-600' :
+                            method === 'card' ? 'text-blue-600' :
+                            'text-purple-600'
+                          }
+                        />
+                        <span className="capitalize">{method.replace('_', ' ')}</span>
+                      </div>
+                      <span className="font-bold text-gray-800">{formatCurrency(amount)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No sales today</p>
+                );
+              })()}
             </div>
           </div>
 
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Top Products</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Top Products (Today)</h2>
             <div className="space-y-2">
-              {summary.top_selling_products.slice(0, 5).map((product, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{product.product}</span>
-                  <span className="font-semibold text-gray-800">{product.quantity} units</span>
-                </div>
-              ))}
-              {summary.top_selling_products.length === 0 && (
-                <p className="text-gray-500 text-center py-4">No sales yet</p>
-              )}
+              {(() => {
+                // Calculate today's top products from filtered sales
+                const productCounts: { [key: string]: number } = {};
+                todayStats.forEach(sale => {
+                  sale.items.forEach(item => {
+                    if (!productCounts[item.product_name]) {
+                      productCounts[item.product_name] = 0;
+                    }
+                    productCounts[item.product_name] += item.quantity;
+                  });
+                });
+                
+                const topProducts = Object.entries(productCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 5);
+                
+                return topProducts.length > 0 ? (
+                  topProducts.map(([product, quantity], index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">{product}</span>
+                      <span className="font-semibold text-gray-800">{quantity} units</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No sales today</p>
+                );
+              })()}
             </div>
           </div>
         </div>

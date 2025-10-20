@@ -122,7 +122,7 @@ export const posSaleAPI = {
   getAll: (params?: any) => api.get('/pos-sales/', { params }),
   getById: (id: number) => api.get(`/pos-sales/${id}`),
   create: (data: any) => api.post('/pos-sales/', data),
-  getSummary: () => api.get('/pos-sales/summary'),
+  getSummary: (params?: any) => api.get('/pos-sales/summary', { params }),
   resendReceipt: (id: number) => api.post(`/pos-sales/${id}/resend-receipt`),
 };
 

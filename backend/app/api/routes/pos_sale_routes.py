@@ -397,13 +397,16 @@ def list_pos_sales(
 
 @router.get("/summary", response_model=POSSaleSummary)
 def get_pos_sales_summary(
+    start_date: str = Query(None, description="Start date in YYYY-MM-DD format"),
+    end_date: str = Query(None, description="End date in YYYY-MM-DD format"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get POS sales summary statistics
+    Get POS sales summary statistics with optional date filtering
     - Shop keepers see only their own sales summary
     - Managers/CEOs see all sales summary
+    - Date filters allow real-time data viewing
     """
     # Allow shop keepers, managers, and admins
     allowed_roles = [UserRole.SHOP_KEEPER, UserRole.MANAGER, UserRole.CEO, UserRole.ADMIN, UserRole.SUPER_ADMIN]
@@ -413,12 +416,35 @@ def get_pos_sales_summary(
             detail=f"Access denied. Your role ({current_user.role.value}) cannot view POS summary."
         )
     
-    # Get all POS sales (regardless of product status)
+    # Get POS sales with date filtering
     query = db.query(POSSale)
     
     # Shop keepers only see their own sales
     if current_user.role == UserRole.SHOP_KEEPER:
         query = query.filter(POSSale.created_by_user_id == current_user.id)
+    
+    # Apply date filters
+    if start_date:
+        try:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(POSSale.created_at >= start_datetime)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid start_date format. Use YYYY-MM-DD"
+            )
+    
+    if end_date:
+        try:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+            # Add one day to include the entire end date
+            end_datetime = end_datetime.replace(hour=23, minute=59, second=59)
+            query = query.filter(POSSale.created_at <= end_datetime)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid end_date format. Use YYYY-MM-DD"
+            )
     
     sales = query.all()
     
