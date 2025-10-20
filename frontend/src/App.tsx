@@ -161,10 +161,8 @@ function AppContent() {
 
   // Show login page if not authenticated
   if (isLoginPage) {
-    // Show maintenance mode on login page BEFORE allowing login
-    if (maintenanceMode) {
-      return <Maintenance reason="System maintenance in progress" />;
-    }
+    // Always allow login page access - admins can login during maintenance
+    // Maintenance mode will be enforced after login for non-admin users
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
