@@ -12,7 +12,8 @@ import {
   faUser, faPhone, faEnvelope, faSearch, faTimes, faReceipt,
   faCheck, faMoneyBill, faCreditCard, faMobileAlt, faTags,
   faShoppingBag, faBarcode, faFilter, faSort, faChevronLeft, faChevronRight,
-  faCalculator, faHistory, faPrint, faPaperPlane, faEye, faEdit
+  faCalculator, faHistory, faPrint, faPaperPlane, faEye, faEdit,
+  faMoneyBillWave
 } from '@fortawesome/free-solid-svg-icons';
 import POSThermalReceipt from '../components/POSThermalReceipt';
 
