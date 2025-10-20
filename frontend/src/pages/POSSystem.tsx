@@ -11,7 +11,8 @@ import {
   faShoppingCart, faPlus, faMinus, faTrash, faCashRegister,
   faUser, faPhone, faEnvelope, faSearch, faTimes, faReceipt,
   faCheck, faMoneyBill, faCreditCard, faMobileAlt, faTags,
-  faShoppingBag, faBarcode, faFilter, faSort, faChevronLeft, faChevronRight
+  faShoppingBag, faBarcode, faFilter, faSort, faChevronLeft, faChevronRight,
+  faCalculator, faHistory, faPrint, faPaperPlane, faEye, faEdit
 } from '@fortawesome/free-solid-svg-icons';
 import POSThermalReceipt from '../components/POSThermalReceipt';
 
@@ -145,6 +146,39 @@ const POSSystem: React.FC = () => {
         discount_amount: 0
       };
       setCart([...cart, newItem]);
+    }
+  };
+
+  // Get available stock for a product (considering items in cart)
+  const getAvailableStock = (product: Product) => {
+    const cartItem = cart.find(item => item.product.id === product.id);
+    if (cartItem) {
+      return product.quantity - cartItem.quantity;
+    }
+    return product.quantity;
+  };
+
+  // Check if product is low stock
+  const isLowStock = (product: Product) => {
+    const availableStock = getAvailableStock(product);
+    return availableStock <= 5; // Low stock threshold
+  };
+
+  // Check if product is out of stock
+  const isOutOfStock = (product: Product) => {
+    const availableStock = getAvailableStock(product);
+    return availableStock <= 0;
+  };
+
+  // Get stock color class
+  const getStockColorClass = (product: Product) => {
+    const availableStock = getAvailableStock(product);
+    if (availableStock <= 0) {
+      return 'bg-red-100 text-red-800 border-red-200'; // Out of stock
+    } else if (availableStock <= 5) {
+      return 'bg-orange-100 text-orange-800 border-orange-200'; // Low stock
+    } else {
+      return 'bg-gray-100 text-gray-600 border-gray-200'; // Normal stock
     }
   };
 
@@ -409,6 +443,52 @@ const POSSystem: React.FC = () => {
         </div>
       </div>
 
+      {/* Quick Actions for Shopkeepers */}
+      <div className="mb-6 bg-white rounded-lg shadow-md p-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+          <FontAwesomeIcon icon={faCalculator} className="text-blue-600" />
+          Quick Actions
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button
+            onClick={() => setOverallDiscount(0)}
+            className="p-3 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition text-center"
+          >
+            <FontAwesomeIcon icon={faCalculator} className="text-blue-600 mb-1" />
+            <div className="text-sm font-medium text-blue-800">Clear Discount</div>
+          </button>
+          <button
+            onClick={() => setPaymentMethod('cash')}
+            className={`p-3 border rounded-lg transition text-center ${
+              paymentMethod === 'cash' 
+                ? 'bg-green-100 border-green-300 text-green-800' 
+                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+            }`}
+          >
+            <FontAwesomeIcon icon={faMoneyBill} className="text-green-600 mb-1" />
+            <div className="text-sm font-medium">Cash Payment</div>
+          </button>
+          <button
+            onClick={() => setCustomerType('walkin')}
+            className={`p-3 border rounded-lg transition text-center ${
+              customerType === 'walkin' 
+                ? 'bg-blue-100 border-blue-300 text-blue-800' 
+                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+            }`}
+          >
+            <FontAwesomeIcon icon={faUser} className="text-blue-600 mb-1" />
+            <div className="text-sm font-medium">Walk-in Customer</div>
+          </button>
+          <button
+            onClick={clearCart}
+            className="p-3 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition text-center"
+          >
+            <FontAwesomeIcon icon={faTrash} className="text-red-600 mb-1" />
+            <div className="text-sm font-medium text-red-800">Clear Cart</div>
+          </button>
+        </div>
+      </div>
+
       {/* Message */}
       {message && (
         <div className={`mb-4 p-4 rounded-lg ${
@@ -552,8 +632,8 @@ const POSSystem: React.FC = () => {
                                       {product.category.name}
                                     </span>
                                   )}
-                                  <span className="bg-gray-100 px-2 py-1 rounded-full text-xs">
-                                    Stock: {product.quantity}
+                                  <span className={`px-2 py-1 rounded-full text-xs border ${getStockColorClass(product)}`}>
+                                    Stock: {getAvailableStock(product)}
                                   </span>
                                 </div>
                               </div>
@@ -575,10 +655,15 @@ const POSSystem: React.FC = () => {
                             
                             <button
                               onClick={() => addToCart(product)}
-                              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                              disabled={isOutOfStock(product)}
+                              className={`px-4 py-2 rounded-lg transition flex items-center gap-2 ${
+                                isOutOfStock(product)
+                                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                              }`}
                             >
                               <FontAwesomeIcon icon={faPlus} />
-                              Add to Cart
+                              {isOutOfStock(product) ? 'Out of Stock' : 'Add to Cart'}
                             </button>
                           </div>
                         </div>

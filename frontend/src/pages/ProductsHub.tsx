@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import Products from './Products';
-import ProductSales from './ProductSales';
 import SoldItems from './SoldItems';
 import Breadcrumb from '../components/Breadcrumb';
 
-type TabType = 'products' | 'sales' | 'sold';
+type TabType = 'products' | 'sold';
 
 const ProductsHub: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('products');
@@ -24,14 +23,11 @@ const ProductsHub: React.FC = () => {
 
   const tabs = [
     { id: 'products' as TabType, label: 'Product Inventory', icon: '📦' },
-    { id: 'sales' as TabType, label: 'Product Sales', icon: '💰' },
     { id: 'sold' as TabType, label: 'Sold Items', icon: '📊' },
   ];
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'sales':
-        return <ProductSales />;
       case 'sold':
         return <SoldItems />;
       case 'products':

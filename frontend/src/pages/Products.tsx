@@ -338,14 +338,13 @@ const Products: React.FC = () => {
             {(userRole === 'shop_keeper') && (
               <button
                 onClick={() => {
-                  // Navigate to sales tab
-                  const event = new CustomEvent('switchTab', { detail: 'sales' });
-                  window.dispatchEvent(event);
+                  // Navigate to POS system for sales
+                  window.location.href = '/pos';
                 }}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm flex items-center gap-2"
               >
-                <span>💰</span>
-                <span>Record Sales</span>
+                <span>🛒</span>
+                <span>Open POS System</span>
               </button>
             )}
             {(userRole === 'manager' || userRole === 'ceo') && (
@@ -372,7 +371,7 @@ const Products: React.FC = () => {
           <div className="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 sm:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-blue-900 mb-2">ℹ️ Shopkeeper Access</h3>
             <p className="text-sm sm:text-base text-blue-800">
-              You can <strong>view all products</strong> and use them in sales. Only <strong>Managers</strong> can add or edit products.
+              You can <strong>view all products</strong> and manage inventory. Use the <strong>POS System</strong> for all sales transactions. Only <strong>Managers</strong> can add or edit products.
             </p>
           </div>
         )}
