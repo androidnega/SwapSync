@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════
+  HOW TO CLEAR ALL POS SALES DATA - QUICK GUIDE
+═══════════════════════════════════════════════════════════════
+
+🎯 GOAL: Clear all historical POS sales to show ₵0.00 everywhere
+
+📋 STEP-BY-STEP INSTRUCTIONS:
+
+1. RESTART YOUR BACKEND API
+   - The new admin endpoint needs to be loaded
+   - Stop and restart: backend API (Railway/Vercel will auto-restart on push)
+
+2. GET YOUR ACCESS TOKEN
+   a. Open your SwapSync app in browser
+   b. Press F12 (open DevTools)
+   c. Go to "Application" or "Storage" tab
+   d. Click "Local Storage" → Your domain
+   e. Find and copy the value of "access_token"
+
+3. RUN THE POWERSHELL SCRIPT
+   a. Open PowerShell in the SwapSync folder
+   b. Run: .\clear_pos_data.ps1
+   c. Type: YES
+   d. Paste your access token
+   e. Choose environment: 1 (local) or 2 (production)
+
+ALTERNATIVE: Manual API Call
+-----------------------------
+Replace YOUR_TOKEN with your actual token:
+
+For Production:
+curl -X POST "https://api.digitstec.store/api/admin/clear-pos-sales" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json"
+
+For Local:
+curl -X POST "http://localhost:8000/api/admin/clear-pos-sales" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json"
+
+4. VERIFY THE RESULT
+   - Refresh POS Transactions page
+   - Refresh POS Monitor page
+   - Everything should show ₵0.00
+   - No transactions should appear
+
+═══════════════════════════════════════════════════════════════
+
+✅ WHAT WAS FIXED:
+
+1. Created admin API endpoint: /api/admin/clear-pos-sales
+2. Only SUPER_ADMIN can access it (secure)
+3. Deletes ALL historical sales data
+4. Frontend now shows real-time "today" data
+5. Historical data won't show unless there are actual sales
+
+═══════════════════════════════════════════════════════════════
+
+🔐 SECURITY:
+- Only SUPER_ADMIN role can clear data
+- Cannot be undone - use carefully!
+- Products/customers/users are NOT deleted
+
+═══════════════════════════════════════════════════════════════
+
+📞 NEED HELP?
+If you get an error, check:
+- Backend API is running
+- You're logged in as SUPER_ADMIN
+- Token is correct and not expired
+- Copied the FULL token (no spaces/breaks)
+
+═══════════════════════════════════════════════════════════════
+

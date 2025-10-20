@@ -424,30 +424,31 @@ def delete_product(
     
     # Delete all related records first
     try:
-        # Delete POS sale items and their parent sales
+        # Delete ALL POS sales containing this product (complete cascade)
         from app.models.pos_sale import POSSaleItem, POSSale
-        pos_sale_items = db.query(POSSaleItem).filter(POSSaleItem.product_id == product_id).all()
         
-        # Get the POS sale IDs that will be affected
-        affected_sale_ids = [item.pos_sale_id for item in pos_sale_items]
+        # Get all POS sales that contain this product
+        pos_sales_with_product = db.query(POSSale).join(
+            POSSaleItem, POSSale.id == POSSaleItem.pos_sale_id
+        ).filter(POSSaleItem.product_id == product_id).all()
         
-        # Delete the POS sale items
-        db.query(POSSaleItem).filter(POSSaleItem.product_id == product_id).delete()
+        affected_sale_ids = [sale.id for sale in pos_sales_with_product]
         
-        # Delete POS sales that become empty (no items left)
-        for sale_id in affected_sale_ids:
-            remaining_items = db.query(POSSaleItem).filter(POSSaleItem.pos_sale_id == sale_id).count()
-            if remaining_items == 0:
-                # Delete the empty POS sale
-                db.query(POSSale).filter(POSSale.id == sale_id).delete()
+        # Delete ALL items from these sales (not just this product's items)
+        if affected_sale_ids:
+            db.query(POSSaleItem).filter(POSSaleItem.pos_sale_id.in_(affected_sale_ids)).delete(synchronize_session=False)
         
-        # Delete product sales
+        # Delete ALL POS sales that contained this product
+        if affected_sale_ids:
+            db.query(POSSale).filter(POSSale.id.in_(affected_sale_ids)).delete(synchronize_session=False)
+        
+        # Delete all product sales for this product
         from app.models.product_sale import ProductSale
-        db.query(ProductSale).filter(ProductSale.product_id == product_id).delete()
+        db.query(ProductSale).filter(ProductSale.product_id == product_id).delete(synchronize_session=False)
         
-        # Delete stock movements
+        # Delete all stock movements for this product
         from app.models.product import StockMovement
-        db.query(StockMovement).filter(StockMovement.product_id == product_id).delete()
+        db.query(StockMovement).filter(StockMovement.product_id == product_id).delete(synchronize_session=False)
         
         # Delete the product itself
         db.delete(product)
@@ -461,10 +462,13 @@ def delete_product(
             action=f"deleted product and all related records",
             module="products",
             target_id=product_id,
-            details=f"{product_name} - SKU: {product_sku} (permanently deleted)"
+            details=f"{product_name} - SKU: {product_sku} | Deleted {len(affected_sale_ids)} POS sales containing this product"
         )
         
-        return {"message": f"Product '{product_name}' and all related records have been permanently deleted"}
+        return {
+            "message": f"Product '{product_name}' and all related records have been permanently deleted",
+            "deleted_sales_count": len(affected_sale_ids)
+        }
         
     except Exception as e:
         db.rollback()
