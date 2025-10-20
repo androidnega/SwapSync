@@ -2,7 +2,7 @@
 SwapSync API - Main Application Entry Point
 Phone Swapping and Repair Shop Management System
 """
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -229,12 +229,22 @@ async def global_exception_handler(request: Request, exc: Exception):
     print(f"📍 Path: {request.url.path}")
     traceback.print_exc()
     
+    # Get origin and determine allowed origin for CORS
+    origin = request.headers.get("origin", "https://swapsync.digitstec.store")
+    allowed_origin = origin if origin in all_origins else "https://swapsync.digitstec.store"
+    
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "detail": "Internal server error. Check server logs for details.",
             "error": str(exc),
             "path": str(request.url.path)
+        },
+        headers={
+            "Access-Control-Allow-Origin": allowed_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
         }
     )
 
@@ -242,11 +252,40 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors"""
+    # Get origin and determine allowed origin for CORS
+    origin = request.headers.get("origin", "https://swapsync.digitstec.store")
+    allowed_origin = origin if origin in all_origins else "https://swapsync.digitstec.store"
+    
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "detail": "Validation error",
             "errors": exc.errors()
+        },
+        headers={
+            "Access-Control-Allow-Origin": allowed_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTP exceptions with CORS headers"""
+    # Get origin and determine allowed origin for CORS
+    origin = request.headers.get("origin", "https://swapsync.digitstec.store")
+    allowed_origin = origin if origin in all_origins else "https://swapsync.digitstec.store"
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers={
+            "Access-Control-Allow-Origin": allowed_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
         }
     )
 
