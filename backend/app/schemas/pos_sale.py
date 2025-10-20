@@ -6,6 +6,17 @@ from typing import Optional, List
 from datetime import datetime
 
 
+class UserSimple(BaseModel):
+    """Simple user info for created_by field"""
+    id: int
+    username: str
+    full_name: str
+    role: str
+    
+    class Config:
+        from_attributes = True
+
+
 class POSItemCreate(BaseModel):
     """Individual item in a POS transaction"""
     product_id: int
@@ -59,7 +70,7 @@ class POSSaleResponse(BaseModel):
     sms_sent: int
     email_sent: int
     created_by_user_id: Optional[int]
-    created_by: Optional[dict] = None
+    created_by: Optional[UserSimple] = None
     created_at: datetime
     
     class Config:
