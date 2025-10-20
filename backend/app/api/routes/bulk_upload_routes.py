@@ -22,22 +22,170 @@ router = APIRouter(prefix="/bulk-upload", tags=["Bulk Upload"])
 async def download_phones_template(
     current_user: User = Depends(require_role(['manager', 'ceo']))
 ):
-    """Download Excel template for bulk phone upload"""
-    # Create sample data
+    """Download Excel template with 100 sample phones ready to use"""
+    
+    # Generate 100 diverse phone samples
+    phone_samples = [
+        # iPhone Models (25 phones)
+        *[('Apple', 'iPhone 15 Pro Max', '', 'Excellent', 5500.00, 3850.00, 'A17 Pro', '8GB', '256GB', '4422mAh', '100%', 'Natural Titanium', 'AVAILABLE'),
+          ('Apple', 'iPhone 15 Pro Max', '', 'Excellent', 6200.00, 4340.00, 'A17 Pro', '8GB', '512GB', '4422mAh', '100%', 'Blue Titanium', 'AVAILABLE'),
+          ('Apple', 'iPhone 15 Pro', '', 'Excellent', 4800.00, 3360.00, 'A17 Pro', '8GB', '256GB', '3274mAh', '100%', 'White Titanium', 'AVAILABLE'),
+          ('Apple', 'iPhone 15 Plus', '', 'Good', 4200.00, 2940.00, 'A16 Bionic', '6GB', '256GB', '4383mAh', '98%', 'Blue', 'AVAILABLE'),
+          ('Apple', 'iPhone 15', '', 'Good', 3800.00, 2660.00, 'A16 Bionic', '6GB', '128GB', '3349mAh', '97%', 'Pink', 'AVAILABLE'),
+          ('Apple', 'iPhone 14 Pro Max', '', 'Excellent', 4500.00, 3150.00, 'A16 Bionic', '6GB', '256GB', '4323mAh', '95%', 'Deep Purple', 'AVAILABLE'),
+          ('Apple', 'iPhone 14 Pro', '', 'Good', 3800.00, 2660.00, 'A16 Bionic', '6GB', '128GB', '3200mAh', '93%', 'Space Black', 'AVAILABLE'),
+          ('Apple', 'iPhone 14 Plus', '', 'Good', 3200.00, 2240.00, 'A15 Bionic', '6GB', '256GB', '4325mAh', '95%', 'Blue', 'AVAILABLE'),
+          ('Apple', 'iPhone 14', '', 'Good', 2800.00, 1960.00, 'A15 Bionic', '6GB', '128GB', '3279mAh', '92%', 'Midnight', 'AVAILABLE'),
+          ('Apple', 'iPhone 13 Pro Max', '', 'Good', 3500.00, 2450.00, 'A15 Bionic', '6GB', '256GB', '4352mAh', '90%', 'Sierra Blue', 'AVAILABLE'),
+          ('Apple', 'iPhone 13 Pro', '', 'Good', 3000.00, 2100.00, 'A15 Bionic', '6GB', '128GB', '3095mAh', '88%', 'Graphite', 'AVAILABLE'),
+          ('Apple', 'iPhone 13', '', 'Good', 2400.00, 1680.00, 'A15 Bionic', '4GB', '128GB', '3240mAh', '87%', 'Starlight', 'AVAILABLE'),
+          ('Apple', 'iPhone 13 Mini', '', 'Good', 2200.00, 1540.00, 'A15 Bionic', '4GB', '128GB', '2438mAh', '85%', 'Pink', 'AVAILABLE'),
+          ('Apple', 'iPhone 12 Pro Max', '', 'Fair', 2800.00, 1960.00, 'A14 Bionic', '6GB', '256GB', '3687mAh', '83%', 'Pacific Blue', 'AVAILABLE'),
+          ('Apple', 'iPhone 12 Pro', '', 'Fair', 2400.00, 1680.00, 'A14 Bionic', '6GB', '128GB', '2815mAh', '80%', 'Gold', 'AVAILABLE'),
+          ('Apple', 'iPhone 12', '', 'Fair', 2000.00, 1400.00, 'A14 Bionic', '4GB', '128GB', '2815mAh', '78%', 'Blue', 'AVAILABLE'),
+          ('Apple', 'iPhone 12 Mini', '', 'Fair', 1800.00, 1260.00, 'A14 Bionic', '4GB', '64GB', '2227mAh', '75%', 'Green', 'AVAILABLE'),
+          ('Apple', 'iPhone 11 Pro Max', '', 'Fair', 2200.00, 1540.00, 'A13 Bionic', '4GB', '256GB', '3969mAh', '70%', 'Midnight Green', 'AVAILABLE'),
+          ('Apple', 'iPhone 11 Pro', '', 'Fair', 1900.00, 1330.00, 'A13 Bionic', '4GB', '64GB', '3046mAh', '68%', 'Space Gray', 'AVAILABLE'),
+          ('Apple', 'iPhone 11', '', 'Fair', 1600.00, 1120.00, 'A13 Bionic', '4GB', '128GB', '3110mAh', '65%', 'Purple', 'AVAILABLE'),
+          ('Apple', 'iPhone XS Max', '', 'Fair', 1500.00, 1050.00, 'A12 Bionic', '4GB', '256GB', '3174mAh', '60%', 'Silver', 'AVAILABLE'),
+          ('Apple', 'iPhone XS', '', 'Fair', 1300.00, 910.00, 'A12 Bionic', '4GB', '64GB', '2658mAh', '58%', 'Gold', 'AVAILABLE'),
+          ('Apple', 'iPhone XR', '', 'Fair', 1200.00, 840.00, 'A12 Bionic', '3GB', '128GB', '2942mAh', '55%', 'Red', 'AVAILABLE'),
+          ('Apple', 'iPhone X', '', 'Fair', 1100.00, 770.00, 'A11 Bionic', '3GB', '64GB', '2716mAh', '50%', 'Space Gray', 'AVAILABLE'),
+          ('Apple', 'iPhone SE 2022', '', 'Good', 1500.00, 1050.00, 'A15 Bionic', '4GB', '64GB', '2018mAh', '90%', 'Midnight', 'AVAILABLE')],
+        
+        # Samsung Galaxy S Series (20 phones)
+        *[('Samsung', 'Galaxy S24 Ultra', '', 'Excellent', 5200.00, 3640.00, 'Snapdragon 8 Gen 3', '12GB', '512GB', '5000mAh', '100%', 'Titanium Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S24 Plus', '', 'Excellent', 4200.00, 2940.00, 'Snapdragon 8 Gen 3', '12GB', '256GB', '4900mAh', '100%', 'Onyx Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S24', '', 'Excellent', 3500.00, 2450.00, 'Snapdragon 8 Gen 3', '8GB', '256GB', '4000mAh', '100%', 'Cream', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S23 Ultra', '', 'Excellent', 4500.00, 3150.00, 'Snapdragon 8 Gen 2', '12GB', '512GB', '5000mAh', '98%', 'Phantom Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S23 Plus', '', 'Good', 3600.00, 2520.00, 'Snapdragon 8 Gen 2', '8GB', '256GB', '4700mAh', '96%', 'Cream', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S23', '', 'Good', 3000.00, 2100.00, 'Snapdragon 8 Gen 2', '8GB', '256GB', '3900mAh', '95%', 'Lavender', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S22 Ultra', '', 'Good', 3800.00, 2660.00, 'Snapdragon 8 Gen 1', '12GB', '512GB', '5000mAh', '92%', 'Burgundy', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S22 Plus', '', 'Good', 2800.00, 1960.00, 'Snapdragon 8 Gen 1', '8GB', '256GB', '4500mAh', '90%', 'Phantom White', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S22', '', 'Good', 2400.00, 1680.00, 'Snapdragon 8 Gen 1', '8GB', '128GB', '3700mAh', '88%', 'Green', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S21 Ultra', '', 'Fair', 2800.00, 1960.00, 'Snapdragon 888', '12GB', '256GB', '5000mAh', '85%', 'Phantom Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S21 Plus', '', 'Fair', 2200.00, 1540.00, 'Snapdragon 888', '8GB', '256GB', '4800mAh', '83%', 'Phantom Silver', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S21', '', 'Fair', 1900.00, 1330.00, 'Snapdragon 888', '8GB', '128GB', '4000mAh', '80%', 'Phantom Gray', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S20 Ultra', '', 'Fair', 2400.00, 1680.00, 'Snapdragon 865', '12GB', '256GB', '5000mAh', '75%', 'Cosmic Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S20 Plus', '', 'Fair', 2000.00, 1400.00, 'Snapdragon 865', '8GB', '128GB', '4500mAh', '72%', 'Cloud Blue', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S20', '', 'Fair', 1700.00, 1190.00, 'Snapdragon 865', '8GB', '128GB', '4000mAh', '70%', 'Cosmic Gray', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S10 Plus', '', 'Fair', 1500.00, 1050.00, 'Snapdragon 855', '8GB', '128GB', '4100mAh', '65%', 'Prism Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S10', '', 'Fair', 1300.00, 910.00, 'Snapdragon 855', '8GB', '128GB', '3400mAh', '60%', 'Prism White', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S10e', '', 'Fair', 1100.00, 770.00, 'Snapdragon 855', '6GB', '128GB', '3100mAh', '58%', 'Canary Yellow', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S9 Plus', '', 'Fair', 1000.00, 700.00, 'Snapdragon 845', '6GB', '64GB', '3500mAh', '55%', 'Midnight Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy S9', '', 'Fair', 900.00, 630.00, 'Snapdragon 845', '4GB', '64GB', '3000mAh', '50%', 'Coral Blue', 'AVAILABLE')],
+        
+        # Samsung Galaxy A Series (15 phones)
+        *[('Samsung', 'Galaxy A54', '', 'Good', 1800.00, 1260.00, 'Exynos 1380', '8GB', '256GB', '5000mAh', '95%', 'Awesome Violet', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A34', '', 'Good', 1400.00, 980.00, 'Dimensity 1080', '8GB', '256GB', '5000mAh', '93%', 'Awesome Lime', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A24', '', 'Good', 1100.00, 770.00, 'Helio G99', '6GB', '128GB', '5000mAh', '92%', 'Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A14', '', 'Good', 800.00, 560.00, 'Helio G80', '4GB', '128GB', '5000mAh', '90%', 'Silver', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A53', '', 'Fair', 1600.00, 1120.00, 'Exynos 1280', '8GB', '256GB', '5000mAh', '85%', 'Awesome Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A33', '', 'Fair', 1300.00, 910.00, 'Exynos 1280', '6GB', '128GB', '5000mAh', '83%', 'Awesome Blue', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A23', '', 'Fair', 1000.00, 700.00, 'Snapdragon 680', '6GB', '128GB', '5000mAh', '80%', 'Peach', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A13', '', 'Fair', 700.00, 490.00, 'Exynos 850', '4GB', '64GB', '5000mAh', '78%', 'White', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A73', '', 'Good', 2000.00, 1400.00, 'Snapdragon 778G', '8GB', '256GB', '5000mAh', '90%', 'Gray', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A52', '', 'Fair', 1400.00, 980.00, 'Snapdragon 720G', '6GB', '128GB', '4500mAh', '75%', 'Violet', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A32', '', 'Fair', 1000.00, 700.00, 'Helio G80', '6GB', '128GB', '5000mAh', '70%', 'Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A22', '', 'Fair', 800.00, 560.00, 'Helio G80', '4GB', '128GB', '5000mAh', '68%', 'Mint', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A12', '', 'Fair', 600.00, 420.00, 'Helio P35', '4GB', '64GB', '5000mAh', '65%', 'Blue', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A51', '', 'Fair', 1200.00, 840.00, 'Exynos 9611', '6GB', '128GB', '4000mAh', '60%', 'Prism Black', 'AVAILABLE'),
+          ('Samsung', 'Galaxy A71', '', 'Fair', 1500.00, 1050.00, 'Snapdragon 730', '8GB', '128GB', '4500mAh', '62%', 'Prism Silver', 'AVAILABLE')],
+        
+        # Xiaomi/Redmi (15 phones)
+        *[('Xiaomi', 'Xiaomi 14 Pro', '', 'Excellent', 3500.00, 2450.00, 'Snapdragon 8 Gen 3', '12GB', '512GB', '4880mAh', '100%', 'Black', 'AVAILABLE'),
+          ('Xiaomi', 'Xiaomi 13 Pro', '', 'Good', 2800.00, 1960.00, 'Snapdragon 8 Gen 2', '12GB', '256GB', '4820mAh', '95%', 'White', 'AVAILABLE'),
+          ('Xiaomi', 'Xiaomi 13', '', 'Good', 2400.00, 1680.00, 'Snapdragon 8 Gen 2', '8GB', '256GB', '4500mAh', '93%', 'Green', 'AVAILABLE'),
+          ('Xiaomi', 'Xiaomi 12 Pro', '', 'Good', 2200.00, 1540.00, 'Snapdragon 8 Gen 1', '12GB', '256GB', '4600mAh', '90%', 'Blue', 'AVAILABLE'),
+          ('Xiaomi', 'Xiaomi 12', '', 'Fair', 1900.00, 1330.00, 'Snapdragon 8 Gen 1', '8GB', '256GB', '4500mAh', '85%', 'Gray', 'AVAILABLE'),
+          ('Xiaomi', 'Xiaomi 11', '', 'Fair', 1600.00, 1120.00, 'Snapdragon 888', '8GB', '128GB', '4600mAh', '80%', 'Midnight Gray', 'AVAILABLE'),
+          ('Xiaomi', 'Redmi Note 13 Pro', '', 'Good', 1500.00, 1050.00, 'Snapdragon 7s Gen 2', '8GB', '256GB', '5100mAh', '95%', 'Black', 'AVAILABLE'),
+          ('Xiaomi', 'Redmi Note 13', '', 'Good', 1200.00, 840.00, 'Snapdragon 685', '8GB', '256GB', '5000mAh', '93%', 'Blue', 'AVAILABLE'),
+          ('Xiaomi', 'Redmi Note 12 Pro', '', 'Good', 1300.00, 910.00, 'Dimensity 1080', '8GB', '256GB', '5000mAh', '90%', 'Graphite Gray', 'AVAILABLE'),
+          ('Xiaomi', 'Redmi Note 12', '', 'Fair', 1000.00, 700.00, 'Snapdragon 685', '6GB', '128GB', '5000mAh', '85%', 'Onyx Gray', 'AVAILABLE'),
+          ('Xiaomi', 'Redmi Note 11 Pro', '', 'Fair', 1100.00, 770.00, 'Helio G96', '6GB', '128GB', '5000mAh', '80%', 'Star Blue', 'AVAILABLE'),
+          ('Xiaomi', 'Redmi Note 11', '', 'Fair', 900.00, 630.00, 'Snapdragon 680', '4GB', '128GB', '5000mAh', '75%', 'Graphite Gray', 'AVAILABLE'),
+          ('Xiaomi', 'Redmi 13C', '', 'Good', 700.00, 490.00, 'Helio G85', '4GB', '128GB', '5000mAh', '92%', 'Navy Blue', 'AVAILABLE'),
+          ('Xiaomi', 'Redmi 12', '', 'Good', 800.00, 560.00, 'Helio G88', '6GB', '128GB', '5000mAh', '90%', 'Silver', 'AVAILABLE'),
+          ('Xiaomi', 'POCO X5 Pro', '', 'Good', 1400.00, 980.00, 'Snapdragon 778G', '8GB', '256GB', '5000mAh', '88%', 'Yellow', 'AVAILABLE')],
+        
+        # Other Brands - Google, OnePlus, Oppo, Vivo, Huawei (25 phones)
+        *[('Google', 'Pixel 8 Pro', '', 'Excellent', 4200.00, 2940.00, 'Tensor G3', '12GB', '256GB', '5050mAh', '100%', 'Obsidian', 'AVAILABLE'),
+          ('Google', 'Pixel 8', '', 'Excellent', 3200.00, 2240.00, 'Tensor G3', '8GB', '256GB', '4575mAh', '100%', 'Rose', 'AVAILABLE'),
+          ('Google', 'Pixel 7 Pro', '', 'Good', 3000.00, 2100.00, 'Tensor G2', '12GB', '256GB', '5000mAh', '93%', 'Snow', 'AVAILABLE'),
+          ('Google', 'Pixel 7', '', 'Good', 2400.00, 1680.00, 'Tensor G2', '8GB', '128GB', '4355mAh', '90%', 'Lemongrass', 'AVAILABLE'),
+          ('Google', 'Pixel 6 Pro', '', 'Fair', 2000.00, 1400.00, 'Tensor', '12GB', '128GB', '5003mAh', '80%', 'Stormy Black', 'AVAILABLE'),
+          ('OnePlus', 'OnePlus 12', '', 'Excellent', 3800.00, 2660.00, 'Snapdragon 8 Gen 3', '12GB', '256GB', '5400mAh', '100%', 'Flowy Emerald', 'AVAILABLE'),
+          ('OnePlus', 'OnePlus 11', '', 'Good', 2800.00, 1960.00, 'Snapdragon 8 Gen 2', '8GB', '128GB', '5000mAh', '92%', 'Titan Black', 'AVAILABLE'),
+          ('OnePlus', 'OnePlus 10 Pro', '', 'Fair', 2200.00, 1540.00, 'Snapdragon 8 Gen 1', '8GB', '128GB', '5000mAh', '85%', 'Volcanic Black', 'AVAILABLE'),
+          ('OnePlus', 'OnePlus Nord 3', '', 'Good', 1600.00, 1120.00, 'Dimensity 9000', '8GB', '128GB', '5000mAh', '90%', 'Misty Green', 'AVAILABLE'),
+          ('OnePlus', 'OnePlus Nord CE 3', '', 'Good', 1200.00, 840.00, 'Snapdragon 782G', '8GB', '128GB', '5000mAh', '88%', 'Aqua Surge', 'AVAILABLE'),
+          ('Oppo', 'Oppo Find X6 Pro', '', 'Excellent', 3500.00, 2450.00, 'Snapdragon 8 Gen 2', '12GB', '256GB', '5000mAh', '98%', 'Black', 'AVAILABLE'),
+          ('Oppo', 'Oppo Reno 10 Pro', '', 'Good', 1800.00, 1260.00, 'Snapdragon 778G', '12GB', '256GB', '4600mAh', '92%', 'Silvery Gray', 'AVAILABLE'),
+          ('Oppo', 'Oppo Reno 8 Pro', '', 'Fair', 1600.00, 1120.00, 'Dimensity 8100', '8GB', '256GB', '4500mAh', '85%', 'Glazed Black', 'AVAILABLE'),
+          ('Oppo', 'Oppo A78', '', 'Good', 1100.00, 770.00, 'Dimensity 700', '8GB', '256GB', '5000mAh', '90%', 'Blue', 'AVAILABLE'),
+          ('Oppo', 'Oppo A58', '', 'Good', 900.00, 630.00, 'Helio G85', '6GB', '128GB', '5000mAh', '88%', 'Black', 'AVAILABLE'),
+          ('Vivo', 'Vivo X90 Pro', '', 'Excellent', 3200.00, 2240.00, 'Dimensity 9200', '12GB', '256GB', '4870mAh', '98%', 'Legendary Black', 'AVAILABLE'),
+          ('Vivo', 'Vivo V29', '', 'Good', 1600.00, 1120.00, 'Snapdragon 778G', '12GB', '256GB', '4600mAh', '92%', 'Noble Black', 'AVAILABLE'),
+          ('Vivo', 'Vivo V27', '', 'Fair', 1400.00, 980.00, 'Dimensity 7200', '8GB', '256GB', '4600mAh', '85%', 'Magic Blue', 'AVAILABLE'),
+          ('Vivo', 'Vivo Y100', '', 'Good', 1200.00, 840.00, 'Snapdragon 685', '8GB', '128GB', '5000mAh', '90%', 'Metal Black', 'AVAILABLE'),
+          ('Vivo', 'Vivo Y36', '', 'Good', 900.00, 630.00, 'Snapdragon 680', '8GB', '128GB', '5000mAh', '88%', 'Meteor Black', 'AVAILABLE'),
+          ('Huawei', 'Huawei P60 Pro', '', 'Excellent', 3500.00, 2450.00, 'Snapdragon 8+ Gen 1', '8GB', '256GB', '4815mAh', '98%', 'Black', 'AVAILABLE'),
+          ('Huawei', 'Huawei Nova 11', '', 'Good', 1500.00, 1050.00, 'Snapdragon 778G', '8GB', '256GB', '4500mAh', '90%', 'Green', 'AVAILABLE'),
+          ('Huawei', 'Huawei P50 Pro', '', 'Fair', 2000.00, 1400.00, 'Snapdragon 888', '8GB', '256GB', '4360mAh', '80%', 'Golden Black', 'AVAILABLE'),
+          ('Tecno', 'Tecno Phantom X2 Pro', '', 'Good', 1400.00, 980.00, 'Dimensity 9000', '12GB', '256GB', '5160mAh', '92%', 'Mars Orange', 'AVAILABLE'),
+          ('Tecno', 'Tecno Camon 20 Pro', '', 'Good', 1100.00, 770.00, 'Dimensity 8050', '8GB', '256GB', '5000mAh', '90%', 'Serenity Blue', 'AVAILABLE'),
+          ('Tecno', 'Tecno Spark 10 Pro', '', 'Good', 700.00, 490.00, 'Helio G88', '8GB', '256GB', '5000mAh', '88%', 'Pearl White', 'AVAILABLE')],
+        
+        # Budget & Mid-Range Phones (15 phones)
+        *[('Infinix', 'Infinix Note 30 Pro', '', 'Good', 1000.00, 700.00, 'Dimensity 8050', '8GB', '256GB', '5000mAh', '90%', 'Obsidian Black', 'AVAILABLE'),
+          ('Infinix', 'Infinix Hot 30', '', 'Good', 600.00, 420.00, 'Helio G88', '8GB', '128GB', '5000mAh', '88%', 'Knight Black', 'AVAILABLE'),
+          ('Infinix', 'Infinix Smart 8', '', 'Good', 500.00, 350.00, 'Helio G36', '4GB', '64GB', '5000mAh', '85%', 'Timber Black', 'AVAILABLE'),
+          ('Realme', 'Realme GT 3', '', 'Good', 1800.00, 1260.00, 'Snapdragon 8+ Gen 1', '8GB', '128GB', '4600mAh', '90%', 'Booster Black', 'AVAILABLE'),
+          ('Realme', 'Realme 11 Pro', '', 'Good', 1400.00, 980.00, 'Dimensity 7050', '8GB', '256GB', '5000mAh', '88%', 'Sunrise Beige', 'AVAILABLE'),
+          ('Realme', 'Realme C55', '', 'Good', 800.00, 560.00, 'Helio G88', '8GB', '256GB', '5000mAh', '85%', 'Rainforest Green', 'AVAILABLE'),
+          ('Realme', 'Realme C53', '', 'Good', 650.00, 455.00, 'Unisoc T612', '6GB', '128GB', '5000mAh', '83%', 'Champion Gold', 'AVAILABLE'),
+          ('Nokia', 'Nokia G42', '', 'Good', 900.00, 630.00, 'Snapdragon 480+', '6GB', '128GB', '5000mAh', '88%', 'So Purple', 'AVAILABLE'),
+          ('Nokia', 'Nokia X30', '', 'Good', 1500.00, 1050.00, 'Snapdragon 695', '8GB', '256GB', '4200mAh', '85%', 'Cloudy Blue', 'AVAILABLE'),
+          ('Nokia', 'Nokia C32', '', 'Fair', 550.00, 385.00, 'Unisoc SC9863A', '3GB', '64GB', '5000mAh', '80%', 'Charcoal', 'AVAILABLE'),
+          ('Motorola', 'Moto Edge 40 Pro', '', 'Excellent', 2500.00, 1750.00, 'Snapdragon 8 Gen 2', '12GB', '256GB', '4600mAh', '95%', 'Interstellar Black', 'AVAILABLE'),
+          ('Motorola', 'Moto G84', '', 'Good', 1200.00, 840.00, 'Snapdragon 695', '8GB', '256GB', '5000mAh', '88%', 'Viva Magenta', 'AVAILABLE'),
+          ('Motorola', 'Moto G54', '', 'Good', 900.00, 630.00, 'Dimensity 7020', '8GB', '256GB', '5000mAh', '85%', 'Midnight Blue', 'AVAILABLE'),
+          ('Nothing', 'Nothing Phone 2', '', 'Excellent', 2800.00, 1960.00, 'Snapdragon 8+ Gen 1', '12GB', '256GB', '4700mAh', '95%', 'White', 'AVAILABLE'),
+          ('Nothing', 'Nothing Phone 1', '', 'Good', 1800.00, 1260.00, 'Snapdragon 778+', '8GB', '128GB', '4500mAh', '85%', 'Black', 'AVAILABLE')],
+    ]
+    
+    # Unpack into columns
+    brands, models, imeis, conds, vals, costs, cpus, rams, storages, bats, bat_healths, colors, stats = [], [], [], [], [], [], [], [], [], [], [], [], []
+    for item in phone_samples[:100]:  # Limit to 100 items
+        brands.append(item[0])
+        models.append(item[1])
+        imeis.append(item[2])
+        conds.append(item[3])
+        vals.append(item[4])
+        costs.append(item[5])
+        cpus.append(item[6])
+        rams.append(item[7])
+        storages.append(item[8])
+        bats.append(item[9])
+        bat_healths.append(item[10])
+        colors.append(item[11])
+        stats.append(item[12])
+    
     data = {
-        'brand': ['Apple', 'Samsung'],
-        'model': ['iPhone 13', 'Galaxy S23'],
-        'imei': ['123456789012345', '987654321098765'],
-        'condition': ['Good', 'Excellent'],
-        'value': [3500.00, 4200.00],
-        'cost_price': [2450.00, 2940.00],
-        'cpu': ['A15 Bionic', 'Snapdragon 8 Gen 2'],
-        'ram': ['6GB', '8GB'],
-        'storage': ['128GB', '256GB'],
-        'battery': ['3240mAh', '3900mAh'],
-        'battery_health': ['95%', '98%'],
-        'color': ['Midnight Blue', 'Phantom Black'],
-        'status': ['AVAILABLE', 'AVAILABLE']
+        'brand': brands,
+        'model': models,
+        'imei': imeis,
+        'condition': conds,
+        'value': vals,
+        'cost_price': costs,
+        'cpu': cpus,
+        'ram': rams,
+        'storage': storages,
+        'battery': bats,
+        'battery_health': bat_healths,
+        'color': colors,
+        'status': stats
     }
     
     df = pd.DataFrame(data)
@@ -65,10 +213,74 @@ async def download_phones_template(
                 'Battery health percentage (optional, e.g., 95%)',
                 'Phone color (optional)',
                 'Status: AVAILABLE, SWAPPED, SOLD, or UNDER_REPAIR'
+            ],
+            'Example': [
+                'Apple',
+                'iPhone 13 Pro',
+                '123456789012345',
+                'Excellent',
+                '3500.00',
+                '2450.00',
+                'A15 Bionic',
+                '6GB',
+                '128GB',
+                '3095mAh',
+                '95%',
+                'Graphite',
+                'AVAILABLE'
             ]
         }
         instructions_df = pd.DataFrame(instructions_data)
         instructions_df.to_excel(writer, index=False, sheet_name='Instructions')
+        
+        # Add info sheet
+        info_data = {
+            'Information': [
+                '✅ This template contains 100 ready-to-use sample phones',
+                '✅ Mix of premium, mid-range, and budget phones',
+                '✅ You can edit any phone details as needed',
+                '✅ Delete rows you don\'t need',
+                '✅ Add more rows if you need more phones',
+                '✅ Prices are in Ghana Cedis (GH₵)',
+                '✅ IMEI can be left blank - system generates unique IDs',
+                '',
+                'Phone brands included:',
+                '- Apple (25 phones: iPhone 15 Pro Max to iPhone X)',
+                '- Samsung S Series (20 phones: S24 Ultra to S9)',
+                '- Samsung A Series (15 phones: A54 to A12)',
+                '- Xiaomi/Redmi (15 phones: Xiaomi 14 Pro to Redmi 12)',
+                '- Google Pixel (5 phones)',
+                '- OnePlus (5 phones)',
+                '- Oppo (5 phones)',
+                '- Vivo (5 phones)',
+                '- Huawei (3 phones)',
+                '- Tecno (3 phones)',
+                '- Infinix (3 phones)',
+                '- Realme (4 phones)',
+                '- Nokia (3 phones)',
+                '- Motorola (3 phones)',
+                '- Nothing (2 phones)',
+                '',
+                'Condition mix:',
+                '- Excellent: Latest flagship models (2024-2025)',
+                '- Good: Recent models (2022-2023)',
+                '- Fair: Older models (2019-2021)',
+                '',
+                'Price Range:',
+                '- Premium: ₵3500 - ₵6200 (Flagships)',
+                '- Mid-range: ₵1500 - ₵3500 (Good phones)',
+                '- Budget: ₵500 - ₵1500 (Entry-level)',
+                '',
+                'Tips:',
+                '- Adjust prices to match your market',
+                '- Update battery health for used phones',
+                '- Add IMEI for tracking (optional)',
+                '- Change colors and storage as needed',
+                '- Mix and match models you actually have'
+            ]
+        }
+        info_df = pd.DataFrame(info_data)
+        info_df.to_excel(writer, index=False, sheet_name='How To Use')
     
     output.seek(0)
     
@@ -104,15 +316,46 @@ async def bulk_upload_phones(
                 detail=f"Missing required columns: {', '.join(missing_columns)}"
             )
         
+        # Get the next available unique_id number
+        from sqlalchemy import func
+        max_unique_id_row = db.query(Phone.unique_id).filter(
+            Phone.unique_id.like('PHON-%')
+        ).order_by(Phone.unique_id.desc()).first()
+        
+        if max_unique_id_row and max_unique_id_row[0]:
+            # Extract number from PHON-0001 format
+            try:
+                last_number = int(max_unique_id_row[0].split('-')[1])
+                next_unique_number = last_number + 1
+            except (ValueError, IndexError):
+                next_unique_number = 1
+        else:
+            next_unique_number = 1
+        
+        print(f"📊 Starting phone unique_id sequence from: PHON-{str(next_unique_number).zfill(4)}")
+        
         # Process each row
         added_phones = []
         errors = []
         
         for index, row in df.iterrows():
             try:
-                # Get brand_id if exists
+                # Get brand_id if exists (or auto-create)
                 from app.models.brand import Brand
                 brand = db.query(Brand).filter(Brand.name == row['brand']).first()
+                
+                if not brand:
+                    # Auto-create brand if it doesn't exist
+                    print(f"🆕 Auto-creating brand: {row['brand']}")
+                    brand = Brand(
+                        name=str(row['brand']),
+                        description=f"Auto-created from bulk upload",
+                        created_by_user_id=current_user.id
+                    )
+                    db.add(brand)
+                    db.flush()
+                    print(f"✅ Brand created: {brand.name} (ID: {brand.id})")
+                
                 brand_id = brand.id if brand else None
                 
                 # Build specs JSON
@@ -148,13 +391,15 @@ async def bulk_upload_phones(
                 db.add(phone)
                 db.flush()  # Get the ID
                 
-                # Generate unique_id
-                phone.unique_id = f"PHON-{str(phone.id).zfill(4)}"
+                # Generate unique_id using incremental counter
+                phone.unique_id = f"PHON-{str(next_unique_number).zfill(4)}"
+                next_unique_number += 1
                 
                 added_phones.append({
                     'id': phone.id,
                     'brand': phone.brand,
-                    'model': phone.model
+                    'model': phone.model,
+                    'unique_id': phone.unique_id
                 })
                 
             except Exception as e:
