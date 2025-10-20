@@ -13,7 +13,7 @@ from app.core.auth import get_current_user
 from app.core.permissions import require_manager, can_record_sales, is_manager_or_above
 from app.core.activity_logger import log_activity
 from app.models.product import Product, StockMovement
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.category import Category
 from app.schemas.product import (
     ProductCreate, ProductUpdate, ProductResponse,
@@ -126,7 +126,16 @@ def list_products(
 ):
     """
     List all products with filters (Manager and Shopkeeper can view)
+    Accessible by: Manager, CEO, Shopkeeper, Repairer (for inventory viewing)
     """
+    # Allow shop keepers, managers, and repairers to view products
+    allowed_roles = [UserRole.MANAGER, UserRole.CEO, UserRole.SHOP_KEEPER, UserRole.REPAIRER, UserRole.ADMIN, UserRole.SUPER_ADMIN]
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Your role ({current_user.role.value}) cannot view products."
+        )
+    
     # Build query
     query = db.query(Product).filter(Product.is_active == True)
     
