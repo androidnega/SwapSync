@@ -81,7 +81,7 @@ const POSSystem: React.FC = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       // Fetch products
-      const productsRes = await axios.get(`${API_URL}/products`, { headers });
+      const productsRes = await axios.get(`${API_URL}/products?in_stock_only=true`, { headers });
       setProducts(productsRes.data.filter((p: Product) => p.is_available && p.quantity > 0));
       
       // Fetch customers
@@ -91,9 +91,10 @@ const POSSystem: React.FC = () => {
       // Get company name
       const userRes = await axios.get(`${API_URL}/auth/me`, { headers });
       setCompanyName(userRes.data.company_name || userRes.data.display_name || 'Your Shop');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load data:', error);
-      setMessage('❌ Failed to load products');
+      const errorMsg = error.response?.data?.detail || error.message || 'Failed to load products';
+      setMessage(`❌ ${errorMsg}`);
     }
   };
 
