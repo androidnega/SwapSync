@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../services/api';
+import { API_URL, productAPI, categoryAPI, authAPI } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 
@@ -89,9 +89,7 @@ const Products: React.FC = () => {
 
   const fetchUserRole = async () => {
     try {
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      const response = await authAPI.me();
       setUserRole(response.data.role);
     } catch (error) {
       console.error('Failed to fetch user role:', error);
@@ -100,10 +98,7 @@ const Products: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${API_URL}/products/`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-        params: { in_stock_only: false, limit: 500 }
-      });
+      const response = await productAPI.getAll({ in_stock_only: false, limit: 500 });
       setProducts(response.data);
     } catch (error: any) {
       console.error('Failed to fetch products:', error);
@@ -115,9 +110,7 @@ const Products: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${API_URL}/categories/`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      const response = await categoryAPI.getAll();
       setCategories(response.data);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -126,9 +119,7 @@ const Products: React.FC = () => {
 
   const fetchSummary = async () => {
     try {
-      const response = await axios.get(`${API_URL}/products/summary`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      const response = await productAPI.getSummary();
       setSummary(response.data);
     } catch (error) {
       console.error('Failed to fetch summary:', error);

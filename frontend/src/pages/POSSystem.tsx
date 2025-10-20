@@ -3,7 +3,7 @@
  * Allows shop keepers to add multiple items to cart and complete sale
  */
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../services/api';
+import { API_URL, productAPI, customerAPI, authAPI } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -77,19 +77,16 @@ const POSSystem: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const token = getToken();
-      const headers = { Authorization: `Bearer ${token}` };
-      
-      // Fetch products
-      const productsRes = await axios.get(`${API_URL}/products?in_stock_only=true`, { headers });
+      // Fetch products using the productAPI service with proper configuration
+      const productsRes = await productAPI.getAll({ in_stock_only: true });
       setProducts(productsRes.data.filter((p: Product) => p.is_available && p.quantity > 0));
       
-      // Fetch customers
-      const customersRes = await axios.get(`${API_URL}/customers`, { headers });
+      // Fetch customers using the customerAPI service
+      const customersRes = await customerAPI.getAll();
       setCustomers(customersRes.data);
       
-      // Get company name
-      const userRes = await axios.get(`${API_URL}/auth/me`, { headers });
+      // Get company name using the authAPI service
+      const userRes = await authAPI.me();
       setCompanyName(userRes.data.company_name || userRes.data.display_name || 'Your Shop');
     } catch (error: any) {
       console.error('Failed to load data:', error);

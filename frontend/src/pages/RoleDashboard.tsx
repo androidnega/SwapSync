@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../services/api';
+import { API_URL, productAPI } from '../services/api';
 import axios from 'axios';
 import { getToken, getUser } from '../services/authService';
 import DashboardCard from '../components/DashboardCard';
@@ -52,18 +52,12 @@ const RoleDashboard: React.FC = () => {
 
   const fetchStockAlerts = async () => {
     try {
-      const token = getToken();
-      
-      // Fetch low stock products
-      const lowStockResponse = await axios.get(`${API_URL}/products/low-stock`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Fetch low stock products using productAPI service
+      const lowStockResponse = await productAPI.getLowStock();
       setLowStockProducts(lowStockResponse.data);
       
-      // Fetch out of stock products
-      const outOfStockResponse = await axios.get(`${API_URL}/products/out-of-stock`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Fetch out of stock products using productAPI service
+      const outOfStockResponse = await productAPI.getOutOfStock();
       setOutOfStockProducts(outOfStockResponse.data);
     } catch (err) {
       console.error('Failed to fetch stock alerts:', err);

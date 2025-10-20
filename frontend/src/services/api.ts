@@ -103,6 +103,8 @@ export const productAPI = {
   adjustStock: (id: number, data: any) => api.post(`/products/${id}/stock-adjustment`, data),
   getSummary: () => api.get('/products/summary'),
   search: (params: any) => api.get('/products/search', { params }),
+  getLowStock: () => api.get('/products/low-stock'),
+  getOutOfStock: () => api.get('/products/out-of-stock'),
 };
 
 // Product Sales API
