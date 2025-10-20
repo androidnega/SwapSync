@@ -1243,13 +1243,31 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-900 mb-2">📥 Step 1: Download Template</h3>
                 <p className="text-sm text-blue-800 mb-3">Download the Excel template, fill in your phone data, then upload it here.</p>
-                <a
-                  href={bulkUploadAPI.getPhoneTemplate()}
-                  download
+                <button
+                  onClick={async () => {
+                    try {
+                      const token = getToken();
+                      const response = await axios.get(bulkUploadAPI.getPhoneTemplate(), {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        responseType: 'blob'
+                      });
+                      const url = window.URL.createObjectURL(new Blob([response.data]));
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.setAttribute('download', 'phones_template.xlsx');
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                      window.URL.revokeObjectURL(url);
+                    } catch (error) {
+                      console.error('Failed to download template:', error);
+                      alert('Failed to download template. Please try again.');
+                    }
+                  }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
                 >
                   📄 Download Template
-                </a>
+                </button>
               </div>
 
               {/* Upload File */}
