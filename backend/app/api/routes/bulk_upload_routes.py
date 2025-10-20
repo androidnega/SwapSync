@@ -20,11 +20,20 @@ router = APIRouter(prefix="/bulk-upload", tags=["Bulk Upload"])
 
 @router.get("/phones/template")
 async def download_phones_template(
-    current_user: User = Depends(require_role(['manager', 'ceo']))
+    current_user: User = Depends(require_role(['manager', 'ceo'])),
+    db: Session = Depends(get_db)
 ):
-    """Download Excel template with 100 sample phones ready to use"""
+    """Download Excel template with 100 sample phones - uses actual brands from database"""
+    # Get actual brands from database
+    from app.models.brand import Brand
+    brands = db.query(Brand).all()
+    brand_names = [b.name for b in brands] if brands else []
     
-    # Generate 100 diverse phone samples
+    # Use actual brands if available, otherwise use defaults
+    apple_brand = 'Apple' if 'Apple' in brand_names or not brand_names else (brand_names[0] if brand_names else 'Apple')
+    samsung_brand = 'Samsung' if 'Samsung' in brand_names or not brand_names else (brand_names[1] if len(brand_names) > 1 else 'Samsung')
+    
+    # Generate 100 diverse phone samples (using dynamic brands when possible)
     phone_samples = [
         # iPhone Models (25 phones)
         *[('Apple', 'iPhone 15 Pro Max', '', 'Excellent', 5500.00, 3850.00, 'A17 Pro', '8GB', '256GB', '4422mAh', '100%', 'Natural Titanium', 'AVAILABLE'),
