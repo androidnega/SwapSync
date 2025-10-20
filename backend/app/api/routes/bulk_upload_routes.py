@@ -180,20 +180,42 @@ async def bulk_upload_phones(
 
 @router.get("/products/template")
 async def download_products_template(
-    current_user: User = Depends(require_role(['manager', 'ceo']))
+    current_user: User = Depends(require_role(['manager', 'ceo'])),
+    db: Session = Depends(get_db)
 ):
-    """Download Excel template for bulk product upload"""
-    # Create sample data
-    data = {
-        'name': ['iPhone 13 Case', 'Power Bank 20000mAh'],
-        'category': ['Phone Accessories', 'Power Banks'],
-        'brand': ['Apple', ''],
-        'description': ['Silicone protective case', 'Fast charging portable battery'],
-        'cost_price': [30.00, 120.00],
-        'selling_price': [45.00, 180.00],
-        'quantity': [50, 35],
-        'min_stock_level': [10, 10]
-    }
+    """Download Excel template for bulk product upload with actual categories from database"""
+    # Get actual categories from database
+    from app.models.category import Category
+    categories = db.query(Category).limit(10).all()
+    
+    # Create sample data using actual categories
+    if categories:
+        # Use first two categories for samples
+        cat1 = categories[0].name if len(categories) > 0 else 'General'
+        cat2 = categories[1].name if len(categories) > 1 else cat1
+        
+        data = {
+            'name': ['Sample Product 1', 'Sample Product 2'],
+            'category': [cat1, cat2],
+            'brand': ['', ''],
+            'description': ['Sample product description', 'Another sample product'],
+            'cost_price': [30.00, 120.00],
+            'selling_price': [45.00, 180.00],
+            'quantity': [50, 35],
+            'min_stock_level': [10, 10]
+        }
+    else:
+        # No categories exist, create basic template
+        data = {
+            'name': ['Sample Product 1', 'Sample Product 2'],
+            'category': ['CREATE_CATEGORY_FIRST', 'CREATE_CATEGORY_FIRST'],
+            'brand': ['', ''],
+            'description': ['Sample product description', 'Another sample product'],
+            'cost_price': [30.00, 120.00],
+            'selling_price': [45.00, 180.00],
+            'quantity': [50, 35],
+            'min_stock_level': [10, 10]
+        }
     
     df = pd.DataFrame(data)
     
@@ -202,13 +224,14 @@ async def download_products_template(
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Products')
         
-        # Add instructions sheet
+        # Add instructions sheet with available categories
+        category_names = [cat.name for cat in categories] if categories else ['No categories found - create categories first!']
         instructions_data = {
             'Column': ['name', 'category', 'brand', 'description', 'cost_price', 'selling_price', 'quantity', 'min_stock_level'],
             'Required': ['Yes', 'Yes', 'No', 'No', 'Yes', 'Yes', 'Yes', 'No'],
             'Description': [
                 'Product name',
-                'Category name (must match existing category)',
+                f"Category name (Available: {', '.join(category_names[:5])}...)",
                 'Brand name (optional)',
                 'Product description (optional)',
                 'Cost price in GH₵',
@@ -219,6 +242,15 @@ async def download_products_template(
         }
         instructions_df = pd.DataFrame(instructions_data)
         instructions_df.to_excel(writer, index=False, sheet_name='Instructions')
+        
+        # Add available categories sheet
+        if categories:
+            categories_data = {
+                'Available Categories': [cat.name for cat in categories],
+                'Description': [cat.description or 'No description' for cat in categories]
+            }
+            categories_df = pd.DataFrame(categories_data)
+            categories_df.to_excel(writer, index=False, sheet_name='Available Categories')
     
     output.seek(0)
     
@@ -251,12 +283,19 @@ async def bulk_upload_products(
         if missing_columns:
             raise HTTPException(
                 status_code=400, 
-                detail=f"Missing required columns: {', '.join(missing_columns)}"
+                detail=f"Missing required columns: {', '.join(missing_columns)}. Please download the latest template."
             )
         
         # Get categories mapping
         from app.models.category import Category
         categories = db.query(Category).all()
+        
+        if not categories:
+            raise HTTPException(
+                status_code=400,
+                detail="No categories found in database. Please create at least one category before uploading products."
+            )
+        
         category_map = {cat.name: cat.id for cat in categories}
         
         # Process each row
@@ -265,28 +304,47 @@ async def bulk_upload_products(
         
         for index, row in df.iterrows():
             try:
+                # Skip empty rows
+                if pd.isna(row['name']) or str(row['name']).strip() == '':
+                    continue
+                
                 # Get category_id
-                category_name = str(row['category'])
+                category_name = str(row['category']).strip()
                 category_id = category_map.get(category_name)
                 if not category_id:
                     errors.append({
                         'row': index + 2,
-                        'error': f"Category '{category_name}' not found. Available categories: {', '.join(category_map.keys())}"
+                        'product': str(row['name']),
+                        'error': f"Category '{category_name}' not found. Available: {', '.join(list(category_map.keys())[:5])}"
+                    })
+                    continue
+                
+                # Validate numeric fields
+                try:
+                    cost_price = float(row['cost_price'])
+                    selling_price = float(row['selling_price'])
+                    quantity = int(row['quantity'])
+                except (ValueError, TypeError) as e:
+                    errors.append({
+                        'row': index + 2,
+                        'product': str(row['name']),
+                        'error': f"Invalid number format: {str(e)}"
                     })
                     continue
                 
                 # Create product
                 product = Product(
-                    name=str(row['name']),
+                    name=str(row['name']).strip(),
                     category_id=category_id,
-                    brand=str(row['brand']) if pd.notna(row.get('brand')) else None,
-                    description=str(row['description']) if pd.notna(row.get('description')) else None,
-                    cost_price=float(row['cost_price']),
-                    selling_price=float(row['selling_price']),
-                    quantity=int(row['quantity']),
+                    brand=str(row['brand']).strip() if pd.notna(row.get('brand')) and str(row.get('brand')).strip() else None,
+                    description=str(row['description']).strip() if pd.notna(row.get('description')) and str(row.get('description')).strip() else None,
+                    cost_price=cost_price,
+                    selling_price=selling_price,
+                    quantity=quantity,
                     min_stock_level=int(row.get('min_stock_level', 10)),
                     is_active=True,
-                    is_available=True
+                    is_available=True,
+                    created_by_user_id=current_user.id
                 )
                 
                 db.add(product)
@@ -304,20 +362,34 @@ async def bulk_upload_products(
             except Exception as e:
                 errors.append({
                     'row': index + 2,
+                    'product': str(row.get('name', 'Unknown')),
                     'error': str(e)
                 })
         
         db.commit()
+        
+        # Return detailed response
+        if len(added_products) == 0 and len(errors) > 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"No products added. Errors: {errors[0]['error']}"
+            )
         
         return {
             'success': True,
             'added': len(added_products),
             'errors': len(errors),
             'products': added_products,
-            'error_details': errors
+            'error_details': errors,
+            'message': f"Successfully added {len(added_products)} products. {len(errors)} errors."
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"❌ Bulk upload error: {error_detail}")
         raise HTTPException(status_code=500, detail=f"Failed to process file: {str(e)}")
 
