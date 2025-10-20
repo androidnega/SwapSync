@@ -2,8 +2,8 @@
  * Point of Sale (POS) System - Multi-Item Sales
  * Allows shop keepers to add multiple items to cart and complete sale
  */
-import React, { useState, useEffect } from 'react';
-import { API_URL, productAPI, customerAPI, authAPI, posSaleAPI } from '../services/api';
+import React, { useState, useEffect, useMemo } from 'react';
+import { API_URL, productAPI, customerAPI, authAPI, posSaleAPI, categoryAPI, brandAPI } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,7 +11,7 @@ import {
   faShoppingCart, faPlus, faMinus, faTrash, faCashRegister,
   faUser, faPhone, faEnvelope, faSearch, faTimes, faReceipt,
   faCheck, faMoneyBill, faCreditCard, faMobileAlt, faTags,
-  faShoppingBag, faBarcode
+  faShoppingBag, faBarcode, faFilter, faSort, faChevronLeft, faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 import POSThermalReceipt from '../components/POSThermalReceipt';
 
@@ -25,6 +25,11 @@ interface Product {
   quantity: number;
   is_available: boolean;
   condition: string;
+  category_id: number;
+  category?: {
+    id: number;
+    name: string;
+  };
 }
 
 interface CartItem {
@@ -41,13 +46,34 @@ interface Customer {
   email: string | null;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+interface Brand {
+  id: number;
+  name: string;
+}
+
 const POSSystem: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [companyName, setCompanyName] = useState('Your Shop');
+  
+  // Filter and pagination state
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [selectedBrand, setSelectedBrand] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
   
   // Receipt modal
   const [showReceipt, setShowReceipt] = useState(false);
@@ -84,6 +110,14 @@ const POSSystem: React.FC = () => {
       // Fetch customers using the customerAPI service
       const customersRes = await customerAPI.getAll();
       setCustomers(customersRes.data);
+      
+      // Fetch categories
+      const categoriesRes = await categoryAPI.getAll();
+      setCategories(categoriesRes.data);
+      
+      // Fetch brands
+      const brandsRes = await brandAPI.getAll();
+      setBrands(brandsRes.data);
       
       // Get company name using the authAPI service
       const userRes = await authAPI.me();
@@ -291,11 +325,65 @@ const POSSystem: React.FC = () => {
     }
   };
 
-  // Filter products by search term
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter and sort products
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = products.filter(p => {
+      // Search filter
+      const matchesSearch = searchTerm === '' || 
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Category filter
+      const matchesCategory = selectedCategory === null || p.category_id === selectedCategory;
+      
+      // Brand filter
+      const matchesBrand = selectedBrand === null || p.brand === brands.find(b => b.id === selectedBrand)?.name;
+      
+      return matchesSearch && matchesCategory && matchesBrand;
+    });
+
+    // Sort products
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (sortBy) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'price':
+          aValue = a.discount_price || a.selling_price;
+          bValue = b.discount_price || b.selling_price;
+          break;
+        case 'stock':
+          aValue = a.quantity;
+          bValue = b.quantity;
+          break;
+        default:
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+
+    return filtered;
+  }, [products, searchTerm, selectedCategory, selectedBrand, sortBy, sortOrder, brands]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProducts = filteredAndSortedProducts.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, selectedBrand, sortBy, sortOrder]);
 
   return (
     <div className="p-6 max-w-[1800px] mx-auto">
@@ -332,12 +420,17 @@ const POSSystem: React.FC = () => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <FontAwesomeIcon icon={faShoppingBag} />
-                Products
+                Products ({filteredAndSortedProducts.length})
               </h2>
-              <div className="relative w-64">
+            </div>
+
+            {/* Search and Filters */}
+            <div className="mb-4 space-y-3">
+              {/* Search Bar */}
+              <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder="Search products by name or brand..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -347,60 +440,202 @@ const POSSystem: React.FC = () => {
                   className="absolute left-3 top-3 text-gray-400"
                 />
               </div>
+
+              {/* Filters Row */}
+              <div className="flex flex-wrap gap-3">
+                {/* Category Filter */}
+                <div className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faFilter} className="text-gray-500" />
+                  <select
+                    value={selectedCategory || ''}
+                    onChange={(e) => setSelectedCategory(e.target.value ? parseInt(e.target.value) : null)}
+                    className="border rounded px-3 py-1 text-sm"
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Brand Filter */}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedBrand || ''}
+                    onChange={(e) => setSelectedBrand(e.target.value ? parseInt(e.target.value) : null)}
+                    className="border rounded px-3 py-1 text-sm"
+                  >
+                    <option value="">All Brands</option>
+                    {brands.map(brand => (
+                      <option key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sort Options */}
+                <div className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faSort} className="text-gray-500" />
+                  <select
+                    value={`${sortBy}-${sortOrder}`}
+                    onChange={(e) => {
+                      const [newSortBy, newSortOrder] = e.target.value.split('-');
+                      setSortBy(newSortBy as 'name' | 'price' | 'stock');
+                      setSortOrder(newSortOrder as 'asc' | 'desc');
+                    }}
+                    className="border rounded px-3 py-1 text-sm"
+                  >
+                    <option value="name-asc">Name A-Z</option>
+                    <option value="name-desc">Name Z-A</option>
+                    <option value="price-asc">Price Low-High</option>
+                    <option value="price-desc">Price High-Low</option>
+                    <option value="stock-desc">Stock High-Low</option>
+                    <option value="stock-asc">Stock Low-High</option>
+                  </select>
+                </div>
+
+                {/* Clear Filters */}
+                {(selectedCategory || selectedBrand || searchTerm) && (
+                  <button
+                    onClick={() => {
+                      setSelectedCategory(null);
+                      setSelectedBrand(null);
+                      setSearchTerm('');
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                    Clear Filters
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto">
-              {filteredProducts.map(product => (
-                <div
-                  key={product.id}
-                  onClick={() => addToCart(product)}
-                  className="border rounded-lg p-3 hover:shadow-lg transition cursor-pointer hover:border-blue-500"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-sm text-gray-800 line-clamp-2">
-                        {product.name}
-                      </h3>
-                      {product.brand && (
-                        <p className="text-xs text-gray-500">{product.brand}</p>
-                      )}
-                    </div>
+            {/* Products List */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="max-h-[500px] overflow-y-auto">
+                {paginatedProducts.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <FontAwesomeIcon icon={faShoppingBag} className="text-4xl mb-2" />
+                    <p>No products found</p>
+                    <p className="text-sm mt-1">Try adjusting your search or filters</p>
                   </div>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {paginatedProducts.map(product => (
+                      <div
+                        key={product.id}
+                        className="p-4 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          {/* Product Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900 truncate">
+                                  {product.name}
+                                </h3>
+                                <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                                  {product.brand && (
+                                    <span className="font-medium">{product.brand}</span>
+                                  )}
+                                  {product.category && (
+                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                      {product.category.name}
+                                    </span>
+                                  )}
+                                  <span className="bg-gray-100 px-2 py-1 rounded-full text-xs">
+                                    Stock: {product.quantity}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Price and Actions */}
+                          <div className="flex items-center gap-4 ml-4">
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-green-600">
+                                ₵{(product.discount_price || product.selling_price).toFixed(2)}
+                              </p>
+                              {product.discount_price && (
+                                <p className="text-xs text-gray-400 line-through">
+                                  ₵{product.selling_price.toFixed(2)}
+                                </p>
+                              )}
+                            </div>
+                            
+                            <button
+                              onClick={() => addToCart(product)}
+                              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                            >
+                              <FontAwesomeIcon icon={faPlus} />
+                              Add to Cart
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="text-sm text-gray-500">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedProducts.length)} of {filteredAndSortedProducts.length} products
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                  </button>
                   
-                  <div className="flex items-center justify-between mt-2">
-                    <div>
-                      <p className="text-lg font-bold text-green-600">
-                        ₵{(product.discount_price || product.selling_price).toFixed(2)}
-                      </p>
-                      {product.discount_price && (
-                        <p className="text-xs text-gray-400 line-through">
-                          ₵{product.selling_price.toFixed(2)}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">Stock: {product.quantity}</p>
-                    </div>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-1 text-sm rounded ${
+                            currentPage === pageNum
+                              ? 'bg-blue-600 text-white'
+                              : 'border hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
                   </div>
                   
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addToCart(product);
-                    }}
-                    className="w-full mt-2 bg-blue-600 text-white py-1 px-2 rounded text-xs hover:bg-blue-700 transition"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <FontAwesomeIcon icon={faPlus} /> Add to Cart
+                    <FontAwesomeIcon icon={faChevronRight} />
                   </button>
                 </div>
-              ))}
-            </div>
-
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                <FontAwesomeIcon icon={faShoppingBag} className="text-4xl mb-2" />
-                <p>No products found</p>
               </div>
             )}
           </div>
