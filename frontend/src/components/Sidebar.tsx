@@ -30,7 +30,8 @@ import {
   faBox,
   faUser,
   faSms,
-  faComment
+  faComment,
+  faCashRegister
 } from '@fortawesome/free-solid-svg-icons';
 
 interface SidebarItem {
@@ -84,6 +85,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Dashboard', icon: faChartLine, route: '/' },
     { name: 'Manager Analytics', icon: faUserTie, route: '/manager-dashboard' },
     { name: 'Staff Management', icon: faUsers, route: '/staff-management' },
+    { name: 'POS System', icon: faCashRegister, route: '/pos' },
     { name: 'Swapping Hub', icon: faExchangeAlt, route: '/swapping-hub' },
     { name: 'Products Hub', icon: faShoppingCart, route: '/products-hub' },
     { name: 'Repairer Hub', icon: faTools, route: '/repairs' },
@@ -101,6 +103,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Dashboard', icon: faChartLine, route: '/' },
     { name: 'Manager Analytics', icon: faUserTie, route: '/manager-dashboard' },
     { name: 'Staff Management', icon: faUsers, route: '/staff-management' },
+    { name: 'POS System', icon: faCashRegister, route: '/pos' },
     { name: 'Swapping Hub', icon: faExchangeAlt, route: '/swapping-hub' },
     { name: 'Products Hub', icon: faShoppingCart, route: '/products-hub' },
     { name: 'Repairer Hub', icon: faTools, route: '/repairs' },
@@ -116,6 +119,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
   // 👤 SHOP KEEPER - Daily Transactions
   shop_keeper: [
     { name: 'Dashboard', icon: faChartLine, route: '/' },
+    { name: 'POS System', icon: faCashRegister, route: '/pos' },
     { name: 'Customers', icon: faUserCircle, route: '/customers' },
     { name: 'Swapping Hub', icon: faExchangeAlt, route: '/swapping-hub' },
     { name: 'Products Hub', icon: faShoppingCart, route: '/products-hub' },

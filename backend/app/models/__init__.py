@@ -17,6 +17,7 @@ from app.models.category import Category
 from app.models.brand import Brand
 from app.models.product import Product, StockMovement
 from app.models.product_sale import ProductSale
+from app.models.pos_sale import POSSale, POSSaleItem
 from app.models.user_session import UserSession
 from app.models.audit_code import AuditCode
 from app.models.otp_session import OTPSession
@@ -28,6 +29,7 @@ __all__ = [
     "RepairItem", "RepairItemUsage",
     "ResaleStatus", "User", "UserRole", "ActivityLog", "Invoice", 
     "SMSLog", "Category", "Brand", "Product", "StockMovement", "ProductSale",
+    "POSSale", "POSSaleItem",
     "UserSession", "AuditCode", "OTPSession", "SMSConfig", "PendingResale",
     "TransactionType", "PhoneSaleStatus", "ProfitStatus"
 ]

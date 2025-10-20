@@ -30,6 +30,7 @@ import ProductsHub from './pages/ProductsHub';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
 import SMSBroadcast from './pages/SMSBroadcast';
+import POSSystem from './pages/POSSystem';
 import FirstLoginPasswordChange from './components/FirstLoginPasswordChange';
 // import OfflineIndicator from './components/OfflineIndicator';
 import { getToken, removeToken, initializeSession, updateLastActivity } from './services/authService';
@@ -276,6 +277,13 @@ function AppContent() {
           <Route path="/customers" element={
             <ProtectedRoute allowedRoles={['manager', 'ceo', 'shop_keeper', 'repairer']} userRole={user.role}>
               <Customers />
+            </ProtectedRoute>
+          } />
+          
+          {/* POS System - Multi-Item Sales */}
+          <Route path="/pos" element={
+            <ProtectedRoute allowedRoles={['manager', 'ceo', 'shop_keeper']} userRole={user.role}>
+              <POSSystem />
             </ProtectedRoute>
           } />
           
