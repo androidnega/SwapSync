@@ -32,6 +32,7 @@ import UserManagement from './pages/UserManagement';
 import SMSBroadcast from './pages/SMSBroadcast';
 import POSSystem from './pages/POSSystem';
 import POSMonitor from './pages/POSMonitor';
+import POSTransactions from './pages/POSTransactions';
 import FirstLoginPasswordChange from './components/FirstLoginPasswordChange';
 // import OfflineIndicator from './components/OfflineIndicator';
 import { getToken, removeToken, initializeSession, updateLastActivity } from './services/authService';
@@ -292,6 +293,13 @@ function AppContent() {
           <Route path="/pos-monitor" element={
             <ProtectedRoute allowedRoles={['manager', 'ceo']} userRole={user.role}>
               <POSMonitor />
+            </ProtectedRoute>
+          } />
+          
+          {/* POS Transactions - Shop Keeper's View (No Profit) */}
+          <Route path="/my-transactions" element={
+            <ProtectedRoute allowedRoles={['shop_keeper']} userRole={user.role}>
+              <POSTransactions />
             </ProtectedRoute>
           } />
           

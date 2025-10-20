@@ -120,6 +120,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
   shop_keeper: [
     { name: 'Dashboard', icon: faChartLine, route: '/' },
     { name: 'POS System', icon: faCashRegister, route: '/pos' },
+    { name: 'My Transactions', icon: faClipboardList, route: '/my-transactions' },
     { name: 'Customers', icon: faUserCircle, route: '/customers' },
     { name: 'Swapping Hub', icon: faExchangeAlt, route: '/swapping-hub' },
     { name: 'Products Hub', icon: faShoppingCart, route: '/products-hub' },
