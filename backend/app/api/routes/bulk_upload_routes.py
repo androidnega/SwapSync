@@ -300,6 +300,24 @@ async def bulk_upload_products(
         # Track auto-created categories
         new_categories_created = []
         
+        # Get the next available unique_id number
+        from sqlalchemy import func
+        max_unique_id_row = db.query(Product.unique_id).filter(
+            Product.unique_id.like('PROD-%')
+        ).order_by(Product.unique_id.desc()).first()
+        
+        if max_unique_id_row and max_unique_id_row[0]:
+            # Extract number from PROD-0001 format
+            try:
+                last_number = int(max_unique_id_row[0].split('-')[1])
+                next_unique_number = last_number + 1
+            except (ValueError, IndexError):
+                next_unique_number = 1
+        else:
+            next_unique_number = 1
+        
+        print(f"📊 Starting unique_id sequence from: PROD-{str(next_unique_number).zfill(4)}")
+        
         # Process each row
         added_products = []
         errors = []
@@ -362,13 +380,15 @@ async def bulk_upload_products(
                 db.add(product)
                 db.flush()  # Get the ID
                 
-                # Generate unique_id
-                product.unique_id = f"PROD-{str(product.id).zfill(4)}"
+                # Generate unique_id using incremental counter
+                product.unique_id = f"PROD-{str(next_unique_number).zfill(4)}"
+                next_unique_number += 1
                 
                 added_products.append({
                     'id': product.id,
                     'name': product.name,
-                    'category': category_name
+                    'category': category_name,
+                    'unique_id': product.unique_id
                 })
                 
             except Exception as e:
