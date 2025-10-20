@@ -117,6 +117,15 @@ export const productSaleAPI = {
   getByProduct: (productId: number) => api.get(`/product-sales/product/${productId}`),
 };
 
+// POS Sales API
+export const posSaleAPI = {
+  getAll: (params?: any) => api.get('/pos-sales/', { params }),
+  getById: (id: number) => api.get(`/pos-sales/${id}`),
+  create: (data: any) => api.post('/pos-sales/', data),
+  getSummary: () => api.get('/pos-sales/summary'),
+  resendReceipt: (id: number) => api.post(`/pos-sales/${id}/resend-receipt`),
+};
+
 // Brand API
 export const brandAPI = {
   getAll: () => api.get('/brands/'),

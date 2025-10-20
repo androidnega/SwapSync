@@ -3,7 +3,7 @@
  * Shows sales history and analytics WITHOUT profit information
  */
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../services/api';
+import { API_URL, posSaleAPI, authAPI } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -65,19 +65,16 @@ const POSTransactions: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const token = getToken();
-      const headers = { Authorization: `Bearer ${token}` };
-      
-      // Fetch POS sales
-      const salesRes = await axios.get(`${API_URL}/pos-sales?limit=500`, { headers });
+      // Fetch POS sales using posSaleAPI service
+      const salesRes = await posSaleAPI.getAll({ limit: 500 });
       setSales(salesRes.data);
       
-      // Fetch summary
-      const summaryRes = await axios.get(`${API_URL}/pos-sales/summary`, { headers });
+      // Fetch summary using posSaleAPI service
+      const summaryRes = await posSaleAPI.getSummary();
       setSummary(summaryRes.data);
       
-      // Get company name
-      const userRes = await axios.get(`${API_URL}/auth/me`, { headers });
+      // Get company name using authAPI service
+      const userRes = await authAPI.me();
       setCompanyName(userRes.data.company_name || userRes.data.display_name || 'Your Shop');
     } catch (error: any) {
       console.error('Failed to load POS data:', error);
@@ -424,12 +421,7 @@ const POSTransactions: React.FC = () => {
           onClose={() => setShowReceipt(false)}
           onResendSMS={async () => {
             try {
-              const token = getToken();
-              await axios.post(
-                `${API_URL}/pos-sales/${selectedSale.id}/resend-receipt`,
-                {},
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
+              await posSaleAPI.resendReceipt(selectedSale.id);
               setMessage('✅ Receipt SMS sent successfully!');
               setTimeout(() => setMessage(''), 3000);
             } catch (error) {

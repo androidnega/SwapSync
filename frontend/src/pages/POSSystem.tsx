@@ -3,7 +3,7 @@
  * Allows shop keepers to add multiple items to cart and complete sale
  */
 import React, { useState, useEffect } from 'react';
-import { API_URL, productAPI, customerAPI, authAPI } from '../services/api';
+import { API_URL, productAPI, customerAPI, authAPI, posSaleAPI } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -242,9 +242,7 @@ const POSSystem: React.FC = () => {
         notes: notes
       };
 
-      const response = await axios.post(`${API_URL}/pos-sales/`, saleData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await posSaleAPI.create(saleData);
 
       setMessage('✅ Sale completed successfully!');
       setLastSale(response.data);
@@ -669,12 +667,7 @@ const POSSystem: React.FC = () => {
           onClose={() => setShowReceipt(false)}
           onResendSMS={async () => {
             try {
-              const token = getToken();
-              await axios.post(
-                `${API_URL}/pos-sales/${lastSale.id}/resend-receipt`,
-                {},
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
+              await posSaleAPI.resendReceipt(lastSale.id);
               setMessage('✅ Receipt SMS sent successfully!');
             } catch (error) {
               setMessage('❌ Failed to send SMS');
