@@ -201,9 +201,20 @@ def audit_health_check():
         "status": "ok",
         "message": "Audit routes are working",
         "endpoints": [
-            "/audit/expiring/generate",
-            "/audit/expiring/current", 
-            "/audit/expiring/validate",
-            "/audit/expiring/history"
+            "/api/audit/expiring/generate",
+            "/api/audit/expiring/current", 
+            "/api/audit/expiring/validate",
+            "/api/audit/expiring/history"
         ]
+    }
+
+
+@router.get("/test")
+def test_endpoint():
+    """
+    Simple test endpoint to verify route is working
+    """
+    return {
+        "message": "Expiring audit routes are working!",
+        "timestamp": datetime.utcnow().isoformat()
     }
