@@ -314,13 +314,14 @@ def bulk_delete_phones(
         db.commit()
         
         # Log activity
+        phone_names = [f"{p['brand']} {p['model']}" for p in deleted_phones]
         log_activity(
             db=db,
             user=current_user,
             action=f"bulk deleted {len(deleted_phones)} phones",
             module="phones",
             target_id=None,
-            details=f"Deleted phones: {[f'{p['brand']} {p['model']}' for p in deleted_phones]}"
+            details=f"Deleted phones: {phone_names}"
         )
         
         return {
