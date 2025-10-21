@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.permissions import require_manager, can_record_sales, is_manager_or_above
 from app.core.activity_logger import log_activity
+from app.core.company_filter import get_company_user_ids
 from app.models.product import Product, StockMovement
 from app.models.user import User, UserRole
 from app.models.category import Category
@@ -128,6 +129,7 @@ def list_products(
     """
     List all products with filters (Manager and Shopkeeper can view)
     Accessible by: Manager, CEO, Shopkeeper, Repairer (for inventory viewing)
+    Data isolation: Each company only sees their own products
     """
     # Allow shop keepers, managers, and repairers to view products
     allowed_roles = [UserRole.MANAGER, UserRole.CEO, UserRole.SHOP_KEEPER, UserRole.REPAIRER, UserRole.ADMIN, UserRole.SUPER_ADMIN]
@@ -137,8 +139,13 @@ def list_products(
             detail=f"Access denied. Your role ({current_user.role.value}) cannot view products."
         )
     
-    # Build query
+    # Build query with company filtering
     query = db.query(Product).filter(Product.is_active == True)
+    
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    if company_user_ids is not None:
+        query = query.filter(Product.created_by_user_id.in_(company_user_ids))
     
     # Apply filters
     if category_id:

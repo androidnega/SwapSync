@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.permissions import require_manager
 from app.core.activity_logger import log_activity
+from app.core.company_filter import get_company_user_ids
 from app.models.brand import Brand
 from app.models.user import User
 from app.schemas.brand import BrandCreate, BrandUpdate, BrandResponse
@@ -21,10 +22,20 @@ def get_all_brands(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get all brands
-    Available to all authenticated users
+    Get all brands for the current user's company
+    Data isolation: Each company only sees their own brands
     """
-    brands = db.query(Brand).order_by(Brand.name).all()
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    # Super admins see all brands
+    if company_user_ids is None:
+        brands = db.query(Brand).order_by(Brand.name).all()
+    else:
+        # Filter by company
+        brands = db.query(Brand).filter(
+            Brand.created_by_user_id.in_(company_user_ids)
+        ).order_by(Brand.name).all()
+    
     return brands
 
 
@@ -34,7 +45,9 @@ def get_brand(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get a specific brand by ID"""
+    """Get a specific brand by ID (company-filtered)"""
+    company_user_ids = get_company_user_ids(db, current_user)
+    
     brand = db.query(Brand).filter(Brand.id == brand_id).first()
     
     if not brand:
@@ -42,6 +55,14 @@ def get_brand(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Brand with ID {brand_id} not found"
         )
+    
+    # Check company access (admins bypass this check)
+    if company_user_ids is not None:
+        if brand.created_by_user_id not in company_user_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have access to this brand"
+            )
     
     return brand
 

@@ -8,6 +8,7 @@ from typing import List
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.activity_logger import log_activity
+from app.core.company_filter import get_company_user_ids
 from app.models.user import User, UserRole
 from app.models.category import Category
 from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse
@@ -21,9 +22,20 @@ def get_all_categories(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get all categories (available to all authenticated users)
+    Get all categories for the current user's company
+    Data isolation: Each company only sees their own categories
     """
-    categories = db.query(Category).order_by(Category.name).all()
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    # Super admins see all categories
+    if company_user_ids is None:
+        categories = db.query(Category).order_by(Category.name).all()
+    else:
+        # Filter by company
+        categories = db.query(Category).filter(
+            Category.created_by_user_id.in_(company_user_ids)
+        ).order_by(Category.name).all()
+    
     return categories
 
 
@@ -34,14 +46,25 @@ def get_category(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get a specific category by ID
+    Get a specific category by ID (company-filtered)
     """
+    company_user_ids = get_company_user_ids(db, current_user)
+    
     category = db.query(Category).filter(Category.id == category_id).first()
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found"
         )
+    
+    # Check company access (admins bypass this check)
+    if company_user_ids is not None:
+        if category.created_by_user_id not in company_user_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have access to this category"
+            )
+    
     return category
 
 

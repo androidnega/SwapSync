@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.permissions import can_create_phones, can_view_phones, can_manage_phones
 from app.core.activity_logger import log_activity
+from app.core.company_filter import get_company_user_ids
 from app.models.user import User, UserRole
 from app.models.phone import Phone
 from app.schemas.phone import PhoneCreate, PhoneUpdate, PhoneResponse
@@ -64,13 +65,23 @@ def list_phones(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get all phones with filters (Manager + Shopkeeper)"""
+    """
+    Get all phones with filters (Manager + Shopkeeper)
+    Data isolation: Each company only sees their own phones
+    """
     if not can_view_phones(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view phone inventory"
         )
+    
+    # Build query with company filtering
     query = db.query(Phone)
+    
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    if company_user_ids is not None:
+        query = query.filter(Phone.created_by_user_id.in_(company_user_ids))
     
     if available_only:
         query = query.filter(Phone.is_available == True)
@@ -116,6 +127,7 @@ def search_available_phones(
     """
     Search available phones with filters (for Shopkeeper phone selection)
     Shopkeepers use this to SELECT phones for swaps/sales
+    Data isolation: Only shows company's own phones
     """
     if not can_view_phones(current_user):
         raise HTTPException(
@@ -124,6 +136,11 @@ def search_available_phones(
         )
     
     query = db.query(Phone).filter(Phone.is_available == True)
+    
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    if company_user_ids is not None:
+        query = query.filter(Phone.created_by_user_id.in_(company_user_ids))
     
     # Text search (brand, model, IMEI)
     if q:

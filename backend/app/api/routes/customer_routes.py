@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.permissions import can_manage_customers, can_create_customers, can_view_customers, can_delete_customers
 from app.core.activity_logger import log_activity
+from app.core.company_filter import get_company_user_ids
 from app.models.user import User
 from app.models.customer import Customer
 from app.schemas.customer import CustomerCreate, CustomerUpdate, CustomerResponse
@@ -88,7 +89,17 @@ def list_customers(
             detail="You do not have permission to view customers"
         )
     
-    customers = db.query(Customer).offset(skip).limit(limit).all()
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    if company_user_ids is None:
+        # Super admin sees all
+        customers = db.query(Customer).offset(skip).limit(limit).all()
+    else:
+        # Filter by company
+        customers = db.query(Customer).filter(
+            Customer.created_by_user_id.in_(company_user_ids)
+        ).offset(skip).limit(limit).all()
     
     # Build customer list with proper permissions
     result = []
