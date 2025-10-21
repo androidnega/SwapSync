@@ -175,7 +175,7 @@ def create_pos_sale(
         # Check stock
         if product.quantity < item.quantity:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Insufficient stock for '{product.name}'. Available: {product.quantity}, Requested: {item.quantity}"
             )
         
@@ -184,7 +184,7 @@ def create_pos_sale(
         
         if item_subtotal < 0:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Item subtotal cannot be negative for product '{product.name}'"
             )
         
@@ -271,7 +271,7 @@ def create_pos_sale(
         except ValueError as e:
             db.rollback()
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Stock error for '{product.name}': {str(e)}"
             )
         
@@ -341,7 +341,7 @@ def create_pos_sale(
 @router.get("/", response_model=List[POSSaleResponse])
 def list_pos_sales(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    limit: int = Query(100, ge=1, le=5000),
     start_date: str = Query(None, description="Start date in YYYY-MM-DD format"),
     end_date: str = Query(None, description="End date in YYYY-MM-DD format"),
     db: Session = Depends(get_db),
@@ -374,7 +374,7 @@ def list_pos_sales(
             query = query.filter(POSSale.created_at >= start_datetime)
         except ValueError:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid start_date format. Use YYYY-MM-DD"
             )
     
@@ -386,7 +386,7 @@ def list_pos_sales(
             query = query.filter(POSSale.created_at <= end_datetime)
         except ValueError:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid end_date format. Use YYYY-MM-DD"
             )
     
@@ -430,7 +430,7 @@ def get_pos_sales_summary(
             query = query.filter(POSSale.created_at >= start_datetime)
         except ValueError:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid start_date format. Use YYYY-MM-DD"
             )
     
@@ -442,7 +442,7 @@ def get_pos_sales_summary(
             query = query.filter(POSSale.created_at <= end_datetime)
         except ValueError:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid end_date format. Use YYYY-MM-DD"
             )
     
