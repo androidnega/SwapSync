@@ -181,3 +181,19 @@ def get_audit_code_history(
         "total": len(codes)
     }
 
+
+@router.get("/health")
+def audit_health_check():
+    """
+    Health check endpoint for audit routes
+    """
+    return {
+        "status": "ok",
+        "message": "Audit routes are working",
+        "endpoints": [
+            "/audit/expiring/generate",
+            "/audit/expiring/current", 
+            "/audit/expiring/validate",
+            "/audit/expiring/history"
+        ]
+    }

@@ -821,59 +821,94 @@ def get_manager_business_stats(
     - Only System Admin can view (after audit code validation)
     - Returns real-time sales revenue, repair revenue, and other stats
     """
-    from sqlalchemy import func
-    from app.models.customer import Customer
-    from app.models.phone import Phone
-    from app.models.swap import Swap
-    from app.models.sale import Sale
-    from app.models.repair import Repair
-    
-    if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only System Administrators can view business statistics"
-        )
-    
-    # Get the manager
-    manager = db.query(User).filter(
-        User.id == manager_id,
-        User.role.in_([UserRole.MANAGER, UserRole.CEO])
-    ).first()
-    
-    if not manager:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Manager not found"
-        )
-    
-    # Get Manager's staff
-    staff = db.query(User).filter(User.parent_user_id == manager_id).all()
-    staff_ids = [manager_id] + [s.id for s in staff]
-    
-    # Get business statistics
-    total_customers = db.query(Customer).filter(Customer.created_by_id.in_(staff_ids)).count()
-    total_phones = db.query(Phone).filter(Phone.created_by_id.in_(staff_ids)).count()
-    total_swaps = db.query(Swap).filter(Swap.staff_id.in_(staff_ids)).count()
-    total_sales = db.query(Sale).filter(Sale.created_by_user_id.in_(staff_ids)).count()
-    total_repairs = db.query(Repair).filter(Repair.staff_id.in_(staff_ids)).count()
-    
-    # Revenue calculations
-    sales_revenue = db.query(func.sum(Sale.amount_paid)).filter(Sale.created_by_user_id.in_(staff_ids)).scalar() or 0.0
-    repair_revenue = db.query(func.sum(Repair.cost)).filter(
-        Repair.staff_id.in_(staff_ids),
-        Repair.status.in_(['Completed', 'Delivered'])
-    ).scalar() or 0.0
-    
-    return {
-        "manager_id": manager_id,
-        "business_stats": {
-            "total_customers": total_customers,
-            "total_phones": total_phones,
-            "total_swaps": total_swaps,
-            "total_sales": total_sales,
-            "total_repairs": total_repairs,
-            "sales_revenue": float(sales_revenue),
-            "repair_revenue": float(repair_revenue),
-            "total_revenue": float(sales_revenue + repair_revenue)
+    try:
+        from sqlalchemy import func
+        from app.models.customer import Customer
+        from app.models.phone import Phone
+        from app.models.swap import Swap
+        from app.models.sale import Sale
+        from app.models.repair import Repair
+        
+        if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only System Administrators can view business statistics"
+            )
+        
+        # Get the manager
+        manager = db.query(User).filter(
+            User.id == manager_id,
+            User.role.in_([UserRole.MANAGER, UserRole.CEO])
+        ).first()
+        
+        if not manager:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Manager not found"
+            )
+        
+        # Get Manager's staff
+        staff = db.query(User).filter(User.parent_user_id == manager_id).all()
+        staff_ids = [manager_id] + [s.id for s in staff]
+        
+        # Get business statistics with error handling
+        try:
+            total_customers = db.query(Customer).filter(Customer.created_by_id.in_(staff_ids)).count()
+        except Exception as e:
+            total_customers = 0
+            
+        try:
+            total_phones = db.query(Phone).filter(Phone.created_by_id.in_(staff_ids)).count()
+        except Exception as e:
+            total_phones = 0
+            
+        try:
+            total_swaps = db.query(Swap).filter(Swap.staff_id.in_(staff_ids)).count()
+        except Exception as e:
+            total_swaps = 0
+            
+        try:
+            total_sales = db.query(Sale).filter(Sale.created_by_user_id.in_(staff_ids)).count()
+        except Exception as e:
+            total_sales = 0
+            
+        try:
+            total_repairs = db.query(Repair).filter(Repair.staff_id.in_(staff_ids)).count()
+        except Exception as e:
+            total_repairs = 0
+        
+        # Revenue calculations with error handling
+        try:
+            sales_revenue = db.query(func.sum(Sale.amount_paid)).filter(Sale.created_by_user_id.in_(staff_ids)).scalar() or 0.0
+        except Exception as e:
+            sales_revenue = 0.0
+            
+        try:
+            repair_revenue = db.query(func.sum(Repair.cost)).filter(
+                Repair.staff_id.in_(staff_ids),
+                Repair.status.in_(['Completed', 'Delivered'])
+            ).scalar() or 0.0
+        except Exception as e:
+            repair_revenue = 0.0
+        
+        return {
+            "manager_id": manager_id,
+            "manager_name": manager.full_name,
+            "business_stats": {
+                "total_customers": total_customers,
+                "total_phones": total_phones,
+                "total_swaps": total_swaps,
+                "total_sales": total_sales,
+                "total_repairs": total_repairs,
+                "sales_revenue": float(sales_revenue),
+                "repair_revenue": float(repair_revenue),
+                "total_revenue": float(sales_revenue + repair_revenue)
+            }
         }
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching business statistics: {str(e)}"
+        )
