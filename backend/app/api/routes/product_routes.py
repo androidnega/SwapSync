@@ -120,7 +120,7 @@ def list_products(
     in_stock_only: bool = Query(True, description="Show only in-stock products"),
     search: Optional[str] = Query(None, description="Search by name, SKU, or brand"),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    limit: int = Query(100, ge=1, le=5000),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
