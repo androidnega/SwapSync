@@ -109,7 +109,13 @@ def validate_expiring_code(
     Validate an expiring audit code for Manager data access
     System Admin uses this to verify Manager's code
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"Audit validation request from user {current_user.id} ({current_user.role}) for manager {request.manager_id}")
+    
     if current_user.role not in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
+        logger.warning(f"Access denied: User {current_user.id} with role {current_user.role} tried to validate audit code")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only System Administrators can validate audit codes"
@@ -123,6 +129,7 @@ def validate_expiring_code(
     ).first()
     
     if not audit_code:
+        logger.warning(f"Invalid audit code: {request.code} for manager {request.manager_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid audit code"
@@ -130,6 +137,7 @@ def validate_expiring_code(
     
     # Check if expired
     if not audit_code.is_valid():
+        logger.warning(f"Expired audit code: {request.code} for manager {request.manager_id}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Audit code has expired. Ask Manager to generate a new one."
@@ -138,6 +146,8 @@ def validate_expiring_code(
     # Mark as used (one-time use)
     audit_code.used = True
     db.commit()
+    
+    logger.info(f"Audit code validated successfully for manager {request.manager_id}")
     
     return {
         "message": "Audit code validated successfully",

@@ -822,6 +822,9 @@ def get_manager_business_stats(
     - Returns real-time sales revenue, repair revenue, and other stats
     """
     try:
+        import logging
+        logger = logging.getLogger(__name__)
+        
         from sqlalchemy import func
         from app.models.customer import Customer
         from app.models.phone import Phone
@@ -829,7 +832,10 @@ def get_manager_business_stats(
         from app.models.sale import Sale
         from app.models.repair import Repair
         
+        logger.info(f"Business stats request from user {current_user.id} ({current_user.role}) for manager {manager_id}")
+        
         if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
+            logger.warning(f"Access denied: User {current_user.id} with role {current_user.role} tried to view business stats")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only System Administrators can view business statistics"
