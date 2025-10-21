@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEye, faMoneyBillWave, faShoppingCart, faTachometerAlt,
   faUsers, faCalendar, faReceipt, faChartLine, faCreditCard,
-  faMobileAlt, faMoneyBill, faArrowUp, faArrowDown
+  faMobileAlt, faMoneyBill, faArrowUp, faArrowDown, faTrash
 } from '@fortawesome/free-solid-svg-icons';
 import POSThermalReceipt from '../components/POSThermalReceipt';
 
@@ -91,6 +91,23 @@ const POSMonitor: React.FC = () => {
   const viewReceipt = (sale: POSSale) => {
     setSelectedSale(sale);
     setShowReceipt(true);
+  };
+
+  const deleteTransaction = async (sale: POSSale) => {
+    if (!confirm(`Are you sure you want to delete transaction ${sale.transaction_id}?\n\nThis action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await posSaleAPI.delete(sale.id);
+      setMessage(`✅ Transaction ${sale.transaction_id} deleted successfully`);
+      loadData(); // Reload data
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error: any) {
+      console.error('Failed to delete transaction:', error);
+      setMessage(`❌ Failed to delete transaction: ${error.response?.data?.detail || error.message}`);
+      setTimeout(() => setMessage(''), 5000);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -361,12 +378,21 @@ const POSMonitor: React.FC = () => {
                       <div className="text-sm">{formatDate(sale.created_at)}</div>
                     </td>
                     <td className="p-3 text-center">
-                      <button
-                        onClick={() => viewReceipt(sale)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm"
-                      >
-                        <FontAwesomeIcon icon={faReceipt} /> View
-                      </button>
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          onClick={() => viewReceipt(sale)}
+                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm"
+                        >
+                          <FontAwesomeIcon icon={faReceipt} /> View
+                        </button>
+                        <button
+                          onClick={() => deleteTransaction(sale)}
+                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+                          title="Delete Transaction"
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -624,3 +624,55 @@ def resend_pos_receipt(
             detail=f"Failed to send SMS: {str(e)}"
         )
 
+
+@router.delete("/{sale_id}")
+def delete_pos_sale(
+    sale_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Delete a POS sale
+    - Only Managers and Super Admins can delete sales
+    - Shop keepers can only delete their own sales
+    """
+    # Allow managers, admins, and super admins
+    allowed_roles = [UserRole.MANAGER, UserRole.CEO, UserRole.ADMIN, UserRole.SUPER_ADMIN]
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Your role ({current_user.role.value}) cannot delete POS sales."
+        )
+    
+    # Get the sale
+    sale = db.query(POSSale).filter(POSSale.id == sale_id).first()
+    if not sale:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="POS sale not found"
+        )
+    
+    # Shop keepers can only delete their own sales
+    if current_user.role == UserRole.SHOP_KEEPER and sale.created_by_user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only delete your own sales"
+        )
+    
+    try:
+        # Delete the sale
+        db.delete(sale)
+        db.commit()
+        
+        return {
+            "message": "POS sale deleted successfully",
+            "deleted_sale_id": sale_id,
+            "transaction_id": sale.transaction_id
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete POS sale: {str(e)}"
+        )
+
