@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from typing import List, Optional
 from datetime import datetime
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
