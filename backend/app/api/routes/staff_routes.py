@@ -831,6 +831,7 @@ def get_manager_business_stats(
         from app.models.swap import Swap
         from app.models.sale import Sale
         from app.models.repair import Repair
+        from app.models.pos_sale import POSSale
         
         logger.info(f"Business stats request from user {current_user.id} ({current_user.role}) for manager {manager_id}")
         
@@ -857,15 +858,21 @@ def get_manager_business_stats(
         staff = db.query(User).filter(User.parent_user_id == manager_id).all()
         staff_ids = [manager_id] + [s.id for s in staff]
         
+        logger.info(f"Manager {manager_id} has staff IDs: {staff_ids}")
+        
         # Get business statistics with error handling
         try:
             total_customers = db.query(Customer).filter(Customer.created_by_id.in_(staff_ids)).count()
+            logger.info(f"Total customers for manager {manager_id}: {total_customers}")
         except Exception as e:
+            logger.error(f"Error fetching customers: {e}")
             total_customers = 0
             
         try:
             total_phones = db.query(Phone).filter(Phone.created_by_id.in_(staff_ids)).count()
+            logger.info(f"Total phones for manager {manager_id}: {total_phones}")
         except Exception as e:
+            logger.error(f"Error fetching phones: {e}")
             total_phones = 0
             
         try:
@@ -875,8 +882,17 @@ def get_manager_business_stats(
             
         try:
             total_sales = db.query(Sale).filter(Sale.created_by_user_id.in_(staff_ids)).count()
+            logger.info(f"Total sales for manager {manager_id}: {total_sales}")
         except Exception as e:
+            logger.error(f"Error fetching sales: {e}")
             total_sales = 0
+            
+        try:
+            total_pos_sales = db.query(POSSale).filter(POSSale.created_by_user_id.in_(staff_ids)).count()
+            logger.info(f"Total POS sales for manager {manager_id}: {total_pos_sales}")
+        except Exception as e:
+            logger.error(f"Error fetching POS sales: {e}")
+            total_pos_sales = 0
             
         try:
             total_repairs = db.query(Repair).filter(Repair.staff_id.in_(staff_ids)).count()
@@ -886,16 +902,61 @@ def get_manager_business_stats(
         # Revenue calculations with error handling
         try:
             sales_revenue = db.query(func.sum(Sale.amount_paid)).filter(Sale.created_by_user_id.in_(staff_ids)).scalar() or 0.0
+            logger.info(f"Sales revenue for manager {manager_id}: {sales_revenue}")
         except Exception as e:
+            logger.error(f"Error fetching sales revenue: {e}")
             sales_revenue = 0.0
+            
+        try:
+            pos_sales_revenue = db.query(func.sum(POSSale.total_amount)).filter(POSSale.created_by_user_id.in_(staff_ids)).scalar() or 0.0
+            logger.info(f"POS sales revenue for manager {manager_id}: {pos_sales_revenue}")
+        except Exception as e:
+            logger.error(f"Error fetching POS sales revenue: {e}")
+            pos_sales_revenue = 0.0
             
         try:
             repair_revenue = db.query(func.sum(Repair.cost)).filter(
                 Repair.staff_id.in_(staff_ids),
                 Repair.status.in_(['Completed', 'Delivered'])
             ).scalar() or 0.0
+            logger.info(f"Repair revenue for manager {manager_id}: {repair_revenue}")
         except Exception as e:
+            logger.error(f"Error fetching repair revenue: {e}")
             repair_revenue = 0.0
+        
+        # If no staff found, try to get data directly for the manager
+        if not staff_ids or len(staff_ids) == 1:
+            logger.info(f"No staff found for manager {manager_id}, checking direct data...")
+            # Check if manager has direct data
+            direct_customers = db.query(Customer).filter(Customer.created_by_id == manager_id).count()
+            direct_phones = db.query(Phone).filter(Phone.created_by_id == manager_id).count()
+            direct_sales = db.query(Sale).filter(Sale.created_by_user_id == manager_id).count()
+            direct_repairs = db.query(Repair).filter(Repair.staff_id == manager_id).count()
+            
+            logger.info(f"Direct data for manager {manager_id}: customers={direct_customers}, phones={direct_phones}, sales={direct_sales}, repairs={direct_repairs}")
+            
+            # Use direct data if it's higher than staff data
+            if direct_customers > total_customers:
+                total_customers = direct_customers
+            if direct_phones > total_phones:
+                total_phones = direct_phones
+            if direct_sales > total_sales:
+                total_sales = direct_sales
+            if direct_repairs > total_repairs:
+                total_repairs = direct_repairs
+                
+            # Check direct POS sales
+            direct_pos_sales = db.query(POSSale).filter(POSSale.created_by_user_id == manager_id).count()
+            direct_pos_revenue = db.query(func.sum(POSSale.total_amount)).filter(POSSale.created_by_user_id == manager_id).scalar() or 0.0
+            
+            if direct_pos_sales > total_pos_sales:
+                total_pos_sales = direct_pos_sales
+            if direct_pos_revenue > pos_sales_revenue:
+                pos_sales_revenue = direct_pos_revenue
+        
+        # Combine all sales and revenue
+        total_all_sales = total_sales + total_pos_sales
+        total_all_revenue = sales_revenue + pos_sales_revenue
         
         return {
             "manager_id": manager_id,
@@ -904,11 +965,11 @@ def get_manager_business_stats(
                 "total_customers": total_customers,
                 "total_phones": total_phones,
                 "total_swaps": total_swaps,
-                "total_sales": total_sales,
+                "total_sales": total_all_sales,
                 "total_repairs": total_repairs,
-                "sales_revenue": float(sales_revenue),
+                "sales_revenue": float(total_all_revenue),
                 "repair_revenue": float(repair_revenue),
-                "total_revenue": float(sales_revenue + repair_revenue)
+                "total_revenue": float(total_all_revenue + repair_revenue)
             }
         }
     except HTTPException:
