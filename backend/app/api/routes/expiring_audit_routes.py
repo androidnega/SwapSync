@@ -29,7 +29,13 @@ def generate_expiring_code(
     Generate a new auto-expiring audit code (90 seconds)
     Only Managers can generate their own codes
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"Generate audit code request from user {current_user.id} ({current_user.role})")
+    
     if current_user.role not in [UserRole.MANAGER, UserRole.CEO]:
+        logger.warning(f"Access denied: User {current_user.id} with role {current_user.role} tried to generate audit code")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only Managers can generate audit codes"
@@ -52,6 +58,8 @@ def generate_expiring_code(
     db.add(new_code)
     db.commit()
     db.refresh(new_code)
+    
+    logger.info(f"Generated new audit code {new_code.code} for user {current_user.id}")
     
     return {
         "code": new_code.code,
@@ -216,5 +224,19 @@ def test_endpoint():
     """
     return {
         "message": "Expiring audit routes are working!",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@router.get("/auth-test")
+def auth_test_endpoint(current_user: User = Depends(get_current_user)):
+    """
+    Test endpoint to verify authentication is working
+    """
+    return {
+        "message": "Authentication is working!",
+        "user_id": current_user.id,
+        "username": current_user.username,
+        "role": current_user.role.value,
         "timestamp": datetime.utcnow().isoformat()
     }

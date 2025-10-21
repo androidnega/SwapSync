@@ -63,9 +63,15 @@ const ExpiringAuditCode: React.FC = () => {
         setMessage('✅ New audit code generated!');
         setTimeout(() => setMessage(''), 3000);
       }
-    } catch (error) {
-      setMessage('❌ Failed to generate audit code');
-      console.error(error);
+    } catch (error: any) {
+      console.error('Failed to generate audit code:', error);
+      if (error.response?.status === 401) {
+        setMessage('❌ Authentication failed. Please log in again.');
+      } else if (error.response?.status === 403) {
+        setMessage('❌ Access denied. Only Managers can generate audit codes.');
+      } else {
+        setMessage(`❌ Failed to generate audit code: ${error.response?.data?.detail || error.message}`);
+      }
     }
   };
 

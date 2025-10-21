@@ -29,6 +29,20 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
+// Handle 401 responses (unauthorized)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid, redirect to login
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Analytics API
 export const analyticsAPI = {
   getOverview: () => api.get('/analytics/overview'),
