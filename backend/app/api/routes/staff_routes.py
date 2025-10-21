@@ -379,6 +379,69 @@ def delete_user(
     # Check if user has staff members - admin can delete, but we'll reassign staff to None
     staff_count = db.query(User).filter(User.parent_user_id == user_id).count()
     
+    # If deleting a manager, also delete all their staff members
+    if user_to_delete.role in [UserRole.MANAGER, UserRole.CEO]:
+        staff_members = db.query(User).filter(User.parent_user_id == user_id).all()
+        for staff_member in staff_members:
+            # Recursively delete staff members
+            try:
+                # Set all foreign key references to NULL for staff member
+                from app.models.user_session import UserSession
+                from app.models.otp_session import OTPSession
+                from app.models.product import StockMovement, Product
+                from app.models.phone import Phone
+                from app.models.repair import Repair
+                from app.models.sale import Sale
+                from app.models.product_sale import ProductSale
+                from app.models.pos_sale import POSSale
+                from app.models.category import Category
+                from app.models.brand import Brand
+                from app.models.audit_code import AuditCode
+                from app.models.activity_log import ActivityLog
+                from app.models.pending_resale import PendingResale
+                from app.models.invoice import Invoice
+                from app.models.customer import Customer
+                
+                staff_id = staff_member.id
+                
+                # Delete sessions and codes
+                db.query(UserSession).filter(UserSession.user_id == staff_id).delete()
+                db.query(OTPSession).filter(OTPSession.user_id == staff_id).delete()
+                db.query(AuditCode).filter(AuditCode.user_id == staff_id).delete()
+                db.query(ActivityLog).filter(ActivityLog.user_id == staff_id).delete()
+                
+                # Set foreign key references to NULL
+                db.query(PendingResale).filter(PendingResale.attending_staff_id == staff_id).update({"attending_staff_id": None})
+                db.query(Repair).filter(Repair.staff_id == staff_id).update({"staff_id": None})
+                db.query(Invoice).filter(Invoice.staff_id == staff_id).update({"staff_id": None})
+                db.query(Customer).filter(Customer.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                db.query(StockMovement).filter(StockMovement.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                db.query(Product).filter(Product.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                db.query(Phone).filter(Phone.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                db.query(Repair).filter(Repair.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                db.query(Sale).filter(Sale.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                db.query(ProductSale).filter(ProductSale.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                db.query(POSSale).filter(POSSale.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                db.query(Category).filter(Category.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                db.query(Brand).filter(Brand.created_by_user_id == staff_id).update({"created_by_user_id": None})
+                
+                # Delete the staff member
+                db.delete(staff_member)
+                
+                # Log the cascade deletion
+                from app.core.activity_logger import log_activity
+                log_activity(
+                    db=db,
+                    user=current_user,
+                    action=f"cascade deleted staff member {staff_member.username}",
+                    module="users",
+                    target_id=staff_id,
+                    details=f"Staff member deleted as part of manager {deleted_username} deletion"
+                )
+            except Exception as e:
+                print(f"❌ Error deleting staff member {staff_member.id}: {e}")
+                # Continue with other staff members even if one fails
+    
     try:
         # Import all models that have user references
         from app.models.user_session import UserSession
@@ -388,6 +451,7 @@ def delete_user(
         from app.models.repair import Repair
         from app.models.sale import Sale
         from app.models.product_sale import ProductSale
+        from app.models.pos_sale import POSSale
         from app.models.category import Category
         from app.models.brand import Brand
         from app.models.audit_code import AuditCode
@@ -429,6 +493,7 @@ def delete_user(
         db.query(Repair).filter(Repair.created_by_user_id == user_id).update({"created_by_user_id": None})
         db.query(Sale).filter(Sale.created_by_user_id == user_id).update({"created_by_user_id": None})
         db.query(ProductSale).filter(ProductSale.created_by_user_id == user_id).update({"created_by_user_id": None})
+        db.query(POSSale).filter(POSSale.created_by_user_id == user_id).update({"created_by_user_id": None})
         db.query(Category).filter(Category.created_by_user_id == user_id).update({"created_by_user_id": None})
         db.query(Brand).filter(Brand.created_by_user_id == user_id).update({"created_by_user_id": None})
         
