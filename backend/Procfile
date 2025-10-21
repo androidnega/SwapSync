@@ -1,2 +1,3 @@
-web: python run_migrations.py || echo "⚠️ Migrations skipped" && uvicorn main:app --host 0.0.0.0 --port $PORT
+release: python run_migrations.py && python migrate_add_essential_indexes.py
+web: uvicorn main:app --host 0.0.0.0 --port $PORT
 
