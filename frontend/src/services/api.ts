@@ -114,6 +114,7 @@ export const productAPI = {
   create: (data: any) => api.post('/products/', data),
   update: (id: number, data: any) => api.put(`/products/${id}`, data),
   delete: (id: number) => api.delete(`/products/${id}`),
+  bulkDelete: (productIds: number[]) => api.post('/products/bulk-delete', { product_ids: productIds }),
   adjustStock: (id: number, data: any) => api.post(`/products/${id}/stock-adjustment`, data),
   getSummary: () => api.get('/products/summary'),
   search: (params: any) => api.get('/products/search', { params }),

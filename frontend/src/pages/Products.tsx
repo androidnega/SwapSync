@@ -79,6 +79,8 @@ const Products: React.FC = () => {
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [message, setMessage] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -285,6 +287,47 @@ const Products: React.FC = () => {
     }
   };
 
+  const handleSelectProduct = (productId: number) => {
+    setSelectedProducts(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts.map(p => p.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProducts.length === 0) {
+      setMessage('❌ Please select products to delete');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    setShowBulkDeleteConfirm(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      const response = await productAPI.bulkDelete(selectedProducts);
+      setMessage(`✅ ${response.data.message}`);
+      setSelectedProducts([]);
+      setShowBulkDeleteConfirm(false);
+      fetchProducts();
+      fetchSummary();
+      setTimeout(() => setMessage(''), 5000);
+    } catch (error: any) {
+      setMessage(`❌ Failed to delete products: ${error.response?.data?.detail || error.message}`);
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
   const filteredProducts = products.filter(product => {
     // Category filter
     if (filterCategory !== 'all' && product.category_id !== parseInt(filterCategory)) {
@@ -361,6 +404,14 @@ const Products: React.FC = () => {
                 >
                   📤 Bulk Upload
                 </button>
+                {selectedProducts.length > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm sm:text-base"
+                  >
+                    🗑️ Delete Selected ({selectedProducts.length})
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -456,6 +507,16 @@ const Products: React.FC = () => {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
+                  {(userRole === 'manager' || userRole === 'ceo') && (
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">
+                      <input
+                        type="checkbox"
+                        checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
+                        onChange={handleSelectAll}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </th>
+                  )}
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Product</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Category</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Price</th>
@@ -467,19 +528,29 @@ const Products: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-3 md:px-4 lg:px-6 py-12 text-center text-gray-500">
+                    <td colSpan={(userRole === 'manager' || userRole === 'ceo') ? 7 : 6} className="px-3 md:px-4 lg:px-6 py-12 text-center text-gray-500">
                       Loading products...
                     </td>
                   </tr>
                 ) : filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 md:px-4 lg:px-6 py-12 text-center text-gray-500">
+                    <td colSpan={(userRole === 'manager' || userRole === 'ceo') ? 7 : 6} className="px-3 md:px-4 lg:px-6 py-12 text-center text-gray-500">
                       No products found. Click "Add Product" to create one!
                     </td>
                   </tr>
                 ) : (
                   paginatedProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
+                      {(userRole === 'manager' || userRole === 'ceo') && (
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.includes(product.id)}
+                            onChange={() => handleSelectProduct(product.id)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </td>
+                      )}
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-900 text-sm">{product.name}</div>
                         {product.brand && <div className="text-xs text-gray-500">{product.brand}</div>}
@@ -999,6 +1070,33 @@ const Products: React.FC = () => {
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
                 >
                   {uploading ? 'Uploading...' : 'Upload Products'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Delete Confirmation Modal */}
+        {showBulkDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Bulk Delete</h3>
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to delete {selectedProducts.length} selected products? 
+                This action cannot be undone and will also delete all related sales records.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowBulkDeleteConfirm(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBulkDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Delete {selectedProducts.length} Products
                 </button>
               </div>
             </div>

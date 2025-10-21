@@ -477,3 +477,102 @@ def delete_product(
             detail=f"Failed to delete product: {str(e)}"
         )
 
+
+class BulkDeleteRequest(BaseModel):
+    product_ids: List[int]
+
+
+@router.post("/bulk-delete")
+def bulk_delete_products(
+    request: BulkDeleteRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Bulk delete multiple products
+    - Only Managers and above can bulk delete
+    - Deletes products and all related records (sales, stock movements)
+    """
+    # Allow managers, admins, and super admins
+    allowed_roles = [UserRole.MANAGER, UserRole.CEO, UserRole.ADMIN, UserRole.SUPER_ADMIN]
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Your role ({current_user.role.value}) cannot bulk delete products."
+        )
+    
+    if not request.product_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No product IDs provided"
+        )
+    
+    if len(request.product_ids) > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete more than 100 products at once"
+        )
+    
+    try:
+        deleted_products = []
+        total_deleted_sales = 0
+        
+        for product_id in request.product_ids:
+            # Get the product
+            product = db.query(Product).filter(Product.id == product_id).first()
+            if not product:
+                continue
+                
+            product_name = product.name
+            product_sku = product.sku or "N/A"
+            
+            # Find all POS sales containing this product
+            affected_sale_ids = []
+            pos_sales = db.query(POSSale).all()
+            for sale in pos_sales:
+                if sale.items:
+                    for item in sale.items:
+                        if item.get('product_id') == product_id:
+                            affected_sale_ids.append(sale.id)
+                            break
+            
+            # Delete related stock movements
+            from app.models.product import StockMovement
+            db.query(StockMovement).filter(StockMovement.product_id == product_id).delete(synchronize_session=False)
+            
+            # Delete the product itself
+            db.delete(product)
+            
+            deleted_products.append({
+                "id": product_id,
+                "name": product_name,
+                "sku": product_sku,
+                "deleted_sales_count": len(affected_sale_ids)
+            })
+            total_deleted_sales += len(affected_sale_ids)
+        
+        db.commit()
+        
+        # Log activity
+        log_activity(
+            db=db,
+            user=current_user,
+            action=f"bulk deleted {len(deleted_products)} products",
+            module="products",
+            target_id=None,
+            details=f"Deleted products: {[p['name'] for p in deleted_products]} | Total affected sales: {total_deleted_sales}"
+        )
+        
+        return {
+            "message": f"Successfully deleted {len(deleted_products)} products",
+            "deleted_products": deleted_products,
+            "total_deleted_sales": total_deleted_sales
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to bulk delete products: {str(e)}"
+        )
+
