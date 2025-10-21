@@ -17,7 +17,12 @@ if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args=connect_args
+    connect_args=connect_args,
+    pool_size=5,              # Small pool for Railway $5 plan
+    max_overflow=2,           # Allow 2 extra connections in bursts
+    pool_recycle=300,         # Recycle connections every 5 minutes
+    pool_pre_ping=True,       # Verify connections before use
+    echo=False                # Disable SQL query logging in production
 )
 
 # Session factory

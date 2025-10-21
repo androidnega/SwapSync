@@ -263,10 +263,10 @@ def start_scheduler():
     
     scheduler = BackgroundScheduler()
     
-    # Job 1: Check repairs every minute
+    # Job 1: Check repairs every 10 minutes (optimized for $5 Railway plan)
     scheduler.add_job(
         func=check_repair_due_dates,
-        trigger=IntervalTrigger(minutes=1),
+        trigger=IntervalTrigger(minutes=10),
         id='check_repair_due_dates',
         name='Check repair due dates and notify',
         replace_existing=True

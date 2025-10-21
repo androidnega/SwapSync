@@ -65,7 +65,7 @@ def create_customer(
 @router.get("/")
 def list_customers(
     skip: int = 0, 
-    limit: int = 100, 
+    limit: int = 50,  # Reduced from 100 to 50 for Railway optimization
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

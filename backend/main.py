@@ -4,19 +4,26 @@ Phone Swapping and Repair Shop Management System
 """
 from fastapi import FastAPI, Request, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.database import init_db
 from app.api.routes import ping
 from app.api.routes import customer_routes, phone_routes, sale_routes, swap_routes, repair_routes, repair_item_routes, analytics_routes, maintenance_routes, auth_routes, staff_routes, dashboard_routes, invoice_routes, reports_routes, audit_routes, category_routes, brand_routes, websocket_routes, expiring_audit_routes, product_routes, product_sale_routes, pos_sale_routes, profit_report_routes, sms_config_routes, profile_routes, bulk_upload_routes, system_cleanup_routes, sms_broadcast_routes, pending_resale_routes, greetings, today_stats, otp_routes, admin_routes, training_routes
+from app.api.routes import cleanup_routes
 from app.core.auth import create_default_admin
 from app.core.scheduler import start_scheduler, stop_scheduler
 import traceback
 import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging - Use WARNING in production to reduce disk writes
+import os
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Create FastAPI application
@@ -26,6 +33,9 @@ app = FastAPI(
     description="Phone Swapping and Repair Shop Management System",
     debug=settings.DEBUG
 )
+
+# Add GZip compression to reduce bandwidth (Railway optimization)
+app.add_middleware(GZipMiddleware, minimum_size=1000)  # Compress responses > 1KB
 
 # Initialize database on startup
 @app.on_event("startup")
@@ -220,6 +230,7 @@ app.include_router(greetings.router, prefix="/api")
 app.include_router(today_stats.router, prefix="/api")
 app.include_router(admin_routes.router, prefix="/api")
 app.include_router(training_routes.router, prefix="/api")
+app.include_router(cleanup_routes.router, prefix="/api")
 app.include_router(websocket_routes.router)  # No /api prefix for WebSocket
 
 
