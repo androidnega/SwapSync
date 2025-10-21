@@ -176,7 +176,7 @@ def get_dashboard_cards(
         
         # Available Products - Products with stock > 0
         available_products = db.query(func.count(Product.id)).filter(
-            Product.stock_quantity > 0
+            Product.quantity > 0
         ).scalar()
         
         cards.append({
