@@ -345,20 +345,21 @@ def clear_all_data(
         db.query(Sale).delete()
         db.query(Swap).delete()
         
-        # Step 4: Clear foreign keys that reference categories and brands
-        db.query(Phone).update({"category_id": None, "brand_id": None})
-        db.query(Product).update({"category_id": None})
-        
-        # Step 5: Delete master records
-        db.query(Product).delete()
-        db.query(Phone).delete()
+        # Step 4: Delete master records (delete products first since category_id is NOT NULL)
+        db.query(Product).delete()  # Must delete before clearing categories (NOT NULL constraint)
         db.query(Customer).delete()
         
-        # Step 6: Delete categories and brands (user must recreate them)
+        # Step 5: Clear phone foreign keys that reference categories and brands
+        db.query(Phone).update({"category_id": None, "brand_id": None})
+        
+        # Step 6: Delete phones
+        db.query(Phone).delete()
+        
+        # Step 7: Delete categories and brands (user must recreate them)
         db.query(Category).delete()
         db.query(Brand).delete()
         
-        # Step 7: Clear activity logs
+        # Step 8: Clear activity logs
         db.query(ActivityLog).delete()
         
         db.commit()
