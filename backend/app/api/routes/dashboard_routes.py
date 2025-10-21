@@ -173,6 +173,20 @@ def get_dashboard_cards(
             "color": "indigo",
             "visible_to": ["shop_keeper", "ceo", "manager"]
         })
+        
+        # Available Products - Products with stock > 0
+        available_products = db.query(func.count(Product.id)).filter(
+            Product.stock_quantity > 0
+        ).scalar()
+        
+        cards.append({
+            "id": "available_products",
+            "title": "Available Products",
+            "value": available_products,
+            "icon": "faBox",
+            "color": "teal",
+            "visible_to": ["shop_keeper", "ceo", "manager"]
+        })
     
     # REPAIRER - Repair cards only
     if current_user.role == UserRole.REPAIRER:

@@ -27,9 +27,19 @@ interface StaffStats {
   staff_list: StaffMember[];
 }
 
+interface DashboardCard {
+  id: string;
+  title: string;
+  value: string | number;
+  icon: string;
+  color: string;
+  visible_to: string[];
+}
+
 const ManagerDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('analytics');
   const [stats, setStats] = useState<StaffStats | null>(null);
+  const [dashboardCards, setDashboardCards] = useState<DashboardCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [phoneCount, setPhoneCount] = useState<number>(0);
@@ -38,6 +48,7 @@ const ManagerDashboard: React.FC = () => {
   useEffect(() => {
     fetchStats();
     fetchCounts();
+    fetchDashboardCards();
   }, []);
 
   const fetchStats = async () => {
@@ -71,6 +82,18 @@ const ManagerDashboard: React.FC = () => {
       setPhoneCount(phonesResponse.data.length);
     } catch (error) {
       console.error('Failed to fetch counts:', error);
+    }
+  };
+
+  const fetchDashboardCards = async () => {
+    try {
+      const token = getToken();
+      const response = await axios.get(`${API_URL}/dashboard/cards`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDashboardCards(response.data.cards || []);
+    } catch (error) {
+      console.error('Failed to fetch dashboard cards:', error);
     }
   };
 
@@ -120,7 +143,57 @@ const ManagerDashboard: React.FC = () => {
 
   const renderAnalyticsContent = () => (
     <div className="space-y-6">
-      {/* Stats Cards */}
+      {/* Dashboard Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {dashboardCards.map((card) => (
+          <div key={card.id} className="bg-white p-4 md:p-6 rounded-xl shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">{card.title}</div>
+                <div className={`text-3xl font-bold ${
+                  card.color === 'blue' ? 'text-blue-600' :
+                  card.color === 'green' ? 'text-green-600' :
+                  card.color === 'red' ? 'text-red-600' :
+                  card.color === 'purple' ? 'text-purple-600' :
+                  card.color === 'yellow' ? 'text-yellow-600' :
+                  card.color === 'indigo' ? 'text-indigo-600' :
+                  card.color === 'teal' ? 'text-teal-600' :
+                  'text-gray-600'
+                }`}>
+                  {card.value}
+                </div>
+              </div>
+              <div className={`text-2xl ${
+                card.color === 'blue' ? 'text-blue-500' :
+                card.color === 'green' ? 'text-green-500' :
+                card.color === 'red' ? 'text-red-500' :
+                card.color === 'purple' ? 'text-purple-500' :
+                card.color === 'yellow' ? 'text-yellow-500' :
+                card.color === 'indigo' ? 'text-indigo-500' :
+                card.color === 'teal' ? 'text-teal-500' :
+                'text-gray-500'
+              }`}>
+                {card.icon === 'faUserCircle' && '👤'}
+                {card.icon === 'faClock' && '⏰'}
+                {card.icon === 'faCheckCircle' && '✅'}
+                {card.icon === 'faPercent' && '💯'}
+                {card.icon === 'faMobileAlt' && '📱'}
+                {card.icon === 'faBox' && '📦'}
+                {card.icon === 'faUserTie' && '👔'}
+                {card.icon === 'faUsers' && '👥'}
+                {card.icon === 'faServer' && '🖥️'}
+                {card.icon === 'faDatabase' && '🗄️'}
+                {card.icon === 'faTools' && '🔧'}
+                {card.icon === 'faWrench' && '🔨'}
+                {card.icon === 'faCheck' && '✓'}
+                {card.icon === 'faExclamationTriangle' && '⚠️'}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Staff Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 md:p-6 rounded-xl shadow">
           <div className="text-sm text-gray-500 mb-1">Total Staff</div>
