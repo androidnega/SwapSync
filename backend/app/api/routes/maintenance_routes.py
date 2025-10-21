@@ -323,6 +323,8 @@ def clear_all_data(
         from app.models.repair_item_usage import RepairItemUsage
         from app.models.pos_sale import POSSale, POSSaleItem
         from app.models.product import StockMovement
+        from app.models.category import Category
+        from app.models.brand import Brand
         
         # Clear all business data in proper order (respecting ALL foreign key constraints)
         # Step 1: Break circular dependencies and clear customer references
@@ -343,19 +345,27 @@ def clear_all_data(
         db.query(Sale).delete()
         db.query(Swap).delete()
         
-        # Step 4: Delete master records
+        # Step 4: Clear foreign keys that reference categories and brands
+        db.query(Phone).update({"category_id": None, "brand_id": None})
+        db.query(Product).update({"category_id": None})
+        
+        # Step 5: Delete master records
         db.query(Product).delete()
         db.query(Phone).delete()
         db.query(Customer).delete()
         
-        # Step 5: Clear activity logs
+        # Step 6: Delete categories and brands (user must recreate them)
+        db.query(Category).delete()
+        db.query(Brand).delete()
+        
+        # Step 7: Clear activity logs
         db.query(ActivityLog).delete()
         
         db.commit()
         
         return {
             "success": True,
-            "message": "All business data cleared successfully (including POS sales)",
+            "message": "All business data cleared successfully (including categories, brands, and POS sales)",
             "cleared_at": datetime.now().isoformat(),
             "cleared_by": current_user.username
         }

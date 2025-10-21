@@ -73,33 +73,15 @@ def migrate():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_stock_movements_created ON stock_movements(created_at)")
         print("✅ Stock movements indexes created successfully")
         
-        # Insert some default product categories if they don't exist
-        cursor.execute("SELECT COUNT(*) FROM categories WHERE name IN ('Phone Accessories', 'Chargers', 'Earbuds', 'Batteries', 'Cases', 'Screen Protectors')")
-        count = cursor.fetchone()[0]
-        
-        if count == 0:
-            default_categories = [
-                ('Phone Accessories', 'General phone accessories'),
-                ('Chargers', 'Phone chargers and power adapters'),
-                ('Earbuds', 'Earphones and earbuds'),
-                ('Batteries', 'Phone batteries and power banks'),
-                ('Cases', 'Phone cases and covers'),
-                ('Screen Protectors', 'Screen protectors and tempered glass')
-            ]
-            
-            for name, desc in default_categories:
-                cursor.execute("""
-                    INSERT OR IGNORE INTO categories (name, description, created_at)
-                    VALUES (?, ?, CURRENT_TIMESTAMP)
-                """, (name, desc))
-            
-            print("✅ Default product categories created")
+        # NOTE: Default product categories are NO LONGER pre-filled
+        # Users must create their own product categories after account creation
+        # This was changed to allow users to customize their categories
         
         conn.commit()
         print("\n🎉 Migration completed successfully!")
         print("✅ Products table ready")
         print("✅ Stock movements table ready")
-        print("✅ Default categories added")
+        print("✅ Categories are empty by default (users create their own)")
         
     except Exception as e:
         print(f"❌ Migration failed: {e}")
