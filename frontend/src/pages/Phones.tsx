@@ -48,6 +48,8 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [selectedPhones, setSelectedPhones] = useState<number[]>([]);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -267,6 +269,47 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
     }
   };
 
+  const handleSelectPhone = (phoneId: number) => {
+    setSelectedPhones(prev => 
+      prev.includes(phoneId) 
+        ? prev.filter(id => id !== phoneId)
+        : [...prev, phoneId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedPhones.length === filteredPhones.length) {
+      setSelectedPhones([]);
+    } else {
+      setSelectedPhones(filteredPhones.map(p => p.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedPhones.length === 0) {
+      setMessage('❌ Please select phones to delete');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    setShowBulkDeleteConfirm(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      const response = await phoneAPI.bulkDelete(selectedPhones);
+      setMessage(`✅ ${response.data.message}`);
+      setSelectedPhones([]);
+      setShowBulkDeleteConfirm(false);
+      fetchPhones();
+      if (onUpdate) onUpdate(); // Notify parent component
+      setTimeout(() => setMessage(''), 5000);
+    } catch (error: any) {
+      setMessage(`❌ Failed to delete phones: ${error.response?.data?.detail || error.message}`);
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
   const handleBulkUpload = async () => {
     if (!uploadFile) return;
 
@@ -365,6 +408,14 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
               >
                 📤 Bulk Upload
               </button>
+              {selectedPhones.length > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
+                >
+                  🗑️ Delete Selected ({selectedPhones.length})
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -504,6 +555,16 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
+              {(userRole === 'manager' || userRole === 'ceo') && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <input
+                    type="checkbox"
+                    checked={selectedPhones.length === filteredPhones.length && filteredPhones.length > 0}
+                    onChange={handleSelectAll}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
+              )}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Brand
               </th>
@@ -527,7 +588,7 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedPhones.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={(userRole === 'manager' || userRole === 'ceo') ? 7 : 6} className="px-6 py-12 text-center text-gray-500">
                   {filteredPhones.length === 0 ? (
                     userRole === 'shop_keeper' 
                       ? 'No phones available yet. Manager will add phones for swapping.'
@@ -540,6 +601,16 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
             ) : (
               paginatedPhones.map((phone) => (
                 <tr key={phone.id} className="hover:bg-gray-50">
+                  {(userRole === 'manager' || userRole === 'ceo') && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedPhones.includes(phone.id)}
+                        onChange={() => handleSelectPhone(phone.id)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {phone.brand}
                   </td>
@@ -1315,7 +1386,34 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
             </div>
           </div>
         </div>
-      )}
+        )}
+
+        {/* Bulk Delete Confirmation Modal */}
+        {showBulkDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Bulk Delete</h3>
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to delete {selectedPhones.length} selected phones? 
+                This action cannot be undone.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowBulkDeleteConfirm(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBulkDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Delete {selectedPhones.length} Phones
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

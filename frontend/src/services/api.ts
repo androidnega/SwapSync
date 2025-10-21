@@ -76,6 +76,7 @@ export const phoneAPI = {
   toggleAvailability: (id: number, isAvailable: boolean) => 
     api.patch(`/phones/${id}/availability`, null, { params: { is_available: isAvailable } }),
   delete: (id: number) => api.delete(`/phones/${id}`),
+  bulkDelete: (phoneIds: number[]) => api.post('/phones/bulk-delete', { phone_ids: phoneIds }),
 };
 
 // Sale API

@@ -254,3 +254,83 @@ def delete_phone(
     
     return None
 
+
+class BulkDeleteRequest(BaseModel):
+    phone_ids: List[int]
+
+
+@router.post("/bulk-delete")
+def bulk_delete_phones(
+    request: BulkDeleteRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Bulk delete multiple phones
+    - Only Managers and above can bulk delete
+    - Deletes phones from inventory
+    """
+    # Allow managers, admins, and super admins
+    allowed_roles = [UserRole.MANAGER, UserRole.CEO, UserRole.ADMIN, UserRole.SUPER_ADMIN]
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Your role ({current_user.role.value}) cannot bulk delete phones."
+        )
+    
+    if not request.phone_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No phone IDs provided"
+        )
+    
+    if len(request.phone_ids) > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete more than 100 phones at once"
+        )
+    
+    try:
+        deleted_phones = []
+        
+        for phone_id in request.phone_ids:
+            # Get the phone
+            phone = db.query(Phone).filter(Phone.id == phone_id).first()
+            if not phone:
+                continue
+                
+            phone_details = f"{phone.brand} {phone.model} - IMEI: {phone.imei}"
+            
+            # Delete the phone
+            db.delete(phone)
+            
+            deleted_phones.append({
+                "id": phone_id,
+                "brand": phone.brand,
+                "model": phone.model,
+                "imei": phone.imei
+            })
+        
+        db.commit()
+        
+        # Log activity
+        log_activity(
+            db=db,
+            user=current_user,
+            action=f"bulk deleted {len(deleted_phones)} phones",
+            module="phones",
+            target_id=None,
+            details=f"Deleted phones: {[f'{p['brand']} {p['model']}' for p in deleted_phones]}"
+        )
+        
+        return {
+            "message": f"Successfully deleted {len(deleted_phones)} phones",
+            "deleted_phones": deleted_phones
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to bulk delete phones: {str(e)}"
+        )
