@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import authService from '../services/authService';
 import { API_URL } from '../services/api';
 import OTPLogin from '../components/OTPLogin';
-import { getTimeBasedGreeting } from '../services/ghanaianGreetings';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -25,7 +24,6 @@ const Login: React.FC = () => {
   });
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
-  const [greeting, setGreeting] = useState({ twi: '', english: '', emoji: '' });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -38,9 +36,6 @@ const Login: React.FC = () => {
       window.history.replaceState({}, '', '/login');
     }
     
-    // Get time-based greeting
-    const currentGreeting = getTimeBasedGreeting();
-    setGreeting(currentGreeting);
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -152,16 +147,10 @@ const Login: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
         {/* Login Form - Centered */}
         <div className="w-full max-w-lg px-2">
-          {/* Twi & Ahanta Greeting Header */}
+          {/* Login Header */}
           <div className="text-center mb-8">
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-5xl">{greeting.emoji}</span>
-              <h2 className="text-3xl font-bold text-gray-900">{greeting.twi}</h2>
-              {greeting.ahanta && (
-                <p className="text-base text-blue-600 italic">{greeting.ahanta}</p>
-              )}
-              <p className="text-gray-600 text-sm">{greeting.english}</p>
-            </div>
+            <h2 className="text-3xl font-bold text-gray-900">Welcome to SwapSync</h2>
+            <p className="text-gray-600 text-sm">Please sign in to your account</p>
           </div>
 
           {/* Login Form Card */}

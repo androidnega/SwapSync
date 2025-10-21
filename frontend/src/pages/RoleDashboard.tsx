@@ -4,7 +4,6 @@ import axios from 'axios';
 import { getToken, getUser } from '../services/authService';
 import DashboardCard from '../components/DashboardCard';
 import Breadcrumb from '../components/Breadcrumb';
-import WelcomeBanner from '../components/WelcomeBanner';
 import TrainingManualDownload from '../components/TrainingManualDownload';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -128,13 +127,6 @@ const RoleDashboard: React.FC = () => {
       <Breadcrumb />
       <div className="p-4 md:p-6 lg:p-8 space-y-4 md:space-y-6">
         {/* Ghanaian Welcome Banner */}
-        {currentUser && (
-          <WelcomeBanner 
-            userName={currentUser.full_name || currentUser.username}
-            userRole={currentUser.role}
-            userId={currentUser.id}
-          />
-        )}
         
         {/* Training Manual Download - Role-Specific */}
         {currentUser && currentUser.role === 'shop_keeper' && (
