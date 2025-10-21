@@ -26,6 +26,7 @@ interface Phone {
   category_id?: number;
   added_at: string;
   created_at?: string;
+  swapped_from_id?: number;
 }
 
 interface PhonesProps {
@@ -213,7 +214,8 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
         condition: 'New', 
         value: '', 
         category_id: '', 
-        cost_price: '', 
+        cost_price: '',
+        is_swappable: true,
         cpu: '', 
         ram: '', 
         storage: '', 
@@ -339,7 +341,8 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
       condition: 'New', 
       value: '', 
       category_id: '', 
-      cost_price: '', 
+      cost_price: '',
+      is_swappable: true,
       cpu: '', 
       ram: '', 
       storage: '', 
