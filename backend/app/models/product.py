@@ -42,14 +42,14 @@ class Product(Base):
     
     # For Phones specifically (swappable items)
     imei = Column(String, unique=True, nullable=True, index=True)  # Only for phones
-    is_phone = Column(Boolean, default=False)  # True if this is a phone product
-    is_swappable = Column(Boolean, default=False)  # True for phones available for swap
+    is_phone = Column(Boolean, default=False, nullable=True)  # True if this is a phone product
+    is_swappable = Column(Boolean, default=False, nullable=True)  # True for phones available for swap
     phone_condition = Column(String, nullable=True)  # New, Used, Refurbished (for phones)
     phone_specs = Column(JSON, nullable=True)  # Phone-specific specs (CPU, RAM, etc.)
-    phone_status = Column(String, default="AVAILABLE")  # AVAILABLE, SOLD, UNDER_REPAIR, etc.
+    phone_status = Column(String, default="AVAILABLE", nullable=True)  # AVAILABLE, SOLD, UNDER_REPAIR, etc.
     swapped_from_id = Column(Integer, ForeignKey("swaps.id"), nullable=True)  # If phone came from swap
     current_owner_id = Column(Integer, ForeignKey("customers.id"), nullable=True)  # Current owner
-    current_owner_type = Column(String, default="shop")  # shop, customer, repair
+    current_owner_type = Column(String, default="shop", nullable=True)  # shop, customer, repair
     
     # Status
     is_active = Column(Boolean, default=True)  # Active/Inactive
@@ -109,7 +109,7 @@ class Product(Base):
     @property
     def is_phone_product(self):
         """Check if this product is a phone"""
-        return self.is_phone == True
+        return self.is_phone is True
     
     @property
     def phone_display_name(self):
