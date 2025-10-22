@@ -96,6 +96,13 @@ const Repairs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
+  // Repair items filtering and pagination
+  const [itemSearchTerm, setItemSearchTerm] = useState('');
+  const [itemCategoryFilter, setItemCategoryFilter] = useState('');
+  const [itemStockFilter, setItemStockFilter] = useState('all'); // 'all', 'in_stock', 'low_stock', 'out_of_stock'
+  const [itemCurrentPage, setItemCurrentPage] = useState(1);
+  const itemItemsPerPage = 10;
 
   useEffect(() => {
     fetchRepairs();
@@ -1106,6 +1113,77 @@ const Repairs: React.FC = () => {
             </div>
           </div>
 
+          {/* Search and Filters */}
+          <div className="bg-white rounded-xl shadow p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              {/* Search */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Search Items</label>
+                <input
+                  type="text"
+                  placeholder="Search by name or description..."
+                  value={itemSearchTerm}
+                  onChange={(e) => {
+                    setItemSearchTerm(e.target.value);
+                    setItemCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              {/* Category Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select
+                  value={itemCategoryFilter}
+                  onChange={(e) => {
+                    setItemCategoryFilter(e.target.value);
+                    setItemCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Categories</option>
+                  {Array.from(new Set(repairItems.map(item => item.category).filter(Boolean))).map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Stock Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Stock Status</label>
+                <select
+                  value={itemStockFilter}
+                  onChange={(e) => {
+                    setItemStockFilter(e.target.value);
+                    setItemCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Items</option>
+                  <option value="in_stock">In Stock</option>
+                  <option value="low_stock">Low Stock</option>
+                  <option value="out_of_stock">Out of Stock</option>
+                </select>
+              </div>
+              
+              {/* Clear Filters */}
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setItemSearchTerm('');
+                    setItemCategoryFilter('');
+                    setItemStockFilter('all');
+                    setItemCurrentPage(1);
+                  }}
+                  className="w-full px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Items Table */}
           <div className="bg-white rounded-xl shadow overflow-hidden">
             <table className="w-full">
@@ -1120,62 +1198,181 @@ const Repairs: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {repairItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                      No repair items yet. Add your first item!
-                    </td>
-                  </tr>
-                ) : (
-                  repairItems.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{item.name}</div>
-                        {item.description && (
-                          <div className="text-sm text-gray-500">{item.description}</div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {item.category || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        ₵{item.cost_price.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-green-600">
-                        ₵{item.selling_price.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                          item.stock_quantity === 0
-                            ? 'bg-red-100 text-red-800'
-                            : item.stock_quantity <= item.min_stock_level
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {item.stock_quantity} units
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openItemModal(item)}
-                            className="text-blue-600 hover:text-blue-900 font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="text-red-600 hover:text-red-900 font-medium"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                {(() => {
+                  // Filter items based on search and filters
+                  let filteredItems = repairItems.filter(item => {
+                    const matchesSearch = !itemSearchTerm || 
+                      item.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||
+                      (item.description && item.description.toLowerCase().includes(itemSearchTerm.toLowerCase()));
+                    
+                    const matchesCategory = !itemCategoryFilter || item.category === itemCategoryFilter;
+                    
+                    const matchesStock = itemStockFilter === 'all' ||
+                      (itemStockFilter === 'in_stock' && item.stock_quantity > item.min_stock_level) ||
+                      (itemStockFilter === 'low_stock' && item.stock_quantity > 0 && item.stock_quantity <= item.min_stock_level) ||
+                      (itemStockFilter === 'out_of_stock' && item.stock_quantity === 0);
+                    
+                    return matchesSearch && matchesCategory && matchesStock;
+                  });
+                  
+                  // Pagination
+                  const totalPages = Math.ceil(filteredItems.length / itemItemsPerPage);
+                  const startIndex = (itemCurrentPage - 1) * itemItemsPerPage;
+                  const paginatedItems = filteredItems.slice(startIndex, startIndex + itemItemsPerPage);
+                  
+                  return (
+                    <>
+                      {paginatedItems.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                            {repairItems.length === 0 
+                              ? "No repair items yet. Add your first item!"
+                              : "No items match your current filters."
+                            }
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedItems.map((item) => (
+                          <tr key={item.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4">
+                              <div className="font-medium text-gray-900">{item.name}</div>
+                              {item.description && (
+                                <div className="text-sm text-gray-500">{item.description}</div>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {item.category || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              ₵{item.cost_price.toFixed(2)}
+                            </td>
+                            <td className="px-6 py-4 text-sm font-medium text-green-600">
+                              ₵{item.selling_price.toFixed(2)}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                                item.stock_quantity === 0
+                                  ? 'bg-red-100 text-red-800'
+                                  : item.stock_quantity <= item.min_stock_level
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {item.stock_quantity} units
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => openItemModal(item)}
+                                  className="text-blue-600 hover:text-blue-900 font-medium"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteItem(item.id)}
+                                  className="text-red-600 hover:text-red-900 font-medium"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </>
+                  );
+                })()}
               </tbody>
             </table>
+            
+            {/* Pagination */}
+            {(() => {
+              let filteredItems = repairItems.filter(item => {
+                const matchesSearch = !itemSearchTerm || 
+                  item.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||
+                  (item.description && item.description.toLowerCase().includes(itemSearchTerm.toLowerCase()));
+                
+                const matchesCategory = !itemCategoryFilter || item.category === itemCategoryFilter;
+                
+                const matchesStock = itemStockFilter === 'all' ||
+                  (itemStockFilter === 'in_stock' && item.stock_quantity > item.min_stock_level) ||
+                  (itemStockFilter === 'low_stock' && item.stock_quantity > 0 && item.stock_quantity <= item.min_stock_level) ||
+                  (itemStockFilter === 'out_of_stock' && item.stock_quantity === 0);
+                
+                return matchesSearch && matchesCategory && matchesStock;
+              });
+              
+              const totalPages = Math.ceil(filteredItems.length / itemItemsPerPage);
+              
+              if (totalPages <= 1) return null;
+              
+              return (
+                <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                  <div className="flex-1 flex justify-between sm:hidden">
+                    <button
+                      onClick={() => setItemCurrentPage(Math.max(1, itemCurrentPage - 1))}
+                      disabled={itemCurrentPage === 1}
+                      className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setItemCurrentPage(Math.min(totalPages, itemCurrentPage + 1))}
+                      disabled={itemCurrentPage === totalPages}
+                      className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        Showing{' '}
+                        <span className="font-medium">{(itemCurrentPage - 1) * itemItemsPerPage + 1}</span>
+                        {' '}to{' '}
+                        <span className="font-medium">
+                          {Math.min(itemCurrentPage * itemItemsPerPage, filteredItems.length)}
+                        </span>
+                        {' '}of{' '}
+                        <span className="font-medium">{filteredItems.length}</span>
+                        {' '}results
+                      </p>
+                    </div>
+                    <div>
+                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <button
+                          onClick={() => setItemCurrentPage(Math.max(1, itemCurrentPage - 1))}
+                          disabled={itemCurrentPage === 1}
+                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setItemCurrentPage(page)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              page === itemCurrentPage
+                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setItemCurrentPage(Math.min(totalPages, itemCurrentPage + 1))}
+                          disabled={itemCurrentPage === totalPages}
+                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

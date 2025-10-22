@@ -7,7 +7,7 @@ import SwapManager from './SwapManager';
 import PendingResales from './PendingResales';
 import CompletedSwaps from './CompletedSwaps';
 
-type TabType = 'analytics' | 'phones' | 'swaps' | 'pending-resales' | 'completed-swaps';
+type TabType = 'phones' | 'swaps' | 'pending-resales' | 'completed-swaps';
 
 interface StaffMember {
   id: number;
@@ -37,7 +37,7 @@ interface DashboardCard {
 }
 
 const ManagerDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('analytics');
+  const [activeTab, setActiveTab] = useState<TabType>('phones');
   const [stats, setStats] = useState<StaffStats | null>(null);
   const [dashboardCards, setDashboardCards] = useState<DashboardCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,7 +118,6 @@ const ManagerDashboard: React.FC = () => {
   if (!stats) return null;
 
   const tabs = [
-    { id: 'analytics' as TabType, label: 'Analytics', icon: '📈', count: null },
     { id: 'phones' as TabType, label: 'Phone Inventory', icon: '📱', count: phoneCount },
     { id: 'swaps' as TabType, label: 'Phone Swaps', icon: '🔄', count: null },
     { id: 'pending-resales' as TabType, label: 'Pending Resales', icon: '⏳', count: pendingCount },
@@ -135,188 +134,11 @@ const ManagerDashboard: React.FC = () => {
         return <PendingResales onUpdate={fetchCounts} />;
       case 'completed-swaps':
         return <CompletedSwaps />;
-      case 'analytics':
       default:
-        return renderAnalyticsContent();
+        return <Phones onUpdate={fetchCounts} />;
     }
   };
 
-  const renderAnalyticsContent = () => (
-    <div className="space-y-6">
-      {/* Dashboard Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {dashboardCards.map((card) => (
-          <div key={card.id} className="bg-white p-4 md:p-6 rounded-xl shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">{card.title}</div>
-                <div className={`text-3xl font-bold ${
-                  card.color === 'blue' ? 'text-blue-600' :
-                  card.color === 'green' ? 'text-green-600' :
-                  card.color === 'red' ? 'text-red-600' :
-                  card.color === 'purple' ? 'text-purple-600' :
-                  card.color === 'yellow' ? 'text-yellow-600' :
-                  card.color === 'indigo' ? 'text-indigo-600' :
-                  card.color === 'teal' ? 'text-teal-600' :
-                  'text-gray-600'
-                }`}>
-                  {card.value}
-                </div>
-              </div>
-              <div className={`text-2xl ${
-                card.color === 'blue' ? 'text-blue-500' :
-                card.color === 'green' ? 'text-green-500' :
-                card.color === 'red' ? 'text-red-500' :
-                card.color === 'purple' ? 'text-purple-500' :
-                card.color === 'yellow' ? 'text-yellow-500' :
-                card.color === 'indigo' ? 'text-indigo-500' :
-                card.color === 'teal' ? 'text-teal-500' :
-                'text-gray-500'
-              }`}>
-                {card.icon === 'faUserCircle' && '👤'}
-                {card.icon === 'faClock' && '⏰'}
-                {card.icon === 'faCheckCircle' && '✅'}
-                {card.icon === 'faPercent' && '💯'}
-                {card.icon === 'faMobileAlt' && '📱'}
-                {card.icon === 'faBox' && '📦'}
-                {card.icon === 'faUserTie' && '👔'}
-                {card.icon === 'faUsers' && '👥'}
-                {card.icon === 'faServer' && '🖥️'}
-                {card.icon === 'faDatabase' && '🗄️'}
-                {card.icon === 'faTools' && '🔧'}
-                {card.icon === 'faWrench' && '🔨'}
-                {card.icon === 'faCheck' && '✓'}
-                {card.icon === 'faExclamationTriangle' && '⚠️'}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Staff Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 md:p-6 rounded-xl shadow">
-          <div className="text-sm text-gray-500 mb-1">Total Staff</div>
-          <div className="text-3xl font-bold text-blue-600">{stats!.total_staff}</div>
-        </div>
-
-        <div className="bg-white p-4 md:p-6 rounded-xl shadow">
-          <div className="text-sm text-gray-500 mb-1">Active Staff</div>
-          <div className="text-3xl font-bold text-green-600">{stats!.active_staff}</div>
-        </div>
-
-        <div className="bg-white p-4 md:p-6 rounded-xl shadow">
-          <div className="text-sm text-gray-500 mb-1">Inactive Staff</div>
-          <div className="text-3xl font-bold text-red-600">{stats!.inactive_staff}</div>
-        </div>
-
-        <div className="bg-white p-4 md:p-6 rounded-xl shadow">
-          <div className="text-sm text-gray-500 mb-1">Total Activities</div>
-          <div className="text-3xl font-bold text-purple-600">{stats!.total_activities}</div>
-        </div>
-      </div>
-
-      {/* Staff by Role */}
-      <div className="bg-white p-4 md:p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Staff by Role</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {Object.entries(stats!.by_role).map(([role, count]) => (
-            <div key={role} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <span className="text-gray-700 font-medium capitalize">
-                {role.replace('_', ' ')}
-              </span>
-              <span className="text-2xl font-bold text-blue-600">{count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Staff List */}
-      <div className="bg-white p-4 md:p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Staff Members</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="p-3 text-sm font-semibold text-gray-600">Name</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">Username</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">Role</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">Status</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">Last Login</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats!.staff_list.map((staff) => (
-                <tr key={staff.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3 text-gray-800">{staff.full_name}</td>
-                  <td className="p-3 text-gray-600">{staff.username}</td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      staff.role === 'shop_keeper' ? 'bg-blue-100 text-blue-800' :
-                      staff.role === 'repairer' ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {staff.role.replace('_', ' ').toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      staff.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {staff.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="p-3 text-gray-600 text-sm">
-                    {staff.last_login ? new Date(staff.last_login).toLocaleString() : 'Never'}
-                  </td>
-                </tr>
-              ))}
-              {stats!.staff_list.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-4 md:p-6 text-center text-gray-500">
-                    No staff members yet. Create your first staff member!
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white p-4 md:p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a
-            href="/staff-management"
-            className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg text-center transition"
-          >
-            <div className="text-3xl mb-2">👥</div>
-            <div className="font-semibold text-blue-700">Manage Staff</div>
-            <div className="text-sm text-gray-600">Create & edit staff accounts</div>
-          </a>
-          
-          <a
-            href="/activity-logs"
-            className="p-4 bg-green-50 hover:bg-green-100 rounded-lg text-center transition"
-          >
-            <div className="text-3xl mb-2">📊</div>
-            <div className="font-semibold text-green-700">Activity Logs</div>
-            <div className="text-sm text-gray-600">View staff activities</div>
-          </a>
-          
-          <a
-            href="/admin"
-            className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg text-center transition"
-          >
-            <div className="text-3xl mb-2">📈</div>
-            <div className="font-semibold text-purple-700">Analytics</div>
-            <div className="text-sm text-gray-600">View shop analytics</div>
-          </a>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50">

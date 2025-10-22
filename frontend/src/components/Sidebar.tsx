@@ -83,7 +83,6 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
   // 👔 MANAGER - Business Owner (Full Business Operations)
   manager: [
     { name: 'Dashboard', icon: faChartLine, route: '/' },
-    { name: 'Manager Analytics', icon: faUserTie, route: '/manager-dashboard' },
     { name: 'Staff Management', icon: faUsers, route: '/staff-management' },
     { name: 'POS Monitor', icon: faEye, route: '/pos-monitor' },
     { name: 'Swapping Hub', icon: faExchangeAlt, route: '/swapping-hub' },
@@ -101,7 +100,6 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
   // 👔 CEO - Backward compatibility alias (maps to manager)
   ceo: [
     { name: 'Dashboard', icon: faChartLine, route: '/' },
-    { name: 'Manager Analytics', icon: faUserTie, route: '/manager-dashboard' },
     { name: 'Staff Management', icon: faUsers, route: '/staff-management' },
     { name: 'POS Monitor', icon: faEye, route: '/pos-monitor' },
     { name: 'Swapping Hub', icon: faExchangeAlt, route: '/swapping-hub' },

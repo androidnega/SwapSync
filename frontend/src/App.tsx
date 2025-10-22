@@ -13,7 +13,6 @@ import Phones from './pages/Phones';
 import Products from './pages/Products';
 import Repairs from './pages/Repairs';
 import PendingResales from './pages/PendingResales';
-import ManagerDashboard from './pages/ManagerDashboard';
 import StaffManagement from './pages/StaffManagement';
 import ActivityLogs from './pages/ActivityLogs';
 import Reports from './pages/Reports';
@@ -247,11 +246,6 @@ function AppContent() {
           <Route path="/profit-reports" element={
             <ProtectedRoute allowedRoles={['manager', 'ceo']} userRole={user.role}>
               <ProfitReports />
-            </ProtectedRoute>
-          } />
-          <Route path="/manager-dashboard" element={
-            <ProtectedRoute allowedRoles={['manager', 'ceo']} userRole={user.role}>
-              <ManagerDashboard />
             </ProtectedRoute>
           } />
           <Route path="/audit-code" element={
