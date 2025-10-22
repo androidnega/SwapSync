@@ -1,317 +1,335 @@
 # SwapSync - Professional Phone Swapping & Repair Shop Management System
 
-## 📋 Table of Contents
-- [System Overview](#system-overview)
-- [Core Features](#core-features)
-- [System Architecture](#system-architecture)
-- [Database Schema](#database-schema)
-- [User Roles & Permissions](#user-roles--permissions)
-- [API Endpoints](#api-endpoints)
-- [Frontend Components](#frontend-components)
-- [Migration to PHP/MySQL](#migration-to-phpmysql)
-- [Installation & Setup](#installation--setup)
-- [Configuration](#configuration)
-- [Deployment](#deployment)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/manuelcode/swapsync)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
+[![React](https://img.shields.io/badge/react-19.1.1-blue.svg)](https://reactjs.org)
+[![FastAPI](https://img.shields.io/badge/fastapi-0.104.1-green.svg)](https://fastapi.tiangolo.com)
 
-## 🎯 System Overview
+## 📱 Overview
 
-SwapSync is a comprehensive business management system designed specifically for phone swapping and repair shops. It provides end-to-end management of inventory, customer transactions, repairs, staff operations, and business analytics.
+SwapSync is a comprehensive business management system designed specifically for phone swapping and repair shops. It provides a complete solution for managing inventory, customer transactions, repairs, staff, and business analytics with real-time SMS notifications and multi-role access control.
 
-### Key Business Functions
-- **Phone Swapping**: Complete swap transaction management with profit tracking
-- **Repair Services**: Full repair workflow from booking to completion
-- **Point of Sale (POS)**: Multi-item sales system for accessories and products
-- **Inventory Management**: Phone and product inventory with stock tracking
-- **Customer Management**: Complete customer database with transaction history
-- **Staff Management**: Role-based access control and user management
-- **Business Analytics**: Comprehensive reporting and profit analysis
-- **SMS Notifications**: Automated customer notifications via SMS
+### 🎯 Key Features
 
-## 🚀 Core Features
-
-### 1. Phone Swapping System
-- **Swap Transactions**: Customer trades old phone + money for new phone
-- **Resale Tracking**: Track trade-in phones for resale with profit/loss calculation
-- **IMEI Management**: Unique IMEI tracking for all phones
-- **Condition Assessment**: Track phone conditions (New, Used, Refurbished)
-- **Profit Analytics**: Calculate profit margins and business performance
-
-### 2. Repair Management
-- **Repair Booking**: Customer repair requests with detailed issue descriptions
-- **Repair Tracking**: Status updates (Pending, In Progress, Completed, Delivered)
-- **Repair Items**: Track repair parts and components used
-- **Cost Management**: Service costs and parts costs tracking
-- **SMS Notifications**: Automated repair status updates to customers
-- **Repair Timeline**: Due dates and completion tracking
-
-### 3. Point of Sale (POS) System
-- **Multi-Item Sales**: Sell phones, accessories, and other products
-- **Category Management**: Organize products by categories (Phones, Earbuds, Chargers, etc.)
-- **Brand Management**: Track product brands (Samsung, Apple, Tecno, etc.)
-- **Stock Management**: Real-time inventory tracking with low-stock alerts
-- **Receipt Generation**: Professional receipts with company branding
-- **Transaction History**: Complete sales history and analytics
-
-### 4. Inventory Management
-- **Product Catalog**: Comprehensive product database
-- **Stock Tracking**: Real-time stock levels with movement history
-- **Purchase Management**: Track product purchases and suppliers
-- **Price Management**: Cost price, selling price, and discount pricing
-- **Barcode Support**: Barcode scanning for quick product identification
-- **Stock Alerts**: Low stock notifications and reorder suggestions
-
-### 5. Customer Management
-- **Customer Database**: Complete customer information and history
-- **Transaction History**: All customer interactions (swaps, sales, repairs)
-- **Contact Management**: Phone numbers, emails, and communication preferences
-- **Customer Analytics**: Purchase patterns and customer value analysis
-- **SMS Integration**: Automated customer notifications
-
-### 6. Staff & User Management
-- **Role-Based Access**: Multiple user roles with specific permissions
-- **User Authentication**: Secure login with JWT tokens
-- **Session Management**: Active session tracking and security
-- **Audit Trails**: Complete activity logging for all users
-- **Multi-Tenant Support**: Support for multiple business locations
-
-### 7. Business Analytics & Reporting
-- **Profit Reports**: Detailed profit/loss analysis
-- **Sales Analytics**: Sales trends and performance metrics
-- **Inventory Reports**: Stock levels, turnover, and valuation
-- **Customer Analytics**: Customer behavior and value analysis
-- **Staff Performance**: User activity and performance tracking
-- **Financial Reports**: Revenue, expenses, and profitability analysis
-
-### 8. SMS Notification System
-- **Multi-Provider Support**: Arkasel (Primary) and Hubtel (Fallback)
-- **Company Branding**: Custom sender IDs with company names
-- **Automated Notifications**: Repair updates, swap confirmations, sale receipts
-- **SMS Logging**: Complete SMS delivery tracking and history
-- **Bulk SMS**: Mass messaging capabilities for marketing
-
-### 9. System Administration
-- **Database Management**: Complete database administration tools
-- **System Maintenance**: Maintenance mode and system health monitoring
-- **Backup & Recovery**: Data backup and restoration capabilities
-- **System Cleanup**: Automated cleanup of old data and logs
-- **Activity Logs**: Comprehensive system activity monitoring
+- **Phone Swapping Management** - Complete swap transaction tracking with profit/loss calculations
+- **Repair Service Management** - Track repair jobs, parts usage, and customer notifications
+- **Point of Sale (POS) System** - Multi-item sales with inventory management
+- **Customer Management** - Comprehensive customer database with transaction history
+- **Inventory Management** - Track phones, accessories, and repair parts
+- **Staff Management** - Role-based access control with audit trails
+- **SMS Notifications** - Automated customer notifications via Arkasel/Hubtel
+- **Business Analytics** - Profit reports, sales analytics, and performance metrics
+- **Multi-tenant Support** - Company isolation with branded SMS
+- **Real-time Dashboard** - Live updates and WebSocket support
 
 ## 🏗️ System Architecture
 
 ### Backend (Python/FastAPI)
-- **Framework**: FastAPI with SQLAlchemy ORM
+- **Framework**: FastAPI 0.104.1
 - **Database**: SQLite (development) / PostgreSQL (production)
-- **Authentication**: JWT tokens with role-based access control
-- **API**: RESTful API with comprehensive endpoints
-- **Real-time**: WebSocket support for live updates
-- **Background Tasks**: APScheduler for automated tasks
+- **Authentication**: JWT with role-based access control
+- **SMS Integration**: Arkasel (primary) + Hubtel (fallback)
+- **Background Tasks**: APScheduler for automated notifications
+- **API Documentation**: Auto-generated OpenAPI/Swagger docs
 
 ### Frontend (React/TypeScript)
-- **Framework**: React 19 with TypeScript
-- **UI Library**: Tailwind CSS with custom components
-- **State Management**: React hooks and context
-- **Routing**: React Router for navigation
-- **Charts**: Recharts for analytics visualization
-- **Icons**: FontAwesome for consistent iconography
+- **Framework**: React 19.1.1 with TypeScript
+- **Styling**: Tailwind CSS
+- **Routing**: React Router DOM
+- **State Management**: React Hooks
+- **Charts**: Recharts for analytics
+- **Icons**: FontAwesome
+- **Build Tool**: Vite
 
 ### Database Schema
-- **SQLAlchemy Models**: 25+ database models
-- **Relationships**: Complex foreign key relationships
-- **Indexes**: Optimized database indexes for performance
-- **Migrations**: Automated database migration system
-- **Constraints**: Data integrity constraints and validations
 
-## 📊 Database Schema
+#### Core Models
+- **Users** - Staff authentication and role management
+- **Customers** - Client information and transaction history
+- **Phones** - Phone inventory with specifications
+- **Products** - Universal product catalog (phones, accessories, parts)
+- **Swaps** - Phone swap transactions with resale tracking
+- **Sales** - Direct phone sales
+- **Repairs** - Repair job management
+- **Categories** - Product categorization
+- **Brands** - Phone brand management
 
-### Core Tables
+#### Supporting Models
+- **POSSales** - Point of sale transactions
+- **RepairItems** - Repair parts inventory
+- **SMSLogs** - SMS notification tracking
+- **ActivityLogs** - System audit trail
+- **Invoices** - Transaction invoicing
+- **UserSessions** - Session management
 
-#### Users & Authentication
-- `users` - User accounts with roles and permissions
-- `user_sessions` - Active user sessions
-- `otp_sessions` - OTP verification sessions
-- `audit_codes` - Manager audit access codes
+## 🚀 Quick Start
 
-#### Business Entities
-- `customers` - Customer information and contact details
-- `brands` - Phone/product brands (Samsung, Apple, etc.)
-- `categories` - Product categories (Phones, Accessories, etc.)
-- `products` - Universal product catalog
-- `phones` - Phone-specific inventory (legacy, being migrated to products)
+### Prerequisites
+- Python 3.8+
+- Node.js 16+
+- npm or yarn
 
-#### Transactions
-- `swaps` - Phone swap transactions with resale tracking
-- `sales` - Direct phone sales
-- `product_sales` - Product sales (accessories, etc.)
-- `pos_sales` - Point of sale transactions
-- `pos_sale_items` - Individual items in POS transactions
+### Backend Setup
 
-#### Repair System
-- `repairs` - Repair requests and tracking
-- `repair_items` - Repair parts and components
-- `repair_item_usage` - Track repair item consumption
+1. **Clone the repository**
+```bash
+git clone https://github.com/manuelcode/swapsync.git
+cd swapsync/backend
+```
 
-#### System & Logging
-- `activity_logs` - System activity tracking
-- `sms_logs` - SMS delivery logs
-- `invoices` - Invoice generation and tracking
-- `pending_resales` - Trade-in phone resale tracking
-- `sms_config` - SMS provider configuration
+2. **Create virtual environment**
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# Unix/MacOS
+source venv/bin/activate
+```
 
-### Key Relationships
-- Users can create customers, products, and transactions
-- Customers have multiple transactions (swaps, sales, repairs)
-- Products belong to categories and brands
-- Swaps track both given and received phones
-- Repairs link to customers and assigned staff
-- All transactions generate invoices and activity logs
+3. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+4. **Run the server**
+```bash
+python main.py
+```
+
+The API will be available at: http://127.0.0.1:8000
+API Documentation: http://127.0.0.1:8000/docs
+
+### Frontend Setup
+
+1. **Navigate to frontend directory**
+```bash
+cd ../frontend
+```
+
+2. **Install dependencies**
+```bash
+npm install
+```
+
+3. **Start development server**
+```bash
+npm run dev
+```
+
+The frontend will be available at: http://localhost:5173
 
 ## 👥 User Roles & Permissions
 
-### 1. Super Admin
-- **Access**: Complete system access
-- **Permissions**: 
-  - System database management
-  - User management (create managers)
-  - System settings and configuration
-  - SMS configuration
-  - Activity logs and audit trails
-  - System maintenance
+### Super Admin
+- System-wide access and configuration
+- User management and role assignment
+- Database management and maintenance
+- SMS configuration and broadcasting
 
-### 2. Manager/CEO
-- **Access**: Business operations and analytics
-- **Permissions**:
-  - Business reports and analytics
-  - Staff management (create shop keepers/repairers)
-  - Brand and category management
-  - Audit code management
-  - POS monitoring
-  - Profit reports
+### Manager/CEO
+- Business analytics and reports
+- Staff management
+- Brand and category management
+- Audit code generation
+- POS transaction monitoring
 
-### 3. Shop Keeper
-- **Access**: Daily business operations
-- **Permissions**:
-  - Customer management
-  - Phone and product management
-  - Swap transactions
-  - POS system operations
-  - Sales management
-  - Pending resales
+### Shop Keeper
+- Customer management
+- Phone and product sales
+- Swap transactions
+- POS system operations
+- Inventory management
 
-### 4. Repairer
-- **Access**: Repair operations only
-- **Permissions**:
-  - Repair management
-  - Customer management (for repairs)
-  - Repair item tracking
-  - Repair status updates
+### Repairer
+- Repair job management
+- Customer notifications
+- Repair parts tracking
+- Repair status updates
 
-## 🔌 API Endpoints
+## 📊 Core Features
+
+### 1. Phone Swapping System
+- **Swap Transactions**: Track customer trade-ins with new phone purchases
+- **Resale Management**: Monitor trade-in phones for resale opportunities
+- **Profit Tracking**: Calculate profit/loss on swap chains
+- **IMEI Tracking**: Unique phone identification and history
+
+### 2. Repair Management
+- **Job Tracking**: Complete repair workflow from booking to delivery
+- **Parts Management**: Track repair item usage and costs
+- **Customer Notifications**: Automated SMS updates on repair status
+- **Cost Calculation**: Service fees + parts costs with profit margins
+
+### 3. Point of Sale (POS)
+- **Multi-item Sales**: Sell phones, accessories, and repair parts
+- **Inventory Integration**: Real-time stock updates
+- **Receipt Generation**: Professional invoice printing
+- **Transaction History**: Complete sales audit trail
+
+### 4. Customer Management
+- **Customer Database**: Comprehensive client information
+- **Transaction History**: Complete purchase and repair history
+- **SMS Integration**: Automated notifications and updates
+- **Unique IDs**: Customer identification system (CUST-0001)
+
+### 5. Inventory Management
+- **Product Catalog**: Universal product management
+- **Stock Tracking**: Real-time inventory levels
+- **Low Stock Alerts**: Automated reorder notifications
+- **Brand & Category Management**: Organized product hierarchy
+
+### 6. SMS Notifications
+- **Multi-provider Support**: Arkasel (primary) + Hubtel (fallback)
+- **Company Branding**: Custom sender IDs per company
+- **Automated Triggers**: Repair updates, swap confirmations, sale receipts
+- **Delivery Tracking**: Repair completion notifications
+
+### 7. Business Analytics
+- **Profit Reports**: Detailed profit/loss analysis
+- **Sales Analytics**: Performance metrics and trends
+- **Staff Performance**: Individual and team metrics
+- **Inventory Reports**: Stock movement and turnover
+
+## 🔧 Configuration
+
+### Environment Variables
+```bash
+# Database
+DATABASE_URL=sqlite:///./swapsync.db  # or PostgreSQL URL
+
+# Security
+SECRET_KEY=your-secret-key-change-in-production
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# SMS Configuration (Optional)
+ARKASEL_API_KEY=your-arkasel-api-key
+ARKASEL_SENDER_ID=YourCompany
+HUBTEL_CLIENT_ID=your-hubtel-client-id
+HUBTEL_CLIENT_SECRET=your-hubtel-client-secret
+```
+
+### SMS Setup
+1. **Arkasel (Recommended)**
+   - Register at https://arkesel.com
+   - Get API key and configure sender ID
+   - Set `ARKASEL_API_KEY` environment variable
+
+2. **Hubtel (Fallback)**
+   - Register at https://hubtel.com
+   - Get client credentials
+   - Set `HUBTEL_CLIENT_ID` and `HUBTEL_CLIENT_SECRET`
+
+## 📱 API Endpoints
 
 ### Authentication
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout
 - `GET /api/auth/me` - Get current user info
-- `POST /api/otp/send` - Send OTP for verification
-- `POST /api/otp/verify` - Verify OTP
 
-### Customer Management
-- `GET /api/customers/` - List customers
-- `POST /api/customers/` - Create customer
-- `PUT /api/customers/{id}` - Update customer
-- `DELETE /api/customers/{id}` - Delete customer
-
-### Phone Management
+### Core Operations
 - `GET /api/phones/` - List phones
-- `POST /api/phones/` - Add phone
-- `PUT /api/phones/{id}` - Update phone
-- `DELETE /api/phones/{id}` - Delete phone
+- `POST /api/phones/` - Add new phone
+- `GET /api/swaps/` - List swap transactions
+- `POST /api/swaps/` - Create swap transaction
+- `GET /api/repairs/` - List repair jobs
+- `POST /api/repairs/` - Create repair job
 
-### Product Management
-- `GET /api/products/` - List products
-- `POST /api/products/` - Create product
-- `PUT /api/products/{id}` - Update product
-- `DELETE /api/products/{id}` - Delete product
+### Management
+- `GET /api/customers/` - List customers
+- `GET /api/reports/` - Business reports
+- `GET /api/analytics/` - Performance analytics
+- `POST /api/sms/send` - Send SMS notification
 
-### Swap Management
-- `GET /api/swaps/` - List swaps
-- `POST /api/swaps/` - Create swap
-- `PUT /api/swaps/{id}` - Update swap
-- `GET /api/swaps/{id}/invoice` - Generate swap invoice
+## 🗄️ Database Schema
 
-### Repair Management
-- `GET /api/repairs/` - List repairs
-- `POST /api/repairs/` - Create repair
-- `PUT /api/repairs/{id}` - Update repair
-- `POST /api/repairs/{id}/complete` - Complete repair
+### Key Tables
 
-### POS System
-- `GET /api/pos/sales/` - List POS sales
-- `POST /api/pos/sales/` - Create POS sale
-- `GET /api/pos/sales/{id}/receipt` - Generate receipt
+#### users
+```sql
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    unique_id VARCHAR(20) UNIQUE,
+    username VARCHAR UNIQUE NOT NULL,
+    email VARCHAR UNIQUE NOT NULL,
+    full_name VARCHAR NOT NULL,
+    role VARCHAR NOT NULL, -- super_admin, manager, shop_keeper, repairer
+    company_name VARCHAR,
+    use_company_sms_branding INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-### Reports & Analytics
-- `GET /api/reports/sales` - Sales reports
-- `GET /api/reports/profit` - Profit reports
-- `GET /api/analytics/dashboard` - Dashboard analytics
-- `GET /api/reports/inventory` - Inventory reports
+#### customers
+```sql
+CREATE TABLE customers (
+    id INTEGER PRIMARY KEY,
+    unique_id VARCHAR(20) UNIQUE,
+    full_name VARCHAR NOT NULL,
+    phone_number VARCHAR UNIQUE NOT NULL,
+    email VARCHAR,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-### System Administration
-- `GET /api/admin/users/` - List users
-- `POST /api/admin/users/` - Create user
-- `PUT /api/admin/users/{id}` - Update user
-- `GET /api/activity-logs/` - Activity logs
-- `POST /api/maintenance/toggle` - Toggle maintenance mode
+#### phones
+```sql
+CREATE TABLE phones (
+    id INTEGER PRIMARY KEY,
+    unique_id VARCHAR(20) UNIQUE,
+    imei VARCHAR UNIQUE,
+    brand VARCHAR NOT NULL,
+    model VARCHAR NOT NULL,
+    condition VARCHAR NOT NULL,
+    value DECIMAL NOT NULL,
+    cost_price DECIMAL,
+    specs JSON,
+    status VARCHAR DEFAULT 'AVAILABLE',
+    is_swappable BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-## 🎨 Frontend Components
-
-### Main Pages
-- **Dashboard**: Role-based dashboard with key metrics
-- **SwappingHub**: Consolidated phone swapping operations
-- **ProductsHub**: Product and inventory management
-- **POSSystem**: Point of sale interface
-- **Repairs**: Repair management interface
-- **Customers**: Customer management
-- **Reports**: Business analytics and reporting
-- **Settings**: System configuration
-
-### Key Components
-- **Sidebar**: Navigation with role-based menu items
-- **ProtectedRoute**: Route protection based on user roles
-- **DataTable**: Reusable data table with sorting/filtering
-- **Modal**: Reusable modal dialogs
-- **Form**: Form components with validation
-- **Charts**: Analytics charts using Recharts
-- **Print**: Receipt and invoice printing
-
-### UI Features
-- **Responsive Design**: Mobile-friendly interface
-- **Dark/Light Theme**: Theme switching capability
-- **Real-time Updates**: Live data updates
-- **Offline Support**: Offline data storage (planned)
-- **Print Support**: Receipt and invoice printing
-- **Export**: Data export capabilities
+#### swaps
+```sql
+CREATE TABLE swaps (
+    id INTEGER PRIMARY KEY,
+    customer_id INTEGER REFERENCES customers(id),
+    given_phone_description VARCHAR NOT NULL,
+    given_phone_value DECIMAL NOT NULL,
+    new_phone_id INTEGER REFERENCES phones(id),
+    balance_paid DECIMAL NOT NULL,
+    final_price DECIMAL NOT NULL,
+    resale_status VARCHAR DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
 
 ## 🔄 Migration to PHP/MySQL
 
 ### Overview
-This guide provides a comprehensive approach to migrating SwapSync from Python/FastAPI/SQLite to PHP/MySQL while maintaining all functionality and features.
+This guide provides a comprehensive roadmap for migrating SwapSync from Python/FastAPI/SQLite to PHP/MySQL while maintaining all functionality and features.
 
 ### 1. Technology Stack Migration
 
 #### Current Stack → Target Stack
-- **Backend**: Python/FastAPI → PHP 8.1+/Laravel 10+
+- **Backend**: Python/FastAPI → PHP 8.1+/Laravel 10+ or Symfony 6+
 - **Database**: SQLite → MySQL 8.0+
-- **ORM**: SQLAlchemy → Eloquent ORM
-- **Authentication**: JWT → Laravel Sanctum
-- **Frontend**: React/TypeScript → Keep React/TypeScript (or migrate to Vue.js/PHP Blade)
+- **Frontend**: React/TypeScript → Keep React or migrate to Vue.js/Angular
+- **Authentication**: JWT → Laravel Sanctum or Symfony Security
+- **SMS**: Python requests → Guzzle HTTP or cURL
 
 ### 2. Database Migration
 
 #### MySQL Schema Creation
 ```sql
+-- Create database
+CREATE DATABASE swapsync CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE swapsync;
+
 -- Users table
 CREATE TABLE users (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     unique_id VARCHAR(20) UNIQUE,
     username VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -320,59 +338,124 @@ CREATE TABLE users (
     display_name VARCHAR(255),
     profile_picture TEXT,
     company_name VARCHAR(255),
-    use_company_sms_branding TINYINT DEFAULT 0,
+    use_company_sms_branding TINYINT(1) DEFAULT 0,
     password VARCHAR(255) NOT NULL,
-    role ENUM('super_admin', 'manager', 'ceo', 'shop_keeper', 'repairer', 'admin') DEFAULT 'shop_keeper',
-    parent_user_id INT,
+    role ENUM('super_admin', 'manager', 'shop_keeper', 'repairer') DEFAULT 'shop_keeper',
+    parent_user_id BIGINT UNSIGNED,
     audit_code VARCHAR(6),
-    is_active TINYINT DEFAULT 1,
-    must_change_password TINYINT DEFAULT 1,
+    is_active TINYINT(1) DEFAULT 1,
+    must_change_password TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL,
-    current_session_id INT,
-    FOREIGN KEY (parent_user_id) REFERENCES users(id)
+    current_session_id BIGINT UNSIGNED,
+    INDEX idx_username (username),
+    INDEX idx_email (email),
+    INDEX idx_role (role),
+    FOREIGN KEY (parent_user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Customers table
 CREATE TABLE customers (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     unique_id VARCHAR(20) UNIQUE,
     full_name VARCHAR(255) NOT NULL,
-    phone_number VARCHAR(20) UNIQUE,
+    phone_number VARCHAR(20) UNIQUE NOT NULL,
     email VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by_user_id INT,
+    created_by_user_id BIGINT UNSIGNED,
     deletion_code VARCHAR(20),
     code_generated_at TIMESTAMP NULL,
-    FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    INDEX idx_phone (phone_number),
+    INDEX idx_unique_id (unique_id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Brands table
 CREATE TABLE brands (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     logo_url VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
 );
 
 -- Categories table
 CREATE TABLE categories (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     icon VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+);
+
+-- Phones table
+CREATE TABLE phones (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    unique_id VARCHAR(20) UNIQUE,
+    imei VARCHAR(50) UNIQUE,
+    brand VARCHAR(255) NOT NULL,
+    brand_id BIGINT UNSIGNED,
+    model VARCHAR(255) NOT NULL,
+    category_id BIGINT UNSIGNED,
+    condition VARCHAR(100) NOT NULL,
+    value DECIMAL(10,2) NOT NULL,
+    cost_price DECIMAL(10,2),
+    specs JSON,
+    status ENUM('AVAILABLE', 'SOLD', 'UNDER_REPAIR') DEFAULT 'AVAILABLE',
+    is_available BOOLEAN DEFAULT TRUE,
+    is_swappable BOOLEAN DEFAULT TRUE,
+    swapped_from_id BIGINT UNSIGNED,
+    created_by_user_id BIGINT UNSIGNED,
+    current_owner_id BIGINT UNSIGNED,
+    current_owner_type VARCHAR(20) DEFAULT 'shop',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_imei (imei),
+    INDEX idx_brand (brand),
+    INDEX idx_status (status),
+    INDEX idx_unique_id (unique_id),
+    FOREIGN KEY (brand_id) REFERENCES brands(id) ON DELETE SET NULL,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (current_owner_id) REFERENCES customers(id) ON DELETE SET NULL
+);
+
+-- Swaps table
+CREATE TABLE swaps (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    customer_id BIGINT UNSIGNED NOT NULL,
+    given_phone_description TEXT NOT NULL,
+    given_phone_value DECIMAL(10,2) NOT NULL,
+    given_phone_imei VARCHAR(50),
+    new_phone_id BIGINT UNSIGNED NOT NULL,
+    balance_paid DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    discount_amount DECIMAL(10,2) DEFAULT 0.00,
+    final_price DECIMAL(10,2) NOT NULL,
+    resale_status ENUM('pending', 'sold', 'swapped_again') DEFAULT 'pending',
+    resale_value DECIMAL(10,2) DEFAULT 0.00,
+    profit_or_loss DECIMAL(10,2) DEFAULT 0.00,
+    linked_to_resale_id BIGINT UNSIGNED,
+    invoice_number VARCHAR(100) UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_customer (customer_id),
+    INDEX idx_new_phone (new_phone_id),
+    INDEX idx_resale_status (resale_status),
+    INDEX idx_invoice (invoice_number),
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    FOREIGN KEY (new_phone_id) REFERENCES phones(id) ON DELETE CASCADE,
+    FOREIGN KEY (linked_to_resale_id) REFERENCES swaps(id) ON DELETE SET NULL
 );
 
 -- Products table (Universal product catalog)
 CREATE TABLE products (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     unique_id VARCHAR(20) UNIQUE,
     name VARCHAR(255) NOT NULL,
     sku VARCHAR(100) UNIQUE,
     barcode VARCHAR(100) UNIQUE,
-    category_id INT NOT NULL,
+    category_id BIGINT UNSIGNED NOT NULL,
     brand VARCHAR(255),
     cost_price DECIMAL(10,2) NOT NULL,
     selling_price DECIMAL(10,2) NOT NULL,
@@ -381,63 +464,48 @@ CREATE TABLE products (
     min_stock_level INT DEFAULT 5,
     description TEXT,
     specs JSON,
-    condition VARCHAR(50) DEFAULT 'New',
+    condition VARCHAR(100) DEFAULT 'New',
     imei VARCHAR(50) UNIQUE,
     is_phone BOOLEAN DEFAULT FALSE,
     is_swappable BOOLEAN DEFAULT FALSE,
-    phone_condition VARCHAR(50),
+    phone_condition VARCHAR(100),
     phone_specs JSON,
     phone_status VARCHAR(50) DEFAULT 'AVAILABLE',
-    swapped_from_id INT,
-    current_owner_id INT,
-    current_owner_type VARCHAR(50) DEFAULT 'shop',
+    swapped_from_id BIGINT UNSIGNED,
+    current_owner_id BIGINT UNSIGNED,
+    current_owner_type VARCHAR(20) DEFAULT 'shop',
     is_active BOOLEAN DEFAULT TRUE,
     is_available BOOLEAN DEFAULT TRUE,
-    created_by_user_id INT,
+    created_by_user_id BIGINT UNSIGNED,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id),
-    FOREIGN KEY (swapped_from_id) REFERENCES swaps(id),
-    FOREIGN KEY (current_owner_id) REFERENCES customers(id),
-    FOREIGN KEY (created_by_user_id) REFERENCES users(id)
-);
-
--- Swaps table
-CREATE TABLE swaps (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    customer_id INT NOT NULL,
-    given_phone_description TEXT NOT NULL,
-    given_phone_value DECIMAL(10,2) NOT NULL,
-    given_phone_imei VARCHAR(50),
-    new_phone_id INT NOT NULL,
-    balance_paid DECIMAL(10,2) DEFAULT 0.00,
-    discount_amount DECIMAL(10,2) DEFAULT 0.00,
-    final_price DECIMAL(10,2) NOT NULL,
-    resale_status ENUM('pending', 'sold', 'swapped_again') DEFAULT 'pending',
-    resale_value DECIMAL(10,2) DEFAULT 0.00,
-    profit_or_loss DECIMAL(10,2) DEFAULT 0.00,
-    linked_to_resale_id INT,
-    invoice_number VARCHAR(100) UNIQUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id),
-    FOREIGN KEY (new_phone_id) REFERENCES products(id),
-    FOREIGN KEY (linked_to_resale_id) REFERENCES swaps(id)
+    INDEX idx_name (name),
+    INDEX idx_sku (sku),
+    INDEX idx_barcode (barcode),
+    INDEX idx_category (category_id),
+    INDEX idx_brand (brand),
+    INDEX idx_is_phone (is_phone),
+    INDEX idx_imei (imei),
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (current_owner_id) REFERENCES customers(id) ON DELETE SET NULL,
+    FOREIGN KEY (swapped_from_id) REFERENCES swaps(id) ON DELETE SET NULL
 );
 
 -- Repairs table
 CREATE TABLE repairs (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     unique_id VARCHAR(20) UNIQUE,
-    customer_id INT NOT NULL,
+    customer_id BIGINT UNSIGNED NOT NULL,
     customer_name VARCHAR(255),
-    phone_id INT,
-    staff_id INT,
-    created_by_user_id INT,
-    phone_description VARCHAR(255) NOT NULL,
+    phone_id BIGINT UNSIGNED,
+    staff_id BIGINT UNSIGNED,
+    created_by_user_id BIGINT UNSIGNED,
+    phone_description TEXT NOT NULL,
     issue_description TEXT NOT NULL,
     diagnosis TEXT,
-    service_cost DECIMAL(10,2) DEFAULT 0.00,
-    items_cost DECIMAL(10,2) DEFAULT 0.00,
+    service_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    items_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     cost DECIMAL(10,2) NOT NULL,
     status VARCHAR(50) DEFAULT 'Pending',
     due_date TIMESTAMP NULL,
@@ -447,548 +515,448 @@ CREATE TABLE repairs (
     tracking_code VARCHAR(20) UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id),
-    FOREIGN KEY (phone_id) REFERENCES products(id),
-    FOREIGN KEY (staff_id) REFERENCES users(id),
-    FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    INDEX idx_customer (customer_id),
+    INDEX idx_staff (staff_id),
+    INDEX idx_status (status),
+    INDEX idx_tracking (tracking_code),
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    FOREIGN KEY (phone_id) REFERENCES phones(id) ON DELETE SET NULL,
+    FOREIGN KEY (staff_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- POS Sales table
 CREATE TABLE pos_sales (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     unique_id VARCHAR(20) UNIQUE,
-    customer_id INT,
+    customer_id BIGINT UNSIGNED,
     total_amount DECIMAL(10,2) NOT NULL,
     discount_amount DECIMAL(10,2) DEFAULT 0.00,
     final_amount DECIMAL(10,2) NOT NULL,
     payment_method VARCHAR(50) DEFAULT 'cash',
-    created_by_user_id INT,
+    created_by_user_id BIGINT UNSIGNED NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id),
-    FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    INDEX idx_customer (customer_id),
+    INDEX idx_created_by (created_by_user_id),
+    INDEX idx_created_at (created_at),
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- POS Sale Items table
 CREATE TABLE pos_sale_items (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    pos_sale_id INT NOT NULL,
-    product_id INT NOT NULL,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pos_sale_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NOT NULL,
     quantity INT NOT NULL,
     unit_price DECIMAL(10,2) NOT NULL,
     total_price DECIMAL(10,2) NOT NULL,
+    INDEX idx_pos_sale (pos_sale_id),
+    INDEX idx_product (product_id),
     FOREIGN KEY (pos_sale_id) REFERENCES pos_sales(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
--- Activity Logs table
-CREATE TABLE activity_logs (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    action VARCHAR(255) NOT NULL,
-    table_name VARCHAR(100),
-    record_id INT,
-    old_values JSON,
-    new_values JSON,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
+-- SMS Configuration table
+CREATE TABLE sms_configs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    arkasel_api_key_encrypted TEXT,
+    arkasel_sender_id VARCHAR(50) DEFAULT 'SwapSync',
+    arkasel_enabled BOOLEAN DEFAULT FALSE,
+    hubtel_client_id_encrypted TEXT,
+    hubtel_client_secret_encrypted TEXT,
+    hubtel_sender_id VARCHAR(50) DEFAULT 'SwapSync',
+    hubtel_enabled BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- SMS Logs table
 CREATE TABLE sms_logs (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     phone_number VARCHAR(20) NOT NULL,
     message TEXT NOT NULL,
     status VARCHAR(50) NOT NULL,
     provider VARCHAR(50),
     message_id VARCHAR(100),
     error_message TEXT,
-    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_phone (phone_number),
+    INDEX idx_status (status),
+    INDEX idx_sent_at (sent_at)
 );
 
--- SMS Config table
-CREATE TABLE sms_config (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    arkasel_api_key TEXT,
-    arkasel_sender_id VARCHAR(50) DEFAULT 'SwapSync',
-    arkasel_enabled BOOLEAN DEFAULT FALSE,
-    hubtel_client_id TEXT,
-    hubtel_client_secret TEXT,
-    hubtel_sender_id VARCHAR(50) DEFAULT 'SwapSync',
-    hubtel_enabled BOOLEAN DEFAULT FALSE,
+-- Activity Logs table
+CREATE TABLE activity_logs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED,
+    action VARCHAR(100) NOT NULL,
+    table_name VARCHAR(100),
+    record_id BIGINT UNSIGNED,
+    old_values JSON,
+    new_values JSON,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    INDEX idx_user (user_id),
+    INDEX idx_action (action),
+    INDEX idx_table (table_name),
+    INDEX idx_created_at (created_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 ```
 
-### 3. Laravel Backend Implementation
+### 3. PHP Framework Setup
 
-#### Project Structure
-```
-swapsync-php/
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── AuthController.php
-│   │   │   ├── CustomerController.php
-│   │   │   ├── ProductController.php
-│   │   │   ├── SwapController.php
-│   │   │   ├── RepairController.php
-│   │   │   ├── POSController.php
-│   │   │   └── ReportController.php
-│   │   ├── Middleware/
-│   │   │   ├── RoleMiddleware.php
-│   │   │   └── AuditMiddleware.php
-│   │   └── Requests/
-│   │       ├── CustomerRequest.php
-│   │       ├── ProductRequest.php
-│   │       └── SwapRequest.php
-│   ├── Models/
-│   │   ├── User.php
-│   │   ├── Customer.php
-│   │   ├── Product.php
-│   │   ├── Swap.php
-│   │   ├── Repair.php
-│   │   └── POSSale.php
-│   ├── Services/
-│   │   ├── SMSService.php
-│   │   ├── ReportService.php
-│   │   └── AuditService.php
-│   └── Enums/
-│       ├── UserRole.php
-│       ├── PhoneStatus.php
-│       └── ResaleStatus.php
-├── database/
-│   ├── migrations/
-│   └── seeders/
-├── routes/
-│   └── api.php
-└── config/
-    └── swapsync.php
+#### Option A: Laravel 10+ (Recommended)
+```bash
+# Create new Laravel project
+composer create-project laravel/laravel swapsync-php
+
+# Install required packages
+composer require laravel/sanctum
+composer require guzzlehttp/guzzle
+composer require spatie/laravel-permission
+composer require barryvdh/laravel-dompdf
 ```
 
-#### Key Laravel Models
+#### Option B: Symfony 6+
+```bash
+# Create new Symfony project
+composer create-project symfony/skeleton swapsync-php
 
-**User Model (app/Models/User.php)**
+# Install required packages
+composer require symfony/security-bundle
+composer require symfony/orm-pack
+composer require symfony/maker-bundle
+composer require guzzlehttp/guzzle
+```
+
+### 4. Data Migration Script
+
+#### Python to MySQL Data Export
+```python
+# export_data.py
+import sqlite3
+import json
+import csv
+from datetime import datetime
+
+def export_to_mysql_format():
+    conn = sqlite3.connect('swapsync.db')
+    cursor = conn.cursor()
+    
+    # Export users
+    cursor.execute("SELECT * FROM users")
+    users = cursor.fetchall()
+    
+    with open('users_export.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['id', 'unique_id', 'username', 'email', 'phone_number', 
+                        'full_name', 'display_name', 'company_name', 
+                        'use_company_sms_branding', 'role', 'parent_user_id', 
+                        'audit_code', 'is_active', 'created_at'])
+        for user in users:
+            writer.writerow(user)
+    
+    # Export customers
+    cursor.execute("SELECT * FROM customers")
+    customers = cursor.fetchall()
+    
+    with open('customers_export.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['id', 'unique_id', 'full_name', 'phone_number', 
+                        'email', 'created_at', 'created_by_user_id'])
+        for customer in customers:
+            writer.writerow(customer)
+    
+    # Continue for all tables...
+    conn.close()
+
+if __name__ == "__main__":
+    export_to_mysql_format()
+```
+
+#### PHP Data Import Script
 ```php
 <?php
+// import_data.php
+require_once 'vendor/autoload.php';
 
-namespace App\Models;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
-
-class User extends Authenticatable
-{
-    use HasApiTokens, HasFactory;
-
-    protected $fillable = [
-        'unique_id',
-        'username',
-        'email',
-        'phone_number',
-        'full_name',
-        'display_name',
-        'profile_picture',
-        'company_name',
-        'use_company_sms_branding',
-        'password',
-        'role',
-        'parent_user_id',
-        'audit_code',
-        'is_active',
-        'must_change_password'
-    ];
-
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'use_company_sms_branding' => 'boolean',
-        'is_active' => 'boolean',
-        'must_change_password' => 'boolean',
-    ];
-
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'parent_user_id');
-    }
-
-    public function createdUsers()
-    {
-        return $this->hasMany(User::class, 'parent_user_id');
-    }
-
-    public function isSuperAdmin()
-    {
-        return in_array($this->role, ['admin', 'super_admin']);
-    }
-
-    public function isManager()
-    {
-        return in_array($this->role, ['manager', 'ceo']);
-    }
-
-    public function canCreateRole($targetRole)
-    {
-        if ($this->isSuperAdmin()) {
-            return in_array($targetRole, ['manager', 'ceo']);
-        } elseif ($this->isManager()) {
-            return in_array($targetRole, ['shop_keeper', 'repairer']);
+class DataImporter {
+    public function importUsers($csvFile) {
+        $handle = fopen($csvFile, 'r');
+        $header = fgetcsv($handle);
+        
+        while (($data = fgetcsv($handle)) !== FALSE) {
+            DB::table('users')->insert([
+                'id' => $data[0],
+                'unique_id' => $data[1],
+                'username' => $data[2],
+                'email' => $data[3],
+                'phone_number' => $data[4],
+                'full_name' => $data[5],
+                'display_name' => $data[6],
+                'company_name' => $data[7],
+                'use_company_sms_branding' => $data[8],
+                'password' => Hash::make('defaultpassword123'), // Reset passwords
+                'role' => $data[9],
+                'parent_user_id' => $data[10],
+                'audit_code' => $data[11],
+                'is_active' => $data[12],
+                'created_at' => $data[13],
+                'updated_at' => now()
+            ]);
         }
-        return false;
+        fclose($handle);
     }
+    
+    public function importCustomers($csvFile) {
+        // Similar implementation for customers
+    }
+    
+    // Continue for all tables...
 }
+
+$importer = new DataImporter();
+$importer->importUsers('users_export.csv');
+$importer->importCustomers('customers_export.csv');
 ```
 
-**Product Model (app/Models/Product.php)**
+### 5. API Endpoint Migration
+
+#### Laravel Routes Example
 ```php
-<?php
+// routes/api.php
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PhoneController;
+use App\Http\Controllers\SwapController;
+use App\Http\Controllers\RepairController;
 
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Product extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'unique_id',
-        'name',
-        'sku',
-        'barcode',
-        'category_id',
-        'brand',
-        'cost_price',
-        'selling_price',
-        'discount_price',
-        'quantity',
-        'min_stock_level',
-        'description',
-        'specs',
-        'condition',
-        'imei',
-        'is_phone',
-        'is_swappable',
-        'phone_condition',
-        'phone_specs',
-        'phone_status',
-        'swapped_from_id',
-        'current_owner_id',
-        'current_owner_type',
-        'is_active',
-        'is_available',
-        'created_by_user_id'
-    ];
-
-    protected $casts = [
-        'specs' => 'array',
-        'phone_specs' => 'array',
-        'cost_price' => 'decimal:2',
-        'selling_price' => 'decimal:2',
-        'discount_price' => 'decimal:2',
-        'is_phone' => 'boolean',
-        'is_swappable' => 'boolean',
-        'is_active' => 'boolean',
-        'is_available' => 'boolean',
-    ];
-
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
-
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'created_by_user_id');
-    }
-
-    public function currentOwner()
-    {
-        return $this->belongsTo(Customer::class, 'current_owner_id');
-    }
-
-    public function getProfitMarginAttribute()
-    {
-        if ($this->cost_price > 0) {
-            return (($this->selling_price - $this->cost_price) / $this->cost_price) * 100;
-        }
-        return 0;
-    }
-
-    public function isLowStock()
-    {
-        return $this->quantity <= $this->min_stock_level;
-    }
-
-    public function reduceStock($quantity = 1)
-    {
-        if ($this->quantity >= $quantity) {
-            $this->quantity -= $quantity;
-            if ($this->quantity == 0) {
-                $this->is_available = false;
-            }
-            $this->save();
-        } else {
-            throw new \Exception("Insufficient stock. Available: {$this->quantity}, Requested: {$quantity}");
-        }
-    }
-}
+Route::prefix('api')->group(function () {
+    // Authentication
+    Route::post('auth/login', [AuthController::class, 'login']);
+    Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::get('auth/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
+    
+    // Protected routes
+    Route::middleware('auth:sanctum')->group(function () {
+        // Phones
+        Route::get('phones', [PhoneController::class, 'index']);
+        Route::post('phones', [PhoneController::class, 'store']);
+        Route::get('phones/{id}', [PhoneController::class, 'show']);
+        Route::put('phones/{id}', [PhoneController::class, 'update']);
+        Route::delete('phones/{id}', [PhoneController::class, 'destroy']);
+        
+        // Swaps
+        Route::get('swaps', [SwapController::class, 'index']);
+        Route::post('swaps', [SwapController::class, 'store']);
+        Route::get('swaps/{id}', [SwapController::class, 'show']);
+        
+        // Repairs
+        Route::get('repairs', [RepairController::class, 'index']);
+        Route::post('repairs', [RepairController::class, 'store']);
+        Route::put('repairs/{id}', [RepairController::class, 'update']);
+    });
+});
 ```
 
-#### API Controllers
-
-**SwapController (app/Http/Controllers/SwapController.php)**
+#### Laravel Controller Example
 ```php
 <?php
-
+// app/Http/Controllers/PhoneController.php
 namespace App\Http\Controllers;
 
-use App\Models\Swap;
-use App\Models\Customer;
-use App\Models\Product;
-use App\Http\Requests\SwapRequest;
-use App\Services\SMSService;
+use App\Models\Phone;
+use App\Models\Brand;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class SwapController extends Controller
+class PhoneController extends Controller
 {
-    protected $smsService;
-
-    public function __construct(SMSService $smsService)
-    {
-        $this->smsService = $smsService;
-    }
-
     public function index(Request $request): JsonResponse
     {
-        $query = Swap::with(['customer', 'newPhone']);
-
-        if ($request->has('customer_id')) {
-            $query->where('customer_id', $request->customer_id);
+        $query = Phone::with(['brand', 'category', 'createdBy']);
+        
+        // Apply filters
+        if ($request->has('brand')) {
+            $query->where('brand', $request->brand);
         }
-
+        
         if ($request->has('status')) {
-            $query->where('resale_status', $request->status);
+            $query->where('status', $request->status);
         }
-
-        $swaps = $query->orderBy('created_at', 'desc')->paginate(20);
-
-        return response()->json($swaps);
+        
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('model', 'like', "%{$search}%")
+                  ->orWhere('imei', 'like', "%{$search}%");
+            });
+        }
+        
+        $phones = $query->paginate(20);
+        
+        return response()->json($phones);
     }
-
-    public function store(SwapRequest $request): JsonResponse
+    
+    public function store(Request $request): JsonResponse
     {
-        $validated = $request->validated();
-
-        // Create swap
-        $swap = Swap::create([
-            'customer_id' => $validated['customer_id'],
-            'given_phone_description' => $validated['given_phone_description'],
-            'given_phone_value' => $validated['given_phone_value'],
-            'given_phone_imei' => $validated['given_phone_imei'] ?? null,
-            'new_phone_id' => $validated['new_phone_id'],
-            'balance_paid' => $validated['balance_paid'] ?? 0,
-            'discount_amount' => $validated['discount_amount'] ?? 0,
-            'final_price' => $validated['final_price'],
-            'invoice_number' => $this->generateInvoiceNumber(),
+        $validated = $request->validate([
+            'brand' => 'required|string|max:255',
+            'model' => 'required|string|max:255',
+            'condition' => 'required|string|max:100',
+            'value' => 'required|numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
+            'imei' => 'nullable|string|unique:phones,imei',
+            'specs' => 'nullable|array'
         ]);
-
-        // Update phone status
-        $phone = Product::find($validated['new_phone_id']);
-        $phone->markAsSold($validated['customer_id']);
-
-        // Send SMS notification
-        $customer = Customer::find($validated['customer_id']);
-        $this->smsService->sendSwapNotification(
-            $customer->phone_number,
-            $customer->full_name,
-            auth()->user()->company_name ?? 'SwapSync',
-            $validated['given_phone_description'],
-            $phone->name,
-            $validated['final_price']
-        );
-
-        return response()->json($swap->load(['customer', 'newPhone']), 201);
+        
+        $phone = Phone::create([
+            ...$validated,
+            'created_by_user_id' => auth()->id(),
+            'unique_id' => $this->generateUniqueId('PHON')
+        ]);
+        
+        return response()->json($phone->load(['brand', 'category']), 201);
     }
-
-    public function show(Swap $swap): JsonResponse
+    
+    private function generateUniqueId(string $prefix): string
     {
-        return response()->json($swap->load(['customer', 'newPhone']));
-    }
-
-    public function update(SwapRequest $request, Swap $swap): JsonResponse
-    {
-        $validated = $request->validated();
-        $swap->update($validated);
-
-        return response()->json($swap->load(['customer', 'newPhone']));
-    }
-
-    public function destroy(Swap $swap): JsonResponse
-    {
-        $swap->delete();
-        return response()->json(['message' => 'Swap deleted successfully']);
-    }
-
-    private function generateInvoiceNumber(): string
-    {
-        $count = Swap::count() + 1;
-        return 'SWAP-' . str_pad($count, 6, '0', STR_PAD_LEFT);
+        $count = Phone::count() + 1;
+        return $prefix . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
     }
 }
 ```
 
-#### SMS Service Implementation
+### 6. SMS Service Migration
 
-**SMSService (app/Services/SMSService.php)**
+#### Laravel SMS Service
 ```php
 <?php
-
+// app/Services/SmsService.php
 namespace App\Services;
 
-use App\Models\SMSLog;
-use App\Models\SMSConfig;
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 
-class SMSService
+class SmsService
 {
-    protected $config;
-
+    private $arkaselApiKey;
+    private $arkaselSenderId;
+    private $hubtelClientId;
+    private $hubtelClientSecret;
+    private $hubtelSenderId;
+    
     public function __construct()
     {
-        $this->config = SMSConfig::first();
+        $this->arkaselApiKey = config('sms.arkasel_api_key');
+        $this->arkaselSenderId = config('sms.arkasel_sender_id');
+        $this->hubtelClientId = config('sms.hubtel_client_id');
+        $this->hubtelClientSecret = config('sms.hubtel_client_secret');
+        $this->hubtelSenderId = config('sms.hubtel_sender_id');
     }
-
-    public function sendSMS(string $phoneNumber, string $message, string $companyName = 'SwapSync'): array
+    
+    public function sendSms(string $phoneNumber, string $message, string $companyName = 'SwapSync'): array
     {
         $normalizedPhone = $this->normalizePhoneNumber($phoneNumber);
-
+        
         // Try Arkasel first
-        if ($this->config && $this->config->arkasel_enabled) {
+        if ($this->arkaselApiKey) {
             $result = $this->sendViaArkasel($normalizedPhone, $message, $companyName);
             if ($result['success']) {
                 return $result;
             }
         }
-
+        
         // Fallback to Hubtel
-        if ($this->config && $this->config->hubtel_enabled) {
+        if ($this->hubtelClientId && $this->hubtelClientSecret) {
             $result = $this->sendViaHubtel($normalizedPhone, $message, $companyName);
             if ($result['success']) {
                 return $result;
             }
         }
-
+        
         return [
             'success' => false,
             'status' => 'failed',
-            'error' => 'No SMS providers configured or all failed'
+            'error' => 'All SMS providers failed'
         ];
     }
-
+    
     private function sendViaArkasel(string $phoneNumber, string $message, string $companyName): array
     {
         try {
-            $senderId = $companyName !== 'SwapSync' ? $companyName : $this->config->arkasel_sender_id;
-
-            $response = Http::withHeaders([
-                'api-key' => $this->config->arkasel_api_key,
-                'Content-Type' => 'application/json'
-            ])->post('https://sms.arkesel.com/api/v2/sms/send', [
-                'sender' => $senderId,
-                'recipients' => [$phoneNumber],
-                'message' => $message,
-                'sandbox' => false
+            $client = new Client();
+            $senderId = $companyName !== 'SwapSync' ? $companyName : $this->arkaselSenderId;
+            
+            $response = $client->post('https://sms.arkesel.com/api/v2/sms/send', [
+                'headers' => [
+                    'api-key' => $this->arkaselApiKey,
+                    'Content-Type' => 'application/json'
+                ],
+                'json' => [
+                    'sender' => $senderId,
+                    'recipients' => [$phoneNumber],
+                    'message' => $message,
+                    'sandbox' => false
+                ]
             ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                $this->logSMS($phoneNumber, $message, 'sent', 'arkasel', $data['id'] ?? null);
-                
+            
+            if ($response->getStatusCode() === 200) {
+                $data = json_decode($response->getBody(), true);
                 return [
                     'success' => true,
                     'status' => 'sent',
                     'provider' => 'arkasel',
-                    'message_id' => $data['id'] ?? null
+                    'message_id' => $data['id'] ?? null,
+                    'response' => $data
                 ];
             }
-
-            $this->logSMS($phoneNumber, $message, 'failed', 'arkasel', null, $response->body());
-            return [
-                'success' => false,
-                'status' => 'failed',
-                'provider' => 'arkasel',
-                'error' => $response->body()
-            ];
-
         } catch (\Exception $e) {
-            $this->logSMS($phoneNumber, $message, 'failed', 'arkasel', null, $e->getMessage());
-            return [
-                'success' => false,
-                'status' => 'failed',
-                'provider' => 'arkasel',
-                'error' => $e->getMessage()
-            ];
+            Log::error('Arkasel SMS failed: ' . $e->getMessage());
         }
+        
+        return ['success' => false, 'error' => 'Arkasel failed'];
     }
-
+    
     private function sendViaHubtel(string $phoneNumber, string $message, string $companyName): array
     {
         try {
-            $senderId = $companyName !== 'SwapSync' ? $companyName : $this->config->hubtel_sender_id;
-
-            $response = Http::withBasicAuth(
-                $this->config->hubtel_client_id,
-                $this->config->hubtel_client_secret
-            )->post('https://api.hubtel.com/v1/messages/send', [
-                'From' => $senderId,
-                'To' => $phoneNumber,
-                'Content' => $message,
-                'RegisteredDelivery' => true
+            $client = new Client();
+            $senderId = $companyName !== 'SwapSync' ? $companyName : $this->hubtelSenderId;
+            
+            $response = $client->post('https://api.hubtel.com/v1/messages/send', [
+                'auth' => [$this->hubtelClientId, $this->hubtelClientSecret],
+                'json' => [
+                    'From' => $senderId,
+                    'To' => $phoneNumber,
+                    'Content' => $message,
+                    'RegisteredDelivery' => true
+                ]
             ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                $this->logSMS($phoneNumber, $message, 'sent', 'hubtel', $data['MessageId'] ?? null);
-                
+            
+            if ($response->getStatusCode() === 200) {
+                $data = json_decode($response->getBody(), true);
                 return [
                     'success' => true,
                     'status' => 'sent',
                     'provider' => 'hubtel',
-                    'message_id' => $data['MessageId'] ?? null
+                    'message_id' => $data['MessageId'] ?? null,
+                    'response' => $data
                 ];
             }
-
-            $this->logSMS($phoneNumber, $message, 'failed', 'hubtel', null, $response->body());
-            return [
-                'success' => false,
-                'status' => 'failed',
-                'provider' => 'hubtel',
-                'error' => $response->body()
-            ];
-
         } catch (\Exception $e) {
-            $this->logSMS($phoneNumber, $message, 'failed', 'hubtel', null, $e->getMessage());
-            return [
-                'success' => false,
-                'status' => 'failed',
-                'provider' => 'hubtel',
-                'error' => $e->getMessage()
-            ];
+            Log::error('Hubtel SMS failed: ' . $e->getMessage());
         }
+        
+        return ['success' => false, 'error' => 'Hubtel failed'];
     }
-
+    
     private function normalizePhoneNumber(string $phoneNumber): string
     {
         $phone = preg_replace('/[^0-9]/', '', $phoneNumber);
@@ -1001,482 +969,105 @@ class SMSService
         
         return $phone;
     }
-
-    private function logSMS(string $phoneNumber, string $message, string $status, string $provider, ?string $messageId, ?string $errorMessage = null): void
-    {
-        SMSLog::create([
-            'phone_number' => $phoneNumber,
-            'message' => $message,
-            'status' => $status,
-            'provider' => $provider,
-            'message_id' => $messageId,
-            'error_message' => $errorMessage
-        ]);
-    }
-
-    public function sendRepairCompletionSMS(string $phoneNumber, string $customerName, string $companyName, string $repairDescription, float $cost, ?string $invoiceNumber = null): array
-    {
-        $message = "Hi {$customerName},\n\n";
-        $message .= "Your repair with {$companyName} has been successfully completed!\n\n";
-        $message .= "Phone: {$repairDescription}\n";
-        $message .= "Cost: GH₵" . number_format($cost, 2) . "\n";
-        
-        if ($invoiceNumber) {
-            $message .= "Invoice: #{$invoiceNumber}\n";
-        }
-        
-        $message .= "\nCollect from {$companyName}.";
-
-        return $this->sendSMS($phoneNumber, $message, $companyName);
-    }
-
-    public function sendSwapNotification(string $phoneNumber, string $customerName, string $companyName, string $oldPhone, string $newPhone, ?float $amountPaid = null): array
-    {
-        $message = "Hi {$customerName},\n\n";
-        $message .= "Your phone swap with {$companyName} is complete!\n\n";
-        $message .= "Swapped: {$oldPhone}\n";
-        $message .= "Received: {$newPhone}\n";
-        
-        if ($amountPaid) {
-            $message .= "Amount Paid: GH₵" . number_format($amountPaid, 2) . "\n";
-        }
-        
-        $message .= "\nThank you for choosing {$companyName}!";
-
-        return $this->sendSMS($phoneNumber, $message, $companyName);
-    }
 }
 ```
 
-### 4. API Routes Configuration
+### 7. Frontend Migration Options
 
-**routes/api.php**
-```php
-<?php
+#### Option A: Keep React (Recommended)
+- Update API endpoints to point to PHP backend
+- Modify authentication to use Laravel Sanctum tokens
+- Update API service layer for new response formats
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\SwapController;
-use App\Http\Controllers\RepairController;
-use App\Http\Controllers\POSController;
-use App\Http\Controllers\ReportController;
-
-// Authentication routes
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
-
-// Protected routes
-Route::middleware('auth:sanctum')->group(function () {
-    
-    // Customer management
-    Route::apiResource('customers', CustomerController::class);
-    
-    // Product management
-    Route::apiResource('products', ProductController::class);
-    Route::get('products/category/{category}', [ProductController::class, 'byCategory']);
-    Route::get('products/brand/{brand}', [ProductController::class, 'byBrand']);
-    
-    // Swap management
-    Route::apiResource('swaps', SwapController::class);
-    Route::get('swaps/{swap}/invoice', [SwapController::class, 'generateInvoice']);
-    
-    // Repair management
-    Route::apiResource('repairs', RepairController::class);
-    Route::post('repairs/{repair}/complete', [RepairController::class, 'complete']);
-    Route::post('repairs/{repair}/update-status', [RepairController::class, 'updateStatus']);
-    
-    // POS system
-    Route::apiResource('pos/sales', POSController::class);
-    Route::get('pos/sales/{sale}/receipt', [POSController::class, 'generateReceipt']);
-    
-    // Reports and analytics
-    Route::prefix('reports')->group(function () {
-        Route::get('sales', [ReportController::class, 'sales']);
-        Route::get('profit', [ReportController::class, 'profit']);
-        Route::get('inventory', [ReportController::class, 'inventory']);
-        Route::get('customers', [ReportController::class, 'customers']);
-    });
-    
-    // Dashboard analytics
-    Route::get('analytics/dashboard', [ReportController::class, 'dashboard']);
-    
-    // Role-based routes
-    Route::middleware('role:super_admin,admin')->group(function () {
-        Route::get('admin/users', [UserController::class, 'index']);
-        Route::post('admin/users', [UserController::class, 'store']);
-        Route::put('admin/users/{user}', [UserController::class, 'update']);
-        Route::delete('admin/users/{user}', [UserController::class, 'destroy']);
-    });
-    
-    Route::middleware('role:manager,ceo')->group(function () {
-        Route::get('reports/profit', [ReportController::class, 'profit']);
-        Route::get('pos/monitor', [POSController::class, 'monitor']);
-    });
-});
+#### Option B: Migrate to Vue.js
+```bash
+# Create Vue.js project
+npm create vue@latest swapsync-vue
+cd swapsync-vue
+npm install axios vue-router pinia
 ```
 
-### 5. Middleware Implementation
-
-**RoleMiddleware (app/Http/Middleware/RoleMiddleware.php)**
-```php
-<?php
-
-namespace App\Http\Middleware;
-
-use Closure;
-use Illuminate\Http\Request;
-
-class RoleMiddleware
-{
-    public function handle(Request $request, Closure $next, ...$roles)
-    {
-        if (!auth()->check()) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
-        }
-
-        $userRole = auth()->user()->role;
-        
-        if (!in_array($userRole, $roles)) {
-            return response()->json(['message' => 'Insufficient permissions'], 403);
-        }
-
-        return $next($request);
-    }
-}
-```
-
-### 6. Data Migration Script
-
-**Migration Script (database/migrations/2024_01_01_000000_migrate_from_python.php)**
-```php
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
-
-class MigrateFromPython extends Migration
-{
-    public function up()
-    {
-        // This migration would handle data import from the Python system
-        // You would need to export data from SQLite and import to MySQL
-        
-        // Example: Import customers
-        $this->importCustomers();
-        
-        // Example: Import products
-        $this->importProducts();
-        
-        // Example: Import swaps
-        $this->importSwaps();
-    }
-
-    private function importCustomers()
-    {
-        // Read from exported CSV or JSON file
-        $customers = json_decode(file_get_contents(storage_path('migration/customers.json')), true);
-        
-        foreach ($customers as $customer) {
-            DB::table('customers')->insert([
-                'unique_id' => $customer['unique_id'],
-                'full_name' => $customer['full_name'],
-                'phone_number' => $customer['phone_number'],
-                'email' => $customer['email'],
-                'created_at' => $customer['created_at'],
-                'created_by_user_id' => $customer['created_by_user_id'],
-            ]);
-        }
-    }
-
-    private function importProducts()
-    {
-        $products = json_decode(file_get_contents(storage_path('migration/products.json')), true);
-        
-        foreach ($products as $product) {
-            DB::table('products')->insert([
-                'unique_id' => $product['unique_id'],
-                'name' => $product['name'],
-                'sku' => $product['sku'],
-                'category_id' => $product['category_id'],
-                'brand' => $product['brand'],
-                'cost_price' => $product['cost_price'],
-                'selling_price' => $product['selling_price'],
-                'quantity' => $product['quantity'],
-                'is_phone' => $product['is_phone'],
-                'is_swappable' => $product['is_swappable'],
-                'created_at' => $product['created_at'],
-            ]);
-        }
-    }
-
-    private function importSwaps()
-    {
-        $swaps = json_decode(file_get_contents(storage_path('migration/swaps.json')), true);
-        
-        foreach ($swaps as $swap) {
-            DB::table('swaps')->insert([
-                'customer_id' => $swap['customer_id'],
-                'given_phone_description' => $swap['given_phone_description'],
-                'given_phone_value' => $swap['given_phone_value'],
-                'new_phone_id' => $swap['new_phone_id'],
-                'balance_paid' => $swap['balance_paid'],
-                'final_price' => $swap['final_price'],
-                'resale_status' => $swap['resale_status'],
-                'created_at' => $swap['created_at'],
-            ]);
-        }
-    }
-
-    public function down()
-    {
-        // Rollback migration if needed
-        DB::table('swaps')->truncate();
-        DB::table('products')->truncate();
-        DB::table('customers')->truncate();
-    }
-}
-```
-
-### 7. Frontend Integration
-
-The React frontend can remain largely unchanged, but you'll need to update the API endpoints and authentication:
-
-**API Service Update (frontend/src/services/api.js)**
-```javascript
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
-
-// Create axios instance
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-});
-
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Handle auth errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
-
-export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  logout: () => api.post('/auth/logout'),
-  me: () => api.get('/auth/me'),
-};
-
-export const customerAPI = {
-  getAll: () => api.get('/customers'),
-  create: (customer) => api.post('/customers', customer),
-  update: (id, customer) => api.put(`/customers/${id}`, customer),
-  delete: (id) => api.delete(`/customers/${id}`),
-};
-
-export const productAPI = {
-  getAll: () => api.get('/products'),
-  create: (product) => api.post('/products', product),
-  update: (id, product) => api.put(`/products/${id}`, product),
-  delete: (id) => api.delete(`/products/${id}`),
-  byCategory: (category) => api.get(`/products/category/${category}`),
-  byBrand: (brand) => api.get(`/products/brand/${brand}`),
-};
-
-export const swapAPI = {
-  getAll: () => api.get('/swaps'),
-  create: (swap) => api.post('/swaps', swap),
-  update: (id, swap) => api.put(`/swaps/${id}`, swap),
-  delete: (id) => api.delete(`/swaps/${id}`),
-  generateInvoice: (id) => api.get(`/swaps/${id}/invoice`),
-};
-
-export const repairAPI = {
-  getAll: () => api.get('/repairs'),
-  create: (repair) => api.post('/repairs', repair),
-  update: (id, repair) => api.put(`/repairs/${id}`, repair),
-  delete: (id) => api.delete(`/repairs/${id}`),
-  complete: (id) => api.post(`/repairs/${id}/complete`),
-  updateStatus: (id, status) => api.post(`/repairs/${id}/update-status`, { status }),
-};
-
-export const posAPI = {
-  getAll: () => api.get('/pos/sales'),
-  create: (sale) => api.post('/pos/sales', sale),
-  generateReceipt: (id) => api.get(`/pos/sales/${id}/receipt`),
-};
-
-export const reportAPI = {
-  sales: (params) => api.get('/reports/sales', { params }),
-  profit: (params) => api.get('/reports/profit', { params }),
-  inventory: (params) => api.get('/reports/inventory', { params }),
-  customers: (params) => api.get('/reports/customers', { params }),
-  dashboard: () => api.get('/analytics/dashboard'),
-};
-
-export default api;
+#### Option C: Migrate to Angular
+```bash
+# Create Angular project
+ng new swapsync-angular
+cd swapsync-angular
+npm install @angular/material
 ```
 
 ### 8. Deployment Configuration
 
-**Docker Configuration (docker-compose.yml)**
-```yaml
-version: '3.8'
-
-services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - APP_ENV=production
-      - DB_CONNECTION=mysql
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=swapsync
-      - DB_USERNAME=swapsync
-      - DB_PASSWORD=your_password
-    depends_on:
-      - mysql
-    volumes:
-      - ./storage:/var/www/html/storage
-      - ./bootstrap/cache:/var/www/html/bootstrap/cache
-
-  mysql:
-    image: mysql:8.0
-    environment:
-      - MYSQL_ROOT_PASSWORD=root_password
-      - MYSQL_DATABASE=swapsync
-      - MYSQL_USER=swapsync
-      - MYSQL_PASSWORD=your_password
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
-    depends_on:
-      - app
-
-volumes:
-  mysql_data:
+#### Laravel Deployment
+```bash
+# Production setup
+composer install --optimize-autoloader --no-dev
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan migrate --force
 ```
 
-**Dockerfile**
-```dockerfile
-FROM php:8.1-fpm
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    nodejs \
-    npm
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
-
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy existing application directory contents
-COPY . /var/www/html
-
-# Copy existing application directory permissions
-COPY --chown=www-data:www-data . /var/www/html
-
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader
-RUN npm install && npm run build
-
-# Change current user to www
-USER www-data
-
-# Expose port 9000 and start php-fpm server
-EXPOSE 9000
-CMD ["php-fpm"]
+#### Nginx Configuration
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    root /var/www/swapsync/public;
+    
+    index index.php;
+    
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
 ```
 
 ### 9. Migration Checklist
 
 #### Pre-Migration
-- [ ] Export all data from Python system (SQLite)
-- [ ] Create MySQL database and user
-- [ ] Set up Laravel project structure
-- [ ] Configure environment variables
-- [ ] Set up SMS provider credentials
+- [ ] Backup existing SQLite database
+- [ ] Export all data to CSV/JSON format
+- [ ] Document current API endpoints and responses
+- [ ] List all custom configurations and settings
+- [ ] Test SMS functionality with current providers
 
 #### Database Migration
-- [ ] Create MySQL schema using migrations
-- [ ] Import customer data
-- [ ] Import product data
-- [ ] Import user data
-- [ ] Import transaction data (swaps, sales, repairs)
-- [ ] Import system configuration
-- [ ] Verify data integrity
+- [ ] Create MySQL database and user
+- [ ] Run schema creation scripts
+- [ ] Import data using PHP scripts
+- [ ] Verify data integrity and relationships
+- [ ] Update auto-increment sequences
 
 #### Backend Migration
-- [ ] Implement Laravel models
-- [ ] Create API controllers
+- [ ] Set up PHP framework (Laravel/Symfony)
+- [ ] Create models and relationships
 - [ ] Implement authentication system
-- [ ] Set up SMS service
-- [ ] Configure middleware
-- [ ] Test all API endpoints
+- [ ] Migrate all API endpoints
+- [ ] Implement SMS service
+- [ ] Set up background job processing
+- [ ] Configure logging and monitoring
 
-#### Frontend Updates
-- [ ] Update API service URLs
-- [ ] Update authentication flow
-- [ ] Test all frontend functionality
-- [ ] Update environment configuration
+#### Frontend Migration
+- [ ] Update API service endpoints
+- [ ] Modify authentication flow
+- [ ] Test all user interfaces
+- [ ] Update environment configurations
+- [ ] Verify responsive design
 
 #### Testing & Deployment
-- [ ] Run comprehensive tests
-- [ ] Set up production environment
-- [ ] Configure SSL certificates
-- [ ] Set up monitoring and logging
-- [ ] Create backup procedures
+- [ ] Run comprehensive testing suite
+- [ ] Performance testing and optimization
+- [ ] Security audit and penetration testing
+- [ ] User acceptance testing
+- [ ] Production deployment
+- [ ] Monitor system performance
 - [ ] Train users on new system
 
 ### 10. Performance Optimization
@@ -1484,277 +1075,128 @@ CMD ["php-fpm"]
 #### Database Optimization
 ```sql
 -- Add indexes for better performance
-CREATE INDEX idx_products_category ON products(category_id);
-CREATE INDEX idx_products_brand ON products(brand);
-CREATE INDEX idx_products_imei ON products(imei);
-CREATE INDEX idx_swaps_customer ON swaps(customer_id);
-CREATE INDEX idx_swaps_created_at ON swaps(created_at);
-CREATE INDEX idx_repairs_customer ON repairs(customer_id);
-CREATE INDEX idx_repairs_status ON repairs(status);
-CREATE INDEX idx_activity_logs_user ON activity_logs(user_id);
-CREATE INDEX idx_activity_logs_created_at ON activity_logs(created_at);
+CREATE INDEX idx_phones_brand_model ON phones(brand, model);
+CREATE INDEX idx_swaps_customer_date ON swaps(customer_id, created_at);
+CREATE INDEX idx_repairs_status_date ON repairs(status, created_at);
+CREATE INDEX idx_pos_sales_date ON pos_sales(created_at);
+
+-- Optimize queries
+EXPLAIN SELECT * FROM phones WHERE brand = 'Samsung' AND status = 'AVAILABLE';
 ```
 
-#### Laravel Optimization
+#### PHP Optimization
 ```php
-// config/database.php - MySQL optimization
-'mysql' => [
-    'driver' => 'mysql',
-    'host' => env('DB_HOST', '127.0.0.1'),
-    'port' => env('DB_PORT', '3306'),
-    'database' => env('DB_DATABASE', 'swapsync'),
-    'username' => env('DB_USERNAME', 'root'),
-    'password' => env('DB_PASSWORD', ''),
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci',
-    'prefix' => '',
-    'strict' => true,
-    'engine' => 'InnoDB',
-    'options' => [
-        PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-    ],
-],
-```
+// Use eager loading to prevent N+1 queries
+$phones = Phone::with(['brand', 'category', 'createdBy'])->get();
 
-#### Caching Strategy
-```php
-// Use Redis for caching
-'cache' => [
-    'default' => env('CACHE_DRIVER', 'redis'),
-    'stores' => [
-        'redis' => [
-            'driver' => 'redis',
-            'connection' => 'cache',
-        ],
-    ],
-],
+// Use database transactions for bulk operations
+DB::transaction(function () {
+    // Multiple database operations
+});
+
+// Cache frequently accessed data
+Cache::remember('brands', 3600, function () {
+    return Brand::all();
+});
 ```
 
 ### 11. Security Considerations
 
-#### Authentication Security
-- Use Laravel Sanctum for API authentication
-- Implement proper password hashing
-- Set up session management
-- Configure CORS properly
+#### Laravel Security Features
+```php
+// CSRF Protection (built-in)
+// SQL Injection Protection (Eloquent ORM)
+// XSS Protection (Blade templating)
 
-#### Data Security
-- Use database transactions for critical operations
-- Implement proper input validation
-- Set up audit logging
-- Configure backup encryption
+// Rate Limiting
+Route::middleware('throttle:60,1')->group(function () {
+    Route::post('auth/login', [AuthController::class, 'login']);
+});
 
-#### API Security
-- Rate limiting for API endpoints
-- Input sanitization
-- SQL injection prevention
-- XSS protection
+// Input Validation
+$validated = $request->validate([
+    'email' => 'required|email|max:255',
+    'password' => 'required|min:8',
+]);
 
-## 🚀 Installation & Setup
-
-### Prerequisites
-- PHP 8.1 or higher
-- MySQL 8.0 or higher
-- Composer
-- Node.js and npm
-- Web server (Apache/Nginx)
-
-### Installation Steps
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/your-org/swapsync-php.git
-cd swapsync-php
+// Password Hashing
+$hashedPassword = Hash::make($password);
 ```
 
-2. **Install PHP dependencies**
-```bash
-composer install
+#### MySQL Security
+```sql
+-- Create dedicated database user
+CREATE USER 'swapsync'@'localhost' IDENTIFIED BY 'strong_password';
+GRANT SELECT, INSERT, UPDATE, DELETE ON swapsync.* TO 'swapsync'@'localhost';
+FLUSH PRIVILEGES;
+
+-- Enable SSL connections
+ALTER USER 'swapsync'@'localhost' REQUIRE SSL;
 ```
 
-3. **Install frontend dependencies**
-```bash
-cd frontend
-npm install
-npm run build
-cd ..
+### 12. Monitoring and Maintenance
+
+#### Laravel Monitoring
+```php
+// Log important events
+Log::info('User login', ['user_id' => $user->id]);
+Log::error('SMS failed', ['phone' => $phoneNumber, 'error' => $error]);
+
+// Health checks
+Route::get('health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'database' => DB::connection()->getPdo() ? 'connected' : 'disconnected',
+        'timestamp' => now()
+    ]);
+});
 ```
 
-4. **Configure environment**
-```bash
-cp .env.example .env
-# Edit .env with your database and SMS credentials
+#### MySQL Monitoring
+```sql
+-- Monitor slow queries
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 2;
+
+-- Check table sizes
+SELECT 
+    table_name,
+    ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Size (MB)'
+FROM information_schema.tables
+WHERE table_schema = 'swapsync'
+ORDER BY (data_length + index_length) DESC;
 ```
 
-5. **Generate application key**
-```bash
-php artisan key:generate
-```
+## 📞 Support & Contact
 
-6. **Run database migrations**
-```bash
-php artisan migrate
-```
+- **Developer**: Manuel Code
+- **Email**: info@manuelcode.info
+- **Website**: https://www.manuelcode.info
+- **Documentation**: [API Docs](http://127.0.0.1:8000/docs)
 
-7. **Seed initial data**
-```bash
-php artisan db:seed
-```
+## 📄 License
 
-8. **Set up storage permissions**
-```bash
-chmod -R 775 storage bootstrap/cache
-```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-9. **Start the application**
-```bash
-php artisan serve
-```
+## 🤝 Contributing
 
-## ⚙️ Configuration
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### Environment Variables
-```env
-APP_NAME=SwapSync
-APP_ENV=production
-APP_KEY=base64:your-app-key
-APP_DEBUG=false
-APP_URL=https://your-domain.com
+## 📈 Roadmap
 
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=swapsync
-DB_USERNAME=swapsync
-DB_PASSWORD=your_password
+- [ ] Mobile app (React Native)
+- [ ] Advanced analytics dashboard
+- [ ] Multi-language support
+- [ ] Barcode scanning integration
+- [ ] Advanced reporting features
+- [ ] API rate limiting
+- [ ] Webhook support
+- [ ] Backup automation
 
-# SMS Configuration
-ARKASEL_API_KEY=your_arkasel_api_key
-ARKASEL_SENDER_ID=SwapSync
-ARKASEL_ENABLED=true
+---
 
-HUBTEL_CLIENT_ID=your_hubtel_client_id
-HUBTEL_CLIENT_SECRET=your_hubtel_client_secret
-HUBTEL_SENDER_ID=SwapSync
-HUBTEL_ENABLED=true
-
-# Cache Configuration
-CACHE_DRIVER=redis
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-
-# Session Configuration
-SESSION_DRIVER=redis
-SESSION_LIFETIME=120
-```
-
-### SMS Provider Setup
-
-#### Arkasel Setup
-1. Register at [Arkasel](https://arkesel.com)
-2. Get your API key
-3. Configure sender ID
-4. Add credentials to environment
-
-#### Hubtel Setup
-1. Register at [Hubtel](https://hubtel.com)
-2. Get client ID and secret
-3. Configure sender ID
-4. Add credentials to environment
-
-## 🚀 Deployment
-
-### Production Deployment
-
-1. **Server Requirements**
-   - Ubuntu 20.04+ or CentOS 8+
-   - PHP 8.1+ with extensions
-   - MySQL 8.0+
-   - Nginx or Apache
-   - SSL certificate
-
-2. **Deployment Steps**
-```bash
-# Clone repository
-git clone https://github.com/your-org/swapsync-php.git
-cd swapsync-php
-
-# Install dependencies
-composer install --no-dev --optimize-autoloader
-
-# Build frontend
-cd frontend && npm install && npm run build && cd ..
-
-# Configure environment
-cp .env.example .env
-# Edit .env with production values
-
-# Generate key and run migrations
-php artisan key:generate
-php artisan migrate --force
-
-# Set permissions
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
-
-# Configure web server
-# Copy nginx.conf or apache configuration
-```
-
-3. **Nginx Configuration**
-```nginx
-server {
-    listen 80;
-    listen 443 ssl;
-    server_name your-domain.com;
-    root /var/www/swapsync-php/public;
-
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-
-    index index.php;
-
-    charset utf-8;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location = /favicon.ico { access_log off; log_not_found off; }
-    location = /robots.txt  { access_log off; log_not_found off; }
-
-    error_page 404 /index.php;
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    location ~ /\.(?!well-known).* {
-        deny all;
-    }
-}
-```
-
-### Docker Deployment
-
-1. **Build and run with Docker Compose**
-```bash
-docker-compose up -d
-```
-
-2. **Run migrations**
-```bash
-docker-compose exec app php artisan migrate
-```
-
-3. **Seed data**
-```bash
-docker-compose exec app php artisan db:seed
-```
-
-## 📊 Monitoring & Maintenance
-
-### Log
+**SwapSync** - Streamlining phone business operations with modern technology.

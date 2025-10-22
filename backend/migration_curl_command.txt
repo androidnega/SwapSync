@@ -1,0 +1,21 @@
+# Phone Fields Migration - cURL Command
+# Replace YOUR_MANAGER_TOKEN with an actual manager token
+
+curl -X POST "https://api.digitstec.store/api/migrations/add-phone-fields" \
+  -H "Authorization: Bearer YOUR_MANAGER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{}"
+
+# Example with a real token (replace with actual token):
+# curl -X POST "https://api.digitstec.store/api/migrations/add-phone-fields" \
+#   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+#   -H "Content-Type: application/json" \
+#   -d "{}"
+
+# Expected response on success:
+# {
+#   "success": true,
+#   "message": "Migration completed successfully. Added X new fields.",
+#   "added_fields": ["imei", "is_phone", "phone_condition", ...],
+#   "total_products": 123
+# }

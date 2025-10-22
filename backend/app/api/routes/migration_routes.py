@@ -26,38 +26,23 @@ def add_phone_fields_migration(
     require_manager(current_user)
     
     try:
-        # Get database path from SQLAlchemy URL
-        from app.core.database import SQLALCHEMY_DATABASE_URL
-        
-        if not SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This migration is only for SQLite databases"
-            )
-        
-        # Extract database path
-        db_path = SQLALCHEMY_DATABASE_URL.replace("sqlite:///", "")
-        
-        if not os.path.exists(db_path):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Database file not found: {db_path}"
-            )
-        
-        # Run migration
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
+        # Use SQLAlchemy to run the migration directly
+        from sqlalchemy import text
         
         # Check if columns already exist
-        cursor.execute("PRAGMA table_info(products)")
-        columns = [column[1] for column in cursor.fetchall()]
+        result = db.execute(text("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'products' AND table_schema = 'public'
+        """))
+        existing_columns = [row[0] for row in result.fetchall()]
         
         phone_fields = [
             ("imei", "VARCHAR UNIQUE"),
-            ("is_phone", "BOOLEAN DEFAULT 0"),
+            ("is_phone", "BOOLEAN DEFAULT FALSE"),
             ("phone_condition", "VARCHAR"),
-            ("phone_specs", "JSON"),
-            ("is_swappable", "BOOLEAN DEFAULT 0"),
+            ("phone_specs", "JSONB"),
+            ("is_swappable", "BOOLEAN DEFAULT FALSE"),
             ("phone_status", "VARCHAR DEFAULT 'AVAILABLE'"),
             ("swapped_from_id", "INTEGER"),
             ("current_owner_id", "INTEGER"),
@@ -66,11 +51,11 @@ def add_phone_fields_migration(
         
         added_fields = []
         for field_name, field_type in phone_fields:
-            if field_name not in columns:
+            if field_name not in existing_columns:
                 try:
-                    cursor.execute(f"ALTER TABLE products ADD COLUMN {field_name} {field_type}")
+                    db.execute(text(f"ALTER TABLE products ADD COLUMN {field_name} {field_type}"))
                     added_fields.append(field_name)
-                except sqlite3.Error as e:
+                except Exception as e:
                     raise HTTPException(
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                         detail=f"Failed to add column {field_name}: {str(e)}"
@@ -87,13 +72,12 @@ def add_phone_fields_migration(
         
         for index_sql in indexes:
             try:
-                cursor.execute(index_sql)
-            except sqlite3.Error as e:
+                db.execute(text(index_sql))
+            except Exception as e:
                 # Index creation errors are usually not critical
                 pass
         
-        conn.commit()
-        conn.close()
+        db.commit()
         
         return {
             "success": True,
