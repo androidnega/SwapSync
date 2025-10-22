@@ -16,6 +16,7 @@ from app.core.backup import (
     export_data_json,
     save_export_to_file
 )
+from app.core.company_filter import get_company_user_ids
 from app.models.user import User, UserRole
 from app.models.customer import Customer
 from app.models.phone import Phone, PhoneOwnershipHistory
@@ -27,7 +28,7 @@ from app.models.invoice import Invoice
 from app.models.product import Product
 from app.models.product_sale import ProductSale
 from app.models.pending_resale import PendingResale
-from app.core.auth import get_current_active_admin
+from app.core.auth import get_current_active_admin, get_current_user
 
 router = APIRouter(prefix="/maintenance", tags=["Maintenance"])
 
@@ -809,4 +810,147 @@ def clear_users(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to clear users: {str(e)}"
+        )
+
+
+@router.post("/clear-company-data")
+def clear_company_data(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Clear all business data for the current user's company only
+    WARNING: This will permanently delete all business data for this company!
+    Only Managers/CEOs can clear their own company's data
+    """
+    # Only allow managers and CEOs to clear their company data
+    if current_user.role not in [UserRole.MANAGER, UserRole.CEO]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Managers and CEOs can clear their company's data"
+        )
+    
+    try:
+        # Get company user IDs (manager + all their staff)
+        company_user_ids = get_company_user_ids(db, current_user)
+        
+        if not company_user_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No company users found"
+            )
+        
+        # Import additional models
+        from app.models.repair_item_usage import RepairItemUsage
+        from app.models.pos_sale import POSSale, POSSaleItem
+        from app.models.product import StockMovement
+        from app.models.category import Category
+        from app.models.brand import Brand
+        
+        # Count records before deletion for reporting
+        customer_count = db.query(Customer).filter(Customer.created_by_user_id.in_(company_user_ids)).count()
+        phone_count = db.query(Phone).filter(Phone.created_by_user_id.in_(company_user_ids)).count()
+        
+        # Clear all business data in proper order (respecting ALL foreign key constraints)
+        # Step 1: Break circular dependencies and clear customer references for company phones
+        db.query(Phone).filter(Phone.created_by_user_id.in_(company_user_ids)).update({
+            "swapped_from_id": None, 
+            "current_owner_id": None
+        })
+        
+        # Step 2: Delete child records first (filtered by company)
+        # Delete repair item usage for company repairs
+        company_repairs = db.query(Repair).filter(Repair.staff_id.in_(company_user_ids)).all()
+        repair_ids = [r.id for r in company_repairs]
+        if repair_ids:
+            db.query(RepairItemUsage).filter(RepairItemUsage.repair_id.in_(repair_ids)).delete()
+        
+        # Delete phone ownership history for company phones
+        company_phone_ids = [p.id for p in db.query(Phone).filter(Phone.created_by_user_id.in_(company_user_ids)).all()]
+        if company_phone_ids:
+            db.query(PhoneOwnershipHistory).filter(PhoneOwnershipHistory.phone_id.in_(company_phone_ids)).delete()
+        
+        # Delete invoices for company transactions
+        company_customer_ids = [c.id for c in db.query(Customer).filter(Customer.created_by_user_id.in_(company_user_ids)).all()]
+        if company_customer_ids:
+            db.query(Invoice).filter(Invoice.customer_id.in_(company_customer_ids)).delete()
+        
+        # Delete POS sale items for company POS sales
+        company_pos_sales = db.query(POSSale).filter(POSSale.created_by_user_id.in_(company_user_ids)).all()
+        pos_sale_ids = [s.id for s in company_pos_sales]
+        if pos_sale_ids:
+            db.query(POSSaleItem).filter(POSSaleItem.pos_sale_id.in_(pos_sale_ids)).delete()
+        
+        # Delete stock movements for company products
+        company_products = db.query(Product).filter(Product.created_by_user_id.in_(company_user_ids)).all()
+        product_ids = [p.id for p in company_products]
+        if product_ids:
+            db.query(StockMovement).filter(StockMovement.product_id.in_(product_ids)).delete()
+        
+        # Step 3: Delete transaction records (filtered by company)
+        if pos_sale_ids:
+            db.query(POSSale).filter(POSSale.id.in_(pos_sale_ids)).delete()
+        
+        # Delete pending resales for company swaps
+        company_swaps = db.query(Swap).join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids)).all()
+        swap_ids = [s.id for s in company_swaps]
+        if swap_ids:
+            db.query(PendingResale).filter(PendingResale.swap_id.in_(swap_ids)).delete()
+        
+        # Delete product sales for company
+        db.query(ProductSale).filter(ProductSale.created_by_user_id.in_(company_user_ids)).delete()
+        
+        # Delete repairs for company
+        if repair_ids:
+            db.query(Repair).filter(Repair.id.in_(repair_ids)).delete()
+        
+        # Delete sales for company
+        db.query(Sale).filter(Sale.created_by_user_id.in_(company_user_ids)).delete()
+        
+        # Delete swaps for company (through customer relationship)
+        if swap_ids:
+            db.query(Swap).filter(Swap.id.in_(swap_ids)).delete()
+        
+        # Step 4: Delete master records (filtered by company)
+        # Delete products for company
+        if product_ids:
+            db.query(Product).filter(Product.id.in_(product_ids)).delete()
+        
+        # Delete customers for company
+        if company_customer_ids:
+            db.query(Customer).filter(Customer.id.in_(company_customer_ids)).delete()
+        
+        # Step 5: Clear phone foreign keys that reference categories and brands for company phones
+        if company_phone_ids:
+            db.query(Phone).filter(Phone.id.in_(company_phone_ids)).update({
+                "category_id": None, 
+                "brand_id": None
+            })
+        
+        # Step 6: Delete phones for company
+        if company_phone_ids:
+            db.query(Phone).filter(Phone.id.in_(company_phone_ids)).delete()
+        
+        # Step 7: Clear activity logs for company users
+        db.query(ActivityLog).filter(ActivityLog.user_id.in_(company_user_ids)).delete()
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Cleared all business data for company '{current_user.company_name or 'Unknown'}' successfully",
+            "cleared_at": datetime.now().isoformat(),
+            "cleared_by": current_user.username,
+            "company_name": current_user.company_name,
+            "deleted_counts": {
+                "customers": customer_count,
+                "phones": phone_count,
+                "users_affected": len(company_user_ids)
+            }
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear company data: {str(e)}"
         )

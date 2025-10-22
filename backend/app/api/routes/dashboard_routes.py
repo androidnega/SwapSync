@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.permissions import can_view_analytics, can_manage_swaps, can_manage_repairs
+from app.core.company_filter import get_company_user_ids
 from app.models.user import User, UserRole
 from app.models.swap import Swap, ResaleStatus
 from app.models.sale import Sale
@@ -276,14 +277,13 @@ def get_dashboard_cards(
     
     # CEO & MANAGER - Profit/Stats cards
     if current_user.role in [UserRole.CEO, UserRole.MANAGER]:
-        # Get staff IDs (manager + all their staff)
-        staff = db.query(User).filter(User.parent_user_id == current_user.id).all()
-        staff_ids = [current_user.id] + [s.id for s in staff]
+        # Get company user IDs (manager + all their staff)
+        company_user_ids = get_company_user_ids(db, current_user)
         
-        # Total Profit from Swaps - Use PendingResale table (filtered by staff)
+        # Total Profit from Swaps - Use PendingResale table (filtered by company)
         total_profit = db.query(func.sum(PendingResale.profit_amount)).filter(
             PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD,
-            PendingResale.attending_staff_id.in_(staff_ids)
+            PendingResale.attending_staff_id.in_(company_user_ids)
         ).scalar() or 0.0
         
         cards.append({
@@ -295,10 +295,10 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # Product Sales Revenue (filtered by manager and their staff)
+        # Product Sales Revenue (filtered by company)
         # Only count sales that have created_by_user_id set
         product_sales_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
-            ProductSale.created_by_user_id.in_(staff_ids),
+            ProductSale.created_by_user_id.in_(company_user_ids),
             ProductSale.created_by_user_id.isnot(None)
         ).scalar() or 0.0
         
@@ -312,9 +312,9 @@ def get_dashboard_cards(
         })
         
         # Product Sales Profit - Calculate from actual sales
-        # Get all product sales by manager's staff
+        # Get all product sales by company
         product_sales = db.query(ProductSale).filter(
-            ProductSale.created_by_user_id.in_(staff_ids),
+            ProductSale.created_by_user_id.in_(company_user_ids),
             ProductSale.created_by_user_id.isnot(None)
         ).all()
         
@@ -336,10 +336,10 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # Service Charges (workmanship fees) - filtered by manager and their staff
+        # Service Charges (workmanship fees) - filtered by company
         # Only count completed/delivered repairs
         total_service_charges = db.query(func.sum(Repair.service_cost)).filter(
-            Repair.staff_id.in_(staff_ids),
+            Repair.staff_id.in_(company_user_ids),
             Repair.staff_id.isnot(None),
             Repair.status.in_(['Completed', 'Delivered'])
         ).scalar() or 0.0
@@ -359,7 +359,7 @@ def get_dashboard_cards(
         from app.models.repair_item import RepairItem
         
         completed_repairs = db.query(Repair).filter(
-            Repair.staff_id.in_(staff_ids),
+            Repair.staff_id.in_(company_user_ids),
             Repair.staff_id.isnot(None),
             Repair.status.in_(['Completed', 'Delivered'])
         ).all()
@@ -385,16 +385,16 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # Swap Discounts Applied (filtered by manager and their staff)
+        # Swap Discounts Applied (filtered by company)
         # Only count records that have proper staff tracking
         swap_discounts = db.query(func.sum(PendingResale.discount_amount)).filter(
-            PendingResale.attending_staff_id.in_(staff_ids),
+            PendingResale.attending_staff_id.in_(company_user_ids),
             PendingResale.attending_staff_id.isnot(None)
         ).scalar() or 0.0
         
-        # Phone sale discounts (filtered by staff) - also part of swap discounts
+        # Phone sale discounts (filtered by company) - also part of swap discounts
         phone_sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
-            Sale.created_by_user_id.in_(staff_ids),
+            Sale.created_by_user_id.in_(company_user_ids),
             Sale.created_by_user_id.isnot(None)
         ).scalar() or 0.0
         
@@ -409,9 +409,9 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # Product sale discounts (filtered by staff)
+        # Product sale discounts (filtered by company)
         product_sale_discounts = db.query(func.sum(ProductSale.discount_amount)).filter(
-            ProductSale.created_by_user_id.in_(staff_ids),
+            ProductSale.created_by_user_id.in_(company_user_ids),
             ProductSale.created_by_user_id.isnot(None)
         ).scalar() or 0.0
         
@@ -448,48 +448,75 @@ def get_dashboard_summary(
         "stats": {}
     }
     
+    # Get company user IDs for filtering
+    company_user_ids = get_company_user_ids(db, current_user)
+    
     # Shop Keeper stats
     if can_manage_swaps(current_user):
+        # Filter swaps by company
+        swap_query = db.query(Swap)
+        if company_user_ids is not None:
+            # For swaps, we need to filter by the staff who created them
+            # Since swaps don't have created_by_user_id, we'll filter by customer's created_by_user_id
+            swap_query = swap_query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
+        
         summary["stats"]["swaps"] = {
-            "total": db.query(func.count(Swap.id)).scalar(),
-            "pending_resales": db.query(func.count(Swap.id)).filter(
-                Swap.resale_status == ResaleStatus.PENDING
-            ).scalar(),
-            "total_discounts": db.query(func.sum(Swap.discount_amount)).scalar() or 0.0
+            "total": swap_query.count(),
+            "pending_resales": swap_query.filter(Swap.resale_status == ResaleStatus.PENDING).count(),
+            "total_discounts": swap_query.with_entities(func.sum(Swap.discount_amount)).scalar() or 0.0
         }
+        
+        # Filter sales by company
+        sale_query = db.query(Sale)
+        if company_user_ids is not None:
+            sale_query = sale_query.filter(Sale.created_by_user_id.in_(company_user_ids))
         
         summary["stats"]["sales"] = {
-            "total": db.query(func.count(Sale.id)).scalar(),
-            "total_revenue": db.query(func.sum(Sale.amount_paid)).scalar() or 0.0,
-            "total_discounts": db.query(func.sum(Sale.discount_amount)).scalar() or 0.0
+            "total": sale_query.count(),
+            "total_revenue": sale_query.with_entities(func.sum(Sale.amount_paid)).scalar() or 0.0,
+            "total_discounts": sale_query.with_entities(func.sum(Sale.discount_amount)).scalar() or 0.0
         }
         
+        # Filter phones by company
+        phone_query = db.query(Phone)
+        if company_user_ids is not None:
+            phone_query = phone_query.filter(Phone.created_by_user_id.in_(company_user_ids))
+        
         summary["stats"]["phones"] = {
-            "total": db.query(func.count(Phone.id)).scalar(),
-            "available": db.query(func.count(Phone.id)).filter(Phone.is_available == True).scalar()
+            "total": phone_query.count(),
+            "available": phone_query.filter(Phone.is_available == True).count()
         }
     
     # Repairer stats
     if can_manage_repairs(current_user):
+        # Filter repairs by company
+        repair_query = db.query(Repair)
+        if company_user_ids is not None:
+            repair_query = repair_query.filter(Repair.staff_id.in_(company_user_ids))
+        
         summary["stats"]["repairs"] = {
-            "total": db.query(func.count(Repair.id)).scalar(),
-            "pending": db.query(func.count(Repair.id)).filter(
-                Repair.status.in_(["Pending", "In Progress"])
-            ).scalar(),
-            "completed": db.query(func.count(Repair.id)).filter(
-                Repair.status.in_(["Completed", "Delivered"])
-            ).scalar(),
-            "total_revenue": db.query(func.sum(Repair.cost)).scalar() or 0.0
+            "total": repair_query.count(),
+            "pending": repair_query.filter(Repair.status.in_(["Pending", "In Progress"])).count(),
+            "completed": repair_query.filter(Repair.status.in_(["Completed", "Delivered"])).count(),
+            "total_revenue": repair_query.with_entities(func.sum(Repair.cost)).scalar() or 0.0
         }
     
     # CEO/Admin profit stats
     if can_view_analytics(current_user):
+        # Filter profit calculations by company
+        profit_swap_query = db.query(Swap)
+        profit_sale_query = db.query(Sale)
+        profit_repair_query = db.query(Repair)
+        
+        if company_user_ids is not None:
+            profit_swap_query = profit_swap_query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
+            profit_sale_query = profit_sale_query.filter(Sale.created_by_user_id.in_(company_user_ids))
+            profit_repair_query = profit_repair_query.filter(Repair.staff_id.in_(company_user_ids))
+        
         summary["stats"]["profit"] = {
-            "from_swaps": db.query(func.sum(Swap.profit_or_loss)).filter(
-                Swap.resale_status == ResaleStatus.SOLD
-            ).scalar() or 0.0,
-            "from_sales": db.query(func.sum(Sale.amount_paid)).scalar() or 0.0,
-            "from_repairs": db.query(func.sum(Repair.cost)).scalar() or 0.0
+            "from_swaps": profit_swap_query.filter(Swap.resale_status == ResaleStatus.SOLD).with_entities(func.sum(Swap.profit_or_loss)).scalar() or 0.0,
+            "from_sales": profit_sale_query.with_entities(func.sum(Sale.amount_paid)).scalar() or 0.0,
+            "from_repairs": profit_repair_query.with_entities(func.sum(Repair.cost)).scalar() or 0.0
         }
         
         # Calculate total profit

@@ -39,6 +39,7 @@ const Settings: React.FC = () => {
     delete_sales: false,
     delete_repairs: false,
     delete_product_sales: false,
+    delete_company_data: false,
     delete_all: false
   });
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -83,6 +84,49 @@ const Settings: React.FC = () => {
       return;
     }
 
+    // Handle company data clearing separately
+    if (deleteOptions.delete_company_data) {
+      const confirmMessage = '⚠️ WARNING! This will delete ALL business data for your company only (customers, phones, swaps, sales, repairs, etc.). This action CANNOT be undone! Type YES to confirm.';
+      const userConfirm = prompt(confirmMessage);
+      
+      if (userConfirm !== 'YES') {
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const token = getToken();
+        const response = await axios.post(
+          `${API_URL}/maintenance/clear-company-data`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const result = response.data;
+        setMessage(`✅ Successfully cleared company data: ${result.message}`);
+        setShowDeleteModal(false);
+        setConfirmPassword('');
+        setDeleteOptions({
+          delete_phones: false,
+          delete_products: false,
+          delete_customers: false,
+          delete_swaps: false,
+          delete_sales: false,
+          delete_repairs: false,
+          delete_product_sales: false,
+          delete_company_data: false,
+          delete_all: false
+        });
+        fetchDataCounts();
+      } catch (error: any) {
+        console.error('Delete company data error:', error);
+        setMessage(`❌ Failed to clear company data: ${error.response?.data?.detail || error.message}`);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     const confirmMessage = deleteOptions.delete_all 
       ? '⚠️ WARNING! This will delete ALL data from the system (except admin accounts). This action CANNOT be undone! Type YES to confirm.'
       : `Are you sure you want to delete selected data? This action CANNOT be undone!`;
@@ -118,6 +162,7 @@ const Settings: React.FC = () => {
         delete_sales: false,
         delete_repairs: false,
         delete_product_sales: false,
+        delete_company_data: false,
         delete_all: false
       });
       fetchDataCounts();
@@ -833,6 +878,26 @@ const Settings: React.FC = () => {
                   <span className="font-medium">🔧 Delete All Repairs ({dataCounts?.repairs || 0})</span>
                 </label>
 
+                {/* Company Data Clearing - Only for Managers/CEOs */}
+                {(userRole === 'manager' || userRole === 'ceo') && (
+                  <div className="border-t-2 border-orange-300 pt-4 mt-4">
+                    <label className="flex items-center gap-3 p-4 border-2 border-orange-500 bg-orange-100 rounded-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={deleteOptions.delete_company_data}
+                        onChange={(e) => setDeleteOptions({...deleteOptions, delete_company_data: e.target.checked, delete_all: false})}
+                        className="w-6 h-6 text-orange-600"
+                      />
+                      <div>
+                        <span className="font-bold text-orange-800">🏢 Clear ALL Company Data</span>
+                        <p className="text-sm text-orange-700 mt-1">
+                          Delete all business data for your company only (customers, phones, swaps, sales, repairs, etc.)
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
                 <div className="border-t-2 border-red-300 pt-4 mt-4">
                   <label className="flex items-center gap-3 p-4 border-2 border-red-500 bg-red-100 rounded-lg cursor-pointer">
                     <input
@@ -848,6 +913,7 @@ const Settings: React.FC = () => {
                           delete_sales: checked,
                           delete_repairs: checked,
                           delete_product_sales: checked,
+                          delete_company_data: checked,
                           delete_all: checked
                         });
                       }}

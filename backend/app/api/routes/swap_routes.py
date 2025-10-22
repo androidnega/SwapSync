@@ -8,6 +8,7 @@ from datetime import datetime
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.permissions import can_manage_swaps, can_view_swaps
+from app.core.company_filter import get_company_user_ids
 from app.core.invoice_generator import create_swap_invoice
 from app.core.activity_logger import log_activity
 from app.core.sms import send_swap_completion_sms
@@ -278,7 +279,16 @@ def list_swaps(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view swap transactions"
         )
-    swaps = db.query(Swap).order_by(Swap.created_at.desc()).offset(skip).limit(limit).all()
+    
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    query = db.query(Swap)
+    
+    if company_user_ids is not None:
+        # Filter swaps by company through customer's created_by_user_id
+        query = query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
+    
+    swaps = query.order_by(Swap.created_at.desc()).offset(skip).limit(limit).all()
     return swaps
 
 
@@ -296,8 +306,17 @@ def get_pending_resales(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view swap transactions"
         )
+    
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    query = db.query(Swap)
+    
+    if company_user_ids is not None:
+        # Filter swaps by company through customer's created_by_user_id
+        query = query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
+    
     pending_swaps = (
-        db.query(Swap)
+        query
         .filter(Swap.resale_status == ResaleStatus.PENDING)
         .filter(Swap.given_phone_value > 0)  # Only swaps where customer gave a phone
         .order_by(Swap.created_at.desc())
@@ -320,8 +339,17 @@ def get_sold_resales(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view swap transactions"
         )
+    
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    query = db.query(Swap)
+    
+    if company_user_ids is not None:
+        # Filter swaps by company through customer's created_by_user_id
+        query = query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
+    
     sold_swaps = (
-        db.query(Swap)
+        query
         .filter(Swap.resale_status == ResaleStatus.SOLD)
         .order_by(Swap.created_at.desc())
         .all()
@@ -343,9 +371,18 @@ def get_profit_summary(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view swap transactions"
         )
+    
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    query = db.query(Swap)
+    
+    if company_user_ids is not None:
+        # Filter swaps by company through customer's created_by_user_id
+        query = query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
+    
     # Get all swaps with completed resales
     completed_swaps = (
-        db.query(Swap)
+        query
         .filter(Swap.resale_status == ResaleStatus.SOLD)
         .all()
     )
