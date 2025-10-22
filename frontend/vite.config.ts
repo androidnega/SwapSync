@@ -12,5 +12,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    chunkSizeWarningLimit: 2000, // Increase chunk size warning limit to 2MB
   },
 })
