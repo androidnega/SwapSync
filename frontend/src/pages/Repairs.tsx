@@ -98,7 +98,6 @@ const Repairs: React.FC = () => {
   const itemsPerPage = 10;
   
   // Repair items filtering and pagination
-  const [itemSearchTerm, setItemSearchTerm] = useState('');
   const [itemCategoryFilter, setItemCategoryFilter] = useState('');
   const [itemStockFilter, setItemStockFilter] = useState('all'); // 'all', 'in_stock', 'low_stock', 'out_of_stock'
   const [itemCurrentPage, setItemCurrentPage] = useState(1);
