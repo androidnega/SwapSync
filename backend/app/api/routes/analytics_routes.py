@@ -8,44 +8,71 @@ from sqlalchemy import func, and_, extract
 from datetime import datetime, timedelta
 from typing import Optional
 from app.core.database import get_db
+from app.core.auth import get_current_user
+from app.core.company_filter import get_company_user_ids
+from app.models.user import User
 from app.models.customer import Customer
 from app.models.phone import Phone
 from app.models.repair import Repair
 from app.models.sale import Sale
 from app.models.swap import Swap
+from app.models.product import Product
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
 @router.get("/overview")
-def get_overview(db: Session = Depends(get_db)):
+def get_overview(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """
     Dashboard overview with key metrics
     Returns total customers, repairs, sales, swaps, and revenue
+    Filtered by company for data isolation
     """
+    # Get company user IDs for filtering
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    # Build base queries with company filtering
+    customer_query = db.query(Customer)
+    repair_query = db.query(Repair)
+    sale_query = db.query(Sale)
+    swap_query = db.query(Swap)
+    phone_query = db.query(Phone)
+    
+    # Apply company filtering
+    if company_user_ids is not None:
+        customer_query = customer_query.filter(Customer.created_by_user_id.in_(company_user_ids))
+        repair_query = repair_query.filter(Repair.created_by_user_id.in_(company_user_ids))
+        sale_query = sale_query.filter(Sale.created_by_user_id.in_(company_user_ids))
+        # For swaps, filter through customer's created_by_user_id
+        swap_query = swap_query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
+        phone_query = phone_query.filter(Phone.created_by_user_id.in_(company_user_ids))
+    
     # Total counts
-    total_customers = db.query(func.count(Customer.id)).scalar()
-    total_repairs = db.query(func.count(Repair.id)).scalar()
-    total_sales = db.query(func.count(Sale.id)).scalar()
-    total_swaps = db.query(func.count(Swap.id)).scalar()
-    total_phones = db.query(func.count(Phone.id)).scalar()
-    available_phones = db.query(func.count(Phone.id)).filter(Phone.is_available == True).scalar()
+    total_customers = customer_query.count()
+    total_repairs = repair_query.count()
+    total_sales = sale_query.count()
+    total_swaps = swap_query.count()
+    total_phones = phone_query.count()
+    available_phones = phone_query.filter(Phone.is_available == True).count()
     
     # Revenue calculations
-    repair_revenue = db.query(func.sum(Repair.cost)).scalar() or 0.0
-    sales_revenue = db.query(func.sum(Sale.amount_paid)).scalar() or 0.0
-    swap_revenue = db.query(func.sum(Swap.balance_paid)).scalar() or 0.0
+    repair_revenue = repair_query.with_entities(func.sum(Repair.cost)).scalar() or 0.0
+    sales_revenue = sale_query.with_entities(func.sum(Sale.amount_paid)).scalar() or 0.0
+    swap_revenue = swap_query.with_entities(func.sum(Swap.balance_paid)).scalar() or 0.0
     total_revenue = repair_revenue + sales_revenue + swap_revenue
     
     # Repair status breakdown
-    pending_repairs = db.query(func.count(Repair.id)).filter(Repair.status == "Pending").scalar()
-    in_progress_repairs = db.query(func.count(Repair.id)).filter(Repair.status == "In Progress").scalar()
-    completed_repairs = db.query(func.count(Repair.id)).filter(Repair.status == "Completed").scalar()
-    delivered_repairs = db.query(func.count(Repair.id)).filter(Repair.status == "Delivered").scalar()
+    pending_repairs = repair_query.filter(Repair.status == "Pending").count()
+    in_progress_repairs = repair_query.filter(Repair.status == "In Progress").count()
+    completed_repairs = repair_query.filter(Repair.status == "Completed").count()
+    delivered_repairs = repair_query.filter(Repair.status == "Delivered").count()
     
-    # Recent repairs (last 5)
+    # Recent repairs (last 5) - use filtered query
     recent_repairs = (
-        db.query(Repair)
+        repair_query
         .order_by(Repair.created_at.desc())
         .limit(5)
         .all()
@@ -574,27 +601,49 @@ def profit_loss_analysis(db: Session = Depends(get_db)):
 
 
 @router.get("/dashboard-summary")
-def dashboard_summary(db: Session = Depends(get_db)):
+def dashboard_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """
     Complete dashboard summary
     All key metrics in one call for dashboard homepage
+    Filtered by company for data isolation
     """
+    # Get company user IDs for filtering
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    # Build base queries with company filtering
+    customer_query = db.query(Customer)
+    repair_query = db.query(Repair)
+    phone_query = db.query(Phone)
+    sale_query = db.query(Sale)
+    
+    # Apply company filtering
+    if company_user_ids is not None:
+        customer_query = customer_query.filter(Customer.created_by_user_id.in_(company_user_ids))
+        repair_query = repair_query.filter(Repair.created_by_user_id.in_(company_user_ids))
+        phone_query = phone_query.filter(Phone.created_by_user_id.in_(company_user_ids))
+        sale_query = sale_query.filter(Sale.created_by_user_id.in_(company_user_ids))
+    
     # Quick stats
-    total_customers = db.query(func.count(Customer.id)).scalar()
-    total_repairs = db.query(func.count(Repair.id)).scalar()
-    pending_repairs = db.query(func.count(Repair.id)).filter(Repair.status == "Pending").scalar()
-    available_phones = db.query(func.count(Phone.id)).filter(Phone.is_available == True).scalar()
+    total_customers = customer_query.count()
+    total_repairs = repair_query.count()
+    pending_repairs = repair_query.filter(Repair.status == "Pending").count()
+    available_phones = phone_query.filter(Phone.is_available == True).count()
     
     # Revenue (last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     recent_repair_revenue = (
-        db.query(func.sum(Repair.cost))
+        repair_query
         .filter(Repair.created_at >= thirty_days_ago)
+        .with_entities(func.sum(Repair.cost))
         .scalar() or 0.0
     )
     recent_sales_revenue = (
-        db.query(func.sum(Sale.amount_paid))
+        sale_query
         .filter(Sale.created_at >= thirty_days_ago)
+        .with_entities(func.sum(Sale.amount_paid))
         .scalar() or 0.0
     )
     

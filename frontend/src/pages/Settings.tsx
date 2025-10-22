@@ -729,6 +729,28 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
+      {/* Company Data Management - Managers/CEOs */}
+      {(userRole === 'manager' || userRole === 'ceo') && (
+        <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-6">
+          <h2 className="text-2xl font-bold text-orange-900 mb-2 flex items-center gap-2">
+            🏢 Company Data Management
+          </h2>
+          <p className="text-orange-700 mb-4">
+            Manage your company's data. This will only affect your company's data, not other companies.
+          </p>
+          
+          <button
+            onClick={() => {
+              setShowDeleteModal(true);
+              fetchDataCounts();
+            }}
+            className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold"
+          >
+            🗑️ Manage Company Data
+          </button>
+        </div>
+      )}
+
       {/* Danger Zone - Super Admin Only */}
       {userRole === 'super_admin' && (
         <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6">

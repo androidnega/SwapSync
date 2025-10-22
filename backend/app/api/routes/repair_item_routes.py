@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
 from app.core.auth import get_current_user
+from app.core.company_filter import get_company_user_ids
 from app.models.user import User
 from app.models.repair_item import RepairItem
 from app.schemas.repair_item import RepairItemCreate, RepairItemUpdate, RepairItemResponse
@@ -18,8 +19,15 @@ def get_all_repair_items(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get all repair items in inventory"""
-    items = db.query(RepairItem).order_by(RepairItem.name).all()
+    """Get all repair items in inventory (filtered by company)"""
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    query = db.query(RepairItem)
+    if company_user_ids is not None:
+        query = query.filter(RepairItem.created_by_user_id.in_(company_user_ids))
+    
+    items = query.order_by(RepairItem.name).all()
     return items
 
 @router.get("/low-stock", response_model=List[RepairItemResponse])
@@ -27,10 +35,18 @@ def get_low_stock_items(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get repair items with stock below minimum level"""
-    items = db.query(RepairItem).filter(
+    """Get repair items with stock below minimum level (filtered by company)"""
+    # Filter by company (data isolation)
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    query = db.query(RepairItem).filter(
         RepairItem.stock_quantity <= RepairItem.min_stock_level
-    ).all()
+    )
+    
+    if company_user_ids is not None:
+        query = query.filter(RepairItem.created_by_user_id.in_(company_user_ids))
+    
+    items = query.all()
     return items
 
 @router.get("/{item_id}", response_model=RepairItemResponse)
@@ -59,8 +75,10 @@ def create_repair_item(
             detail="Only managers and repairers can add repair items"
         )
     
-    # Create new item
-    new_item = RepairItem(**item_data.dict())
+    # Create new item with company tracking
+    item_dict = item_data.dict()
+    item_dict['created_by_user_id'] = current_user.id
+    new_item = RepairItem(**item_dict)
     db.add(new_item)
     db.commit()
     db.refresh(new_item)

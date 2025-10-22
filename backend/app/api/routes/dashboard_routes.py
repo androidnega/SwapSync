@@ -103,40 +103,55 @@ def get_dashboard_cards(
     
     # CEO & SHOP KEEPER - Business cards
     if current_user.role in [UserRole.CEO, UserRole.SHOP_KEEPER, UserRole.MANAGER]:
-        # Total Customers
+        # Get company user IDs for filtering
+        company_user_ids = get_company_user_ids(db, current_user)
+        
+        # Total Customers - filtered by company
+        customer_query = db.query(Customer)
+        if company_user_ids is not None:
+            customer_query = customer_query.filter(Customer.created_by_user_id.in_(company_user_ids))
+        
         cards.append({
             "id": "total_customers",
             "title": "Total Customers",
-            "value": db.query(func.count(Customer.id)).scalar(),
+            "value": customer_query.count(),
             "icon": "faUserCircle",
             "color": "blue",
             "visible_to": ["shop_keeper", "ceo", "manager"]
         })
         
-        # Pending Resales Card - Use PendingResale table
-        pending_resales = db.query(func.count(PendingResale.id)).filter(
+        # Pending Resales Card - Use PendingResale table (filtered by company)
+        pending_resales_query = db.query(PendingResale).filter(
             PendingResale.incoming_phone_id.isnot(None),
             PendingResale.incoming_phone_status != PhoneSaleStatus.SOLD
-        ).scalar()
+        )
+        if company_user_ids is not None:
+            pending_resales_query = pending_resales_query.filter(
+                PendingResale.attending_staff_id.in_(company_user_ids)
+            )
         
         cards.append({
             "id": "pending_resales",
             "title": "Pending Resales",
-            "value": pending_resales,
+            "value": pending_resales_query.count(),
             "icon": "faClock",
             "color": "yellow",
             "visible_to": ["shop_keeper", "ceo", "manager"]
         })
         
-        # Completed Swaps Card - Use PendingResale table
-        completed_swaps = db.query(func.count(PendingResale.id)).filter(
+        # Completed Swaps Card - Use PendingResale table (filtered by company)
+        completed_swaps_query = db.query(PendingResale).filter(
             PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD
-        ).scalar()
+        )
+        if company_user_ids is not None:
+            completed_swaps_query = completed_swaps_query.filter(
+                PendingResale.attending_staff_id.in_(company_user_ids)
+            )
         
         cards.append({
             "id": "completed_swaps",
             "title": "Completed Swaps",
-            "value": completed_swaps,
+            "value": completed_swaps_query.count(),
             "icon": "faCheckCircle",
             "color": "green",
             "visible_to": ["shop_keeper", "ceo", "manager"]
@@ -160,30 +175,34 @@ def get_dashboard_cards(
                 "visible_to": ["shop_keeper"]
             })
         
-        # Available Phones - Exclude trade-ins waiting for resale
-        available_phones = db.query(func.count(Phone.id)).filter(
+        # Available Phones - Exclude trade-ins waiting for resale (filtered by company)
+        available_phones_query = db.query(Phone).filter(
             Phone.is_available == True,
             Phone.status != PhoneStatus.SWAPPED  # Exclude trade-ins
-        ).scalar()
+        )
+        if company_user_ids is not None:
+            available_phones_query = available_phones_query.filter(Phone.created_by_user_id.in_(company_user_ids))
         
         cards.append({
             "id": "available_phones",
             "title": "Available Phones",
-            "value": available_phones,
+            "value": available_phones_query.count(),
             "icon": "faMobileAlt",
             "color": "indigo",
             "visible_to": ["shop_keeper", "ceo", "manager"]
         })
         
-        # Available Products - Products with stock > 0
-        available_products = db.query(func.count(Product.id)).filter(
+        # Available Products - Products with stock > 0 (filtered by company)
+        available_products_query = db.query(Product).filter(
             Product.quantity > 0
-        ).scalar()
+        )
+        if company_user_ids is not None:
+            available_products_query = available_products_query.filter(Product.created_by_user_id.in_(company_user_ids))
         
         cards.append({
             "id": "available_products",
             "title": "Available Products",
-            "value": available_products,
+            "value": available_products_query.count(),
             "icon": "faBox",
             "color": "teal",
             "visible_to": ["shop_keeper", "ceo", "manager"]
@@ -191,11 +210,18 @@ def get_dashboard_cards(
     
     # REPAIRER - Repair cards only
     if current_user.role == UserRole.REPAIRER:
-        # Total Customers
+        # Get company user IDs for filtering
+        company_user_ids = get_company_user_ids(db, current_user)
+        
+        # Total Customers - filtered by company
+        customer_query = db.query(Customer)
+        if company_user_ids is not None:
+            customer_query = customer_query.filter(Customer.created_by_user_id.in_(company_user_ids))
+        
         cards.append({
             "id": "total_customers",
             "title": "Total Customers",
-            "value": db.query(func.count(Customer.id)).scalar(),
+            "value": customer_query.count(),
             "icon": "faUserCircle",
             "color": "blue",
             "visible_to": ["repairer"]

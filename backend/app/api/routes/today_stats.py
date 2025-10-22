@@ -9,11 +9,13 @@ from sqlalchemy import func
 from datetime import datetime, date
 from app.core.database import get_db
 from app.core.auth import get_current_user
+from app.core.company_filter import get_company_user_ids
 from app.models.user import User
 from app.models.sale import Sale
 from app.models.product_sale import ProductSale
 from app.models.swap import Swap
 from app.models.repair import Repair
+from app.models.customer import Customer
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
