@@ -42,7 +42,14 @@ class Product(Base):
     
     # For Phones specifically (swappable items)
     imei = Column(String, unique=True, nullable=True, index=True)  # Only for phones
+    is_phone = Column(Boolean, default=False)  # True if this is a phone product
     is_swappable = Column(Boolean, default=False)  # True for phones available for swap
+    phone_condition = Column(String, nullable=True)  # New, Used, Refurbished (for phones)
+    phone_specs = Column(JSON, nullable=True)  # Phone-specific specs (CPU, RAM, etc.)
+    phone_status = Column(String, default="AVAILABLE")  # AVAILABLE, SOLD, UNDER_REPAIR, etc.
+    swapped_from_id = Column(Integer, ForeignKey("swaps.id"), nullable=True)  # If phone came from swap
+    current_owner_id = Column(Integer, ForeignKey("customers.id"), nullable=True)  # Current owner
+    current_owner_type = Column(String, default="shop")  # shop, customer, repair
     
     # Status
     is_active = Column(Boolean, default=True)  # Active/Inactive
@@ -98,6 +105,37 @@ class Product(Base):
         self.quantity += quantity
         if self.quantity > 0:
             self.is_available = True
+    
+    @property
+    def is_phone_product(self):
+        """Check if this product is a phone"""
+        return self.is_phone == True
+    
+    @property
+    def phone_display_name(self):
+        """Get display name for phone products"""
+        if self.is_phone_product:
+            return f"{self.brand} {self.name}" if self.brand else self.name
+        return self.name
+    
+    def mark_as_sold(self, customer_id: int = None):
+        """Mark phone as sold (for phone products)"""
+        if self.is_phone_product:
+            self.phone_status = "SOLD"
+            self.is_available = False
+            self.quantity = 0
+            if customer_id:
+                self.current_owner_id = customer_id
+                self.current_owner_type = "customer"
+    
+    def mark_as_available(self):
+        """Mark phone as available (for phone products)"""
+        if self.is_phone_product:
+            self.phone_status = "AVAILABLE"
+            self.is_available = True
+            self.quantity = 1
+            self.current_owner_id = None
+            self.current_owner_type = "shop"
 
 
 class StockMovement(Base):

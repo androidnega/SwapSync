@@ -20,7 +20,7 @@ from app.models.category import Category
 from app.schemas.product import (
     ProductCreate, ProductUpdate, ProductResponse,
     StockAdjustment, StockMovementCreate, StockMovementResponse,
-    ProductSearchFilters, ProductSummary
+    ProductSearchFilters, ProductSummary, PhoneProductCreate
 )
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -113,6 +113,104 @@ def create_product(
     )
     
     return db_product
+
+
+@router.post("/phone", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+def create_phone_product(
+    phone_product: PhoneProductCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Create a new phone product (Manager ONLY)
+    Specialized endpoint for creating phone products with phone-specific fields
+    """
+    # Only managers can create products
+    require_manager(current_user)
+    
+    # Verify category exists
+    category = db.query(Category).filter(Category.id == phone_product.category_id).first()
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Category with ID {phone_product.category_id} not found"
+        )
+    
+    # Check for duplicate IMEI
+    existing_phone = db.query(Product).filter(Product.imei == phone_product.imei).first()
+    if existing_phone:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Phone with IMEI {phone_product.imei} already exists"
+        )
+    
+    # Check for duplicate SKU if provided
+    if phone_product.sku:
+        existing_product = db.query(Product).filter(Product.sku == phone_product.sku).first()
+        if existing_product:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Product with SKU {phone_product.sku} already exists"
+            )
+    
+    # Create phone product
+    db_phone_product = Product(
+        name=phone_product.name,
+        sku=phone_product.sku,
+        barcode=phone_product.barcode,
+        category_id=phone_product.category_id,
+        brand=phone_product.brand,
+        cost_price=phone_product.cost_price,
+        selling_price=phone_product.selling_price,
+        discount_price=phone_product.discount_price,
+        quantity=1,  # Phones are always quantity 1
+        min_stock_level=1,  # Minimum stock for phones
+        description=phone_product.description,
+        specs=phone_product.specs,
+        condition=phone_product.condition,
+        imei=phone_product.imei,
+        is_phone=True,  # Mark as phone product
+        is_swappable=phone_product.is_swappable,
+        phone_condition=phone_product.phone_condition,
+        phone_specs=phone_product.phone_specs,
+        phone_status="AVAILABLE",
+        is_active=True,
+        is_available=True,
+        created_by_user_id=current_user.id
+    )
+    
+    db.add(db_phone_product)
+    db.flush()  # Get the ID
+    
+    # Generate unique ID
+    db_phone_product.generate_unique_id(db)
+    
+    # Create initial stock movement
+    if phone_product.quantity > 0:
+        stock_movement = StockMovement(
+            product_id=db_phone_product.id,
+            movement_type="purchase",
+            quantity=phone_product.quantity,
+            unit_price=phone_product.cost_price,
+            total_amount=phone_product.cost_price * phone_product.quantity,
+            reference_type="initial_stock",
+            notes=f"Initial stock for phone {db_phone_product.name}",
+            created_by_user_id=current_user.id
+        )
+        db.add(stock_movement)
+        db.commit()
+    
+    # Log activity
+    log_activity(
+        db=db,
+        user=current_user,
+        action=f"created phone product",
+        module="products",
+        target_id=db_phone_product.id,
+        details=f"{db_phone_product.name} - IMEI: {db_phone_product.imei}, Condition: {db_phone_product.phone_condition}"
+    )
+    
+    return db_phone_product
 
 
 @router.get("/", response_model=List[ProductResponse])

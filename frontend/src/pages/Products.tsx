@@ -23,6 +23,13 @@ interface Product {
   is_low_stock: boolean;
   is_out_of_stock: boolean;
   created_at: string;
+  // Phone-specific fields
+  imei?: string | null;
+  is_phone?: boolean;
+  is_swappable?: boolean;
+  phone_condition?: string | null;
+  phone_specs?: any;
+  phone_status?: string | null;
 }
 
 interface Category {
@@ -69,7 +76,19 @@ const Products: React.FC = () => {
     discount_price: '',
     quantity: '0',
     min_stock_level: '5',
-    description: ''
+    description: '',
+    // Phone-specific fields
+    imei: '',
+    is_phone: false,
+    is_swappable: false,
+    phone_condition: '',
+    phone_specs: {
+      cpu: '',
+      ram: '',
+      storage: '',
+      battery: '',
+      color: ''
+    }
   });
 
   const [stockAdjustment, setStockAdjustment] = useState({
@@ -81,6 +100,15 @@ const Products: React.FC = () => {
   const [message, setMessage] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+  // Check if selected category is a phone category
+  const isPhoneCategory = (categoryId: string) => {
+    if (!categoryId) return false;
+    const category = categories.find(cat => cat.id.toString() === categoryId);
+    return category?.name?.toLowerCase().includes('phone') || 
+           category?.name?.toLowerCase().includes('mobile') ||
+           category?.name?.toLowerCase().includes('smartphone');
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -146,7 +174,12 @@ const Products: React.FC = () => {
         barcode: formData.barcode || null,
         brand: formData.brand || null,
         description: formData.description || null,
-        imei: formData.imei || null
+        // Phone-specific fields
+        imei: formData.imei || null,
+        is_phone: isPhoneCategory(formData.category_id),
+        is_swappable: formData.is_swappable,
+        phone_condition: formData.phone_condition || null,
+        phone_specs: formData.phone_specs
       };
 
       if (editingId) {
@@ -155,7 +188,9 @@ const Products: React.FC = () => {
         });
         setMessage('✅ Product updated successfully!');
       } else {
-        await axios.post(`${API_URL}/products/`, productData, {
+        // Use phone endpoint for phone products, regular endpoint for others
+        const endpoint = isPhoneCategory(formData.category_id) ? '/products/phone' : '/products/';
+        await axios.post(`${API_URL}${endpoint}`, productData, {
           headers: { Authorization: `Bearer ${getToken()}` }
         });
         setMessage('✅ Product created successfully!');
@@ -214,7 +249,19 @@ const Products: React.FC = () => {
       discount_price: product.discount_price?.toString() || '',
       quantity: product.quantity ? product.quantity.toString() : '0',
       min_stock_level: product.min_stock_level ? product.min_stock_level.toString() : '5',
-      description: product.description || ''
+      description: product.description || '',
+      // Phone-specific fields
+      imei: product.imei || '',
+      is_phone: product.is_phone || false,
+      is_swappable: product.is_swappable || false,
+      phone_condition: product.phone_condition || '',
+      phone_specs: product.phone_specs || {
+        cpu: '',
+        ram: '',
+        storage: '',
+        battery: '',
+        color: ''
+      }
     });
     setEditingId(product.id);
     setShowModal(true);
@@ -268,7 +315,19 @@ const Products: React.FC = () => {
       discount_price: '',
       quantity: '0',
       min_stock_level: '5',
-      description: ''
+      description: '',
+      // Phone-specific fields
+      imei: '',
+      is_phone: false,
+      is_swappable: false,
+      phone_condition: '',
+      phone_specs: {
+        cpu: '',
+        ram: '',
+        storage: '',
+        battery: '',
+        color: ''
+      }
     });
   };
 
@@ -907,6 +966,138 @@ const Products: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                {/* Phone-specific fields - only show when phone category is selected */}
+                {isPhoneCategory(formData.category_id) && (
+                  <div className="border-t border-gray-200 pt-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      📱 Phone Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* IMEI */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">IMEI Number *</label>
+                        <input
+                          type="text"
+                          value={formData.imei}
+                          onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
+                          className="w-full border border-gray-300 rounded-lg p-2 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                          placeholder="Enter 15-digit IMEI"
+                          required={isPhoneCategory(formData.category_id)}
+                          disabled={userRole === 'shop_keeper'}
+                        />
+                      </div>
+
+                      {/* Phone Condition */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Condition *</label>
+                        <select
+                          value={formData.phone_condition}
+                          onChange={(e) => setFormData({ ...formData, phone_condition: e.target.value })}
+                          className="w-full border border-gray-300 rounded-lg p-2 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                          required={isPhoneCategory(formData.category_id)}
+                          disabled={userRole === 'shop_keeper'}
+                        >
+                          <option value="">-- Select Condition --</option>
+                          <option value="New">New</option>
+                          <option value="Used">Used</option>
+                          <option value="Refurbished">Refurbished</option>
+                        </select>
+                      </div>
+
+                      {/* Is Swappable */}
+                      <div className="col-span-2">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={formData.is_swappable}
+                            onChange={(e) => setFormData({ ...formData, is_swappable: e.target.checked })}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            disabled={userRole === 'shop_keeper'}
+                          />
+                          <span className="text-sm font-medium text-gray-700">Available for Phone Swaps</span>
+                        </label>
+                      </div>
+
+                      {/* Phone Specifications */}
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Specifications</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">CPU/Processor</label>
+                            <input
+                              type="text"
+                              value={formData.phone_specs.cpu}
+                              onChange={(e) => setFormData({ 
+                                ...formData, 
+                                phone_specs: { ...formData.phone_specs, cpu: e.target.value }
+                              })}
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
+                              placeholder="e.g., A15 Bionic, Snapdragon 888"
+                              disabled={userRole === 'shop_keeper'}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">RAM</label>
+                            <input
+                              type="text"
+                              value={formData.phone_specs.ram}
+                              onChange={(e) => setFormData({ 
+                                ...formData, 
+                                phone_specs: { ...formData.phone_specs, ram: e.target.value }
+                              })}
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
+                              placeholder="e.g., 6GB, 8GB"
+                              disabled={userRole === 'shop_keeper'}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Storage</label>
+                            <input
+                              type="text"
+                              value={formData.phone_specs.storage}
+                              onChange={(e) => setFormData({ 
+                                ...formData, 
+                                phone_specs: { ...formData.phone_specs, storage: e.target.value }
+                              })}
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
+                              placeholder="e.g., 128GB, 256GB"
+                              disabled={userRole === 'shop_keeper'}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Battery</label>
+                            <input
+                              type="text"
+                              value={formData.phone_specs.battery}
+                              onChange={(e) => setFormData({ 
+                                ...formData, 
+                                phone_specs: { ...formData.phone_specs, battery: e.target.value }
+                              })}
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
+                              placeholder="e.g., 4000mAh, 85% health"
+                              disabled={userRole === 'shop_keeper'}
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-xs text-gray-600 mb-1">Color</label>
+                            <input
+                              type="text"
+                              value={formData.phone_specs.color}
+                              onChange={(e) => setFormData({ 
+                                ...formData, 
+                                phone_specs: { ...formData.phone_specs, color: e.target.value }
+                              })}
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
+                              placeholder="e.g., Space Gray, Pacific Blue"
+                              disabled={userRole === 'shop_keeper'}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Form Actions */}
                 <div className="flex gap-3 justify-end pt-4 border-t">

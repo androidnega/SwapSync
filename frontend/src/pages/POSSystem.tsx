@@ -32,6 +32,13 @@ interface Product {
     id: number;
     name: string;
   };
+  // Phone-specific fields
+  imei?: string | null;
+  is_phone?: boolean;
+  is_swappable?: boolean;
+  phone_condition?: string | null;
+  phone_specs?: any;
+  phone_status?: string | null;
 }
 
 interface CartItem {
@@ -661,7 +668,56 @@ const POSSystem: React.FC = () => {
                                   <span className={`px-2 py-1 rounded-full text-xs border ${getStockColorClass(product)}`}>
                                     Stock: {getAvailableStock(product)}
                                   </span>
+                                  {/* Phone-specific indicators */}
+                                  {product.is_phone && (
+                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                                      📱 Phone
+                                    </span>
+                                  )}
+                                  {product.is_swappable && (
+                                    <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                                      🔄 Swappable
+                                    </span>
+                                  )}
                                 </div>
+                                {/* Phone-specific details */}
+                                {product.is_phone && (
+                                  <div className="mt-2 text-xs text-gray-600 space-y-1">
+                                    {product.imei && (
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">IMEI:</span>
+                                        <span className="font-mono bg-gray-100 px-2 py-1 rounded">{product.imei}</span>
+                                      </div>
+                                    )}
+                                    {product.phone_condition && (
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">Condition:</span>
+                                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
+                                          {product.phone_condition}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {product.phone_specs && (
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        {product.phone_specs.storage && (
+                                          <span className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                            💾 {product.phone_specs.storage}
+                                          </span>
+                                        )}
+                                        {product.phone_specs.ram && (
+                                          <span className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                            🧠 {product.phone_specs.ram}
+                                          </span>
+                                        )}
+                                        {product.phone_specs.color && (
+                                          <span className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                            🎨 {product.phone_specs.color}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -781,6 +837,24 @@ const POSSystem: React.FC = () => {
                         <p className="font-semibold text-sm">{item.product.name}</p>
                         {item.product.brand && (
                           <p className="text-xs text-gray-500">{item.product.brand}</p>
+                        )}
+                        {/* Phone-specific info in cart */}
+                        {item.product.is_phone && (
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                              📱 Phone
+                            </span>
+                            {item.product.imei && (
+                              <span className="text-xs text-gray-500 font-mono">
+                                IMEI: {item.product.imei}
+                              </span>
+                            )}
+                            {item.product.phone_condition && (
+                              <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
+                                {item.product.phone_condition}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                       <button

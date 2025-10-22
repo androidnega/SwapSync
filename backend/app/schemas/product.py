@@ -22,12 +22,26 @@ class ProductBase(BaseModel):
     specs: Optional[Dict[str, Any]] = None
     condition: str = Field(default="New")
     imei: Optional[str] = None  # Only for phones
+    is_phone: bool = Field(default=False)  # True if this is a phone product
     is_swappable: bool = Field(default=False)  # True for phones available for swap
+    phone_condition: Optional[str] = None  # New, Used, Refurbished (for phones)
+    phone_specs: Optional[Dict[str, Any]] = None  # Phone-specific specs
+    phone_status: Optional[str] = Field(default="AVAILABLE")  # AVAILABLE, SOLD, etc.
 
 
 class ProductCreate(ProductBase):
     """Schema for creating a new product"""
     pass
+
+
+class PhoneProductCreate(ProductBase):
+    """Schema for creating a phone product"""
+    imei: str = Field(..., description="IMEI number for the phone")
+    is_phone: bool = Field(default=True)
+    phone_condition: str = Field(..., description="New, Used, Refurbished")
+    phone_specs: Optional[Dict[str, Any]] = Field(None, description="Phone specifications")
+    is_swappable: bool = Field(default=True, description="Can this phone be used in swaps?")
+    quantity: int = Field(default=1, ge=0, le=1, description="For phones, quantity is always 1")
 
 
 class ProductUpdate(BaseModel):
@@ -46,7 +60,11 @@ class ProductUpdate(BaseModel):
     specs: Optional[Dict[str, Any]] = None
     condition: Optional[str] = None
     imei: Optional[str] = None
+    is_phone: Optional[bool] = None
     is_swappable: Optional[bool] = None
+    phone_condition: Optional[str] = None
+    phone_specs: Optional[Dict[str, Any]] = None
+    phone_status: Optional[str] = None
     is_active: Optional[bool] = None
 
 
@@ -67,7 +85,11 @@ class ProductResponse(BaseModel):
     specs: Optional[Dict[str, Any]] = None
     condition: Optional[str] = "New"
     imei: Optional[str] = None
+    is_phone: Optional[bool] = False
     is_swappable: Optional[bool] = False
+    phone_condition: Optional[str] = None
+    phone_specs: Optional[Dict[str, Any]] = None
+    phone_status: Optional[str] = "AVAILABLE"
     is_active: bool
     is_available: bool
     created_by_user_id: Optional[int] = None
