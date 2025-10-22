@@ -28,8 +28,12 @@ async def get_today_stats(
     """
     Get today's statistics for the current user
     Returns sales, repairs, profits, etc. for the current day
+    Filtered by company for data isolation
     """
     today = date.today()
+    
+    # Get company user IDs for filtering
+    company_user_ids = get_company_user_ids(db, current_user)
     
     # Initialize stats
     stats = {
@@ -50,9 +54,12 @@ async def get_today_stats(
                 func.date(Sale.sale_date) == today
             )
             
-            # Filter by user for shop keepers
-            if current_user.role.value == 'shop_keeper':
-                today_sales = today_sales.filter(Sale.created_by == current_user.id)
+            # Apply company filtering
+            if company_user_ids is not None:
+                today_sales = today_sales.filter(Sale.created_by_user_id.in_(company_user_ids))
+            elif current_user.role.value == 'shop_keeper':
+                # For shop keepers without company filtering, filter by their own ID
+                today_sales = today_sales.filter(Sale.created_by_user_id == current_user.id)
             
             sales_list = today_sales.all()
             stats["sales_count"] = len(sales_list)
@@ -67,10 +74,11 @@ async def get_today_stats(
             today_product_sales = db.query(ProductSale).filter(
                 func.date(ProductSale.sale_date) == today
             )
-            if current_user.role.value == 'shop_keeper':
-                today_product_sales = today_product_sales.filter(
-                    ProductSale.created_by == current_user.id
-                )
+            # Apply company filtering
+            if company_user_ids is not None:
+                today_product_sales = today_product_sales.filter(ProductSale.created_by_user_id.in_(company_user_ids))
+            elif current_user.role.value == 'shop_keeper':
+                today_product_sales = today_product_sales.filter(ProductSale.created_by_user_id == current_user.id)
             
             product_sales = today_product_sales.all()
             stats["products_sold"] = sum(ps.quantity for ps in product_sales)
@@ -86,8 +94,11 @@ async def get_today_stats(
             today_swaps = db.query(Swap).filter(
                 func.date(Swap.swap_date) == today
             )
-            if current_user.role.value == 'shop_keeper':
-                today_swaps = today_swaps.filter(Swap.created_by == current_user.id)
+            # Apply company filtering through customer's created_by_user_id
+            if company_user_ids is not None:
+                today_swaps = today_swaps.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
+            elif current_user.role.value == 'shop_keeper':
+                today_swaps = today_swaps.join(Customer).filter(Customer.created_by_user_id == current_user.id)
             
             stats["swaps_completed"] = today_swaps.count()
         
@@ -96,23 +107,27 @@ async def get_today_stats(
             # Pending repairs assigned to this repairer
             if current_user.role.value == 'repairer':
                 stats["repairs_pending"] = db.query(Repair).filter(
-                    Repair.assigned_to == current_user.id,
+                    Repair.staff_id == current_user.id,
                     Repair.status.in_(['Pending', 'In Progress'])
                 ).count()
                 
                 # Completed today
                 stats["repairs_completed"] = db.query(Repair).filter(
-                    Repair.assigned_to == current_user.id,
+                    Repair.staff_id == current_user.id,
                     Repair.status == 'Completed',
                     func.date(Repair.completion_date) == today
                 ).count()
             else:
-                # Manager/CEO see all repairs
-                stats["repairs_pending"] = db.query(Repair).filter(
+                # Manager/CEO see all repairs for their company
+                repair_query = db.query(Repair)
+                if company_user_ids is not None:
+                    repair_query = repair_query.filter(Repair.created_by_user_id.in_(company_user_ids))
+                
+                stats["repairs_pending"] = repair_query.filter(
                     Repair.status.in_(['Pending', 'In Progress'])
                 ).count()
                 
-                stats["repairs_completed"] = db.query(Repair).filter(
+                stats["repairs_completed"] = repair_query.filter(
                     Repair.status == 'Completed',
                     func.date(Repair.completion_date) == today
                 ).count()

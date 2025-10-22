@@ -534,13 +534,25 @@ def inventory_report(db: Session = Depends(get_db)):
 
 
 @router.get("/profit-loss")
-def profit_loss_analysis(db: Session = Depends(get_db)):
+def profit_loss_analysis(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """
     Profit and loss analysis for swaps and sales
     Calculates potential profit from swap transactions
+    Filtered by company for data isolation
     """
-    # Get all swaps with phone data
-    swaps = db.query(Swap).all()
+    # Get company user IDs for filtering
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    # Get swaps with phone data, filtered by company
+    swap_query = db.query(Swap)
+    if company_user_ids is not None:
+        # Filter swaps by company through customer's created_by_user_id
+        swap_query = swap_query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
+    
+    swaps = swap_query.all()
     
     swap_analysis = []
     total_profit = 0.0
