@@ -101,13 +101,108 @@ const Products: React.FC = () => {
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
-  // Check if selected category is a phone category
+  // Check if selected category is a phone category (case-insensitive, plural-friendly)
   const isPhoneCategory = (categoryId: string) => {
     if (!categoryId) return false;
     const category = categories.find(cat => cat.id.toString() === categoryId);
-    return category?.name?.toLowerCase().includes('phone') || 
-           category?.name?.toLowerCase().includes('mobile') ||
-           category?.name?.toLowerCase().includes('smartphone');
+    const categoryName = category?.name?.toLowerCase() || '';
+    return categoryName.includes('phone') || 
+           categoryName.includes('mobile') ||
+           categoryName.includes('smartphone');
+  };
+
+  // Detect brand type (case-insensitive, plural-friendly)
+  const getBrandType = (brandName: string): 'iphone' | 'samsung' | 'google' | 'xiaomi' | 'oppo' | 'huawei' | 'other' => {
+    if (!brandName) return 'other';
+    const brand = brandName.toLowerCase().trim().replace(/s$/, ''); // Remove trailing 's' for plurals
+    
+    if (brand.includes('apple') || brand.includes('iphone')) return 'iphone';
+    if (brand.includes('samsung')) return 'samsung';
+    if (brand.includes('google') || brand.includes('pixel')) return 'google';
+    if (brand.includes('xiaomi') || brand.includes('redmi') || brand.includes('poco')) return 'xiaomi';
+    if (brand.includes('oppo') || brand.includes('realme')) return 'oppo';
+    if (brand.includes('huawei')) return 'huawei';
+    
+    return 'other';
+  };
+
+  // Get category type for other products (case-insensitive, plural-friendly)
+  const getCategoryType = (categoryId: string): 'phone' | 'charger' | 'battery' | 'case' | 'earbuds' | 'cable' | 'other' => {
+    if (!categoryId) return 'other';
+    const category = categories.find(cat => cat.id.toString() === categoryId);
+    const categoryName = category?.name?.toLowerCase().replace(/s$/, '') || '';
+    
+    if (categoryName.includes('phone') || categoryName.includes('mobile')) return 'phone';
+    if (categoryName.includes('charger') || categoryName.includes('adapter')) return 'charger';
+    if (categoryName.includes('battery') || categoryName.includes('power bank')) return 'battery';
+    if (categoryName.includes('case') || categoryName.includes('cover')) return 'case';
+    if (categoryName.includes('earbud') || categoryName.includes('earphone') || categoryName.includes('headphone') || categoryName.includes('airpod')) return 'earbuds';
+    if (categoryName.includes('cable') || categoryName.includes('cord')) return 'cable';
+    
+    return 'other';
+  };
+
+  // Predefined options for phone specifications
+  const phoneColors = [
+    'Black', 'White', 'Silver', 'Gold', 'Rose Gold', 'Space Gray', 'Midnight',
+    'Starlight', 'Blue', 'Pacific Blue', 'Sierra Blue', 'Sky Blue', 'Navy Blue',
+    'Red', 'Product Red', 'Pink', 'Purple', 'Deep Purple', 'Green', 'Alpine Green',
+    'Midnight Green', 'Graphite', 'Titanium', 'Natural Titanium', 'Blue Titanium',
+    'Phantom Black', 'Phantom Silver', 'Phantom White', 'Phantom Gray', 'Phantom Violet',
+    'Coral', 'Yellow', 'Orange', 'Bronze', 'Copper'
+  ];
+
+  const storageOptions = [
+    '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'
+  ];
+
+  const ramOptions = [
+    '2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB', '18GB'
+  ];
+
+  // Brand-specific processor options
+  const getProcessorOptions = (brandType: string): string[] => {
+    switch (brandType) {
+      case 'iphone':
+        return [
+          'A18 Pro', 'A18', 'A17 Pro', 'A16 Bionic', 'A15 Bionic', 'A14 Bionic',
+          'A13 Bionic', 'A12 Bionic', 'A11 Bionic', 'A10 Fusion'
+        ];
+      case 'samsung':
+        return [
+          'Snapdragon 8 Gen 3', 'Snapdragon 8 Gen 2', 'Snapdragon 8 Gen 1',
+          'Snapdragon 888', 'Snapdragon 865', 'Snapdragon 855',
+          'Exynos 2400', 'Exynos 2200', 'Exynos 2100', 'Exynos 990'
+        ];
+      case 'google':
+        return [
+          'Google Tensor G4', 'Google Tensor G3', 'Google Tensor G2', 'Google Tensor',
+          'Snapdragon 765G', 'Snapdragon 730'
+        ];
+      case 'xiaomi':
+        return [
+          'Snapdragon 8 Gen 3', 'Snapdragon 8 Gen 2', 'Snapdragon 888',
+          'Snapdragon 870', 'Snapdragon 865', 'Snapdragon 778G',
+          'MediaTek Dimensity 9200', 'MediaTek Dimensity 8200'
+        ];
+      case 'oppo':
+        return [
+          'Snapdragon 8 Gen 2', 'Snapdragon 888', 'Snapdragon 870',
+          'MediaTek Dimensity 9000', 'MediaTek Dimensity 8100'
+        ];
+      case 'huawei':
+        return [
+          'Kirin 9000', 'Kirin 990', 'Kirin 980', 'Kirin 970',
+          'Snapdragon 888', 'Snapdragon 778G'
+        ];
+      default:
+        return [
+          'Snapdragon 8 Gen 3', 'Snapdragon 8 Gen 2', 'Snapdragon 888',
+          'Snapdragon 778G', 'Snapdragon 750G', 'Snapdragon 730G',
+          'MediaTek Dimensity 9200', 'MediaTek Dimensity 8200',
+          'MediaTek Helio G99', 'MediaTek Helio G96'
+        ];
+    }
   };
 
   useEffect(() => {
@@ -1019,52 +1114,86 @@ const Products: React.FC = () => {
                         </label>
                       </div>
 
-                      {/* Phone Specifications */}
+                      {/* Phone Specifications - Dynamic based on brand */}
                       <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Specifications</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Phone Specifications
+                          {formData.brand && (
+                            <span className="ml-2 text-xs text-blue-600">
+                              (Optimized for {getBrandType(formData.brand) === 'iphone' ? 'iPhone' : 
+                               getBrandType(formData.brand) === 'samsung' ? 'Samsung' : 
+                               getBrandType(formData.brand).charAt(0).toUpperCase() + getBrandType(formData.brand).slice(1)})
+                            </span>
+                          )}
+                        </label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {/* CPU/Processor - Brand-specific suggestions */}
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">CPU/Processor</label>
+                            <label className="block text-xs text-gray-600 mb-1">CPU/Processor *</label>
                             <input
                               type="text"
+                              list="processor-options"
                               value={formData.phone_specs.cpu}
                               onChange={(e) => setFormData({ 
                                 ...formData, 
                                 phone_specs: { ...formData.phone_specs, cpu: e.target.value }
                               })}
-                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
-                              placeholder="e.g., A15 Bionic, Snapdragon 888"
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Select or type processor"
                               disabled={userRole === 'shop_keeper'}
                             />
+                            <datalist id="processor-options">
+                              {getProcessorOptions(getBrandType(formData.brand)).map((proc, idx) => (
+                                <option key={idx} value={proc} />
+                              ))}
+                            </datalist>
                           </div>
+                          
+                          {/* RAM - With suggestions */}
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">RAM</label>
+                            <label className="block text-xs text-gray-600 mb-1">RAM *</label>
                             <input
                               type="text"
+                              list="ram-options"
                               value={formData.phone_specs.ram}
                               onChange={(e) => setFormData({ 
                                 ...formData, 
                                 phone_specs: { ...formData.phone_specs, ram: e.target.value }
                               })}
-                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
-                              placeholder="e.g., 6GB, 8GB"
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Select or type RAM"
                               disabled={userRole === 'shop_keeper'}
                             />
+                            <datalist id="ram-options">
+                              {ramOptions.map((ram, idx) => (
+                                <option key={idx} value={ram} />
+                              ))}
+                            </datalist>
                           </div>
+                          
+                          {/* Storage - With suggestions */}
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">Storage</label>
+                            <label className="block text-xs text-gray-600 mb-1">Storage *</label>
                             <input
                               type="text"
+                              list="storage-options"
                               value={formData.phone_specs.storage}
                               onChange={(e) => setFormData({ 
                                 ...formData, 
                                 phone_specs: { ...formData.phone_specs, storage: e.target.value }
                               })}
-                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
-                              placeholder="e.g., 128GB, 256GB"
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Select or type storage"
                               disabled={userRole === 'shop_keeper'}
                             />
+                            <datalist id="storage-options">
+                              {storageOptions.map((storage, idx) => (
+                                <option key={idx} value={storage} />
+                              ))}
+                            </datalist>
                           </div>
+                          
+                          {/* Battery */}
                           <div>
                             <label className="block text-xs text-gray-600 mb-1">Battery</label>
                             <input
@@ -1074,24 +1203,33 @@ const Products: React.FC = () => {
                                 ...formData, 
                                 phone_specs: { ...formData.phone_specs, battery: e.target.value }
                               })}
-                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="e.g., 4000mAh, 85% health"
                               disabled={userRole === 'shop_keeper'}
                             />
                           </div>
+                          
+                          {/* Color - With suggestions */}
                           <div className="md:col-span-2">
-                            <label className="block text-xs text-gray-600 mb-1">Color</label>
+                            <label className="block text-xs text-gray-600 mb-1">Color *</label>
                             <input
                               type="text"
+                              list="color-options"
                               value={formData.phone_specs.color}
                               onChange={(e) => setFormData({ 
                                 ...formData, 
                                 phone_specs: { ...formData.phone_specs, color: e.target.value }
                               })}
-                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
-                              placeholder="e.g., Space Gray, Pacific Blue"
+                              className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Select or type color"
                               disabled={userRole === 'shop_keeper'}
                             />
+                            <datalist id="color-options">
+                              {phoneColors.map((color, idx) => (
+                                <option key={idx} value={color} />
+                              ))}
+                            </datalist>
+                            <p className="text-xs text-gray-500 mt-1">💡 Select from list or type your own color</p>
                           </div>
                         </div>
                       </div>
