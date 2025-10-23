@@ -57,37 +57,100 @@ def get_dashboard_cards(
             ])
         
         elif current_user.role in [UserRole.CEO, UserRole.MANAGER]:
-            # Manager/CEO cards - simplified
-            cards.extend([
-                {
-                    "id": "welcome",
-                    "title": "Welcome",
-                    "value": current_user.full_name or current_user.username,
-                    "icon": "faUser",
-                    "color": "blue",
-                    "visible_to": ["ceo", "manager"]
-                },
-                {
-                    "id": "role",
-                    "title": "Role",
-                    "value": current_user.role.value.title(),
-                    "icon": "faCrown",
-                    "color": "purple",
-                    "visible_to": ["ceo", "manager"]
-                },
-                {
-                    "id": "company",
-                    "title": "Company",
-                    "value": current_user.company_name or "SwapSync",
-                    "icon": "faBuilding",
+            # Manager/CEO cards - REAL BUSINESS METRICS
+            
+            # Get company user IDs for filtering
+            try:
+                company_user_ids = get_company_user_ids(db, current_user)
+                if company_user_ids is None:
+                    company_user_ids = [current_user.id]
+            except Exception as e:
+                print(f"Error getting company user IDs: {e}")
+                company_user_ids = [current_user.id]
+            
+            # TODAY'S SALES REVENUE
+            try:
+                today = datetime.now().date()
+                today_sales = db.query(func.sum(ProductSale.total_amount)).filter(
+                    func.date(ProductSale.created_at) == today
+                ).scalar() or 0.0
+                
+                cards.append({
+                    "id": "today_revenue",
+                    "title": "Today's Revenue",
+                    "value": f"₵{today_sales:.2f}",
+                    "icon": "faMoneyBillWave",
                     "color": "green",
                     "visible_to": ["ceo", "manager"]
-                }
-            ])
+                })
+            except Exception as e:
+                print(f"Error getting today's revenue: {e}")
             
-            # Try to add basic counts with error handling
+            # TOTAL REVENUE (ALL TIME)
             try:
-                # Simple customer count
+                total_revenue = db.query(func.sum(ProductSale.total_amount)).scalar() or 0.0
+                cards.append({
+                    "id": "total_revenue",
+                    "title": "Total Revenue",
+                    "value": f"₵{total_revenue:.2f}",
+                    "icon": "faChartLine",
+                    "color": "blue",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting total revenue: {e}")
+            
+            # TOTAL SALES COUNT
+            try:
+                total_sales_count = db.query(ProductSale).count()
+                cards.append({
+                    "id": "total_sales",
+                    "title": "Total Sales",
+                    "value": str(total_sales_count),
+                    "icon": "faShoppingCart",
+                    "color": "purple",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting total sales count: {e}")
+            
+            # AVAILABLE PRODUCTS IN STOCK
+            try:
+                available_products = db.query(Product).filter(
+                    Product.quantity > 0,
+                    Product.is_active == True
+                ).count()
+                cards.append({
+                    "id": "available_products",
+                    "title": "Products in Stock",
+                    "value": str(available_products),
+                    "icon": "faBox",
+                    "color": "green",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting available products: {e}")
+            
+            # LOW STOCK PRODUCTS
+            try:
+                low_stock_products = db.query(Product).filter(
+                    Product.quantity <= 5,
+                    Product.quantity > 0,
+                    Product.is_active == True
+                ).count()
+                cards.append({
+                    "id": "low_stock",
+                    "title": "Low Stock Items",
+                    "value": str(low_stock_products),
+                    "icon": "faExclamationTriangle",
+                    "color": "orange" if low_stock_products > 0 else "green",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting low stock products: {e}")
+            
+            # TOTAL CUSTOMERS
+            try:
                 customer_count = db.query(Customer).count()
                 cards.append({
                     "id": "total_customers",
@@ -100,89 +163,279 @@ def get_dashboard_cards(
             except Exception as e:
                 print(f"Error getting customer count: {e}")
             
+            # ACTIVE REPAIRS
             try:
-                # Simple product count
-                product_count = db.query(Product).count()
+                active_repairs = db.query(Repair).filter(
+                    Repair.status.in_(['Pending', 'In Progress'])
+                ).count()
                 cards.append({
-                    "id": "total_products",
-                    "title": "Total Products",
-                    "value": str(product_count),
-                    "icon": "faBox",
-                    "color": "green",
-                    "visible_to": ["ceo", "manager"]
-                })
-            except Exception as e:
-                print(f"Error getting product count: {e}")
-            
-            try:
-                # Simple repair count
-                repair_count = db.query(Repair).count()
-                cards.append({
-                    "id": "total_repairs",
-                    "title": "Total Repairs",
-                    "value": str(repair_count),
+                    "id": "active_repairs",
+                    "title": "Active Repairs",
+                    "value": str(active_repairs),
                     "icon": "faTools",
                     "color": "orange",
                     "visible_to": ["ceo", "manager"]
                 })
             except Exception as e:
-                print(f"Error getting repair count: {e}")
+                print(f"Error getting active repairs: {e}")
+            
+            # COMPLETED REPAIRS
+            try:
+                completed_repairs = db.query(Repair).filter(
+                    Repair.status.in_(['Completed', 'Delivered'])
+                ).count()
+                cards.append({
+                    "id": "completed_repairs",
+                    "title": "Completed Repairs",
+                    "value": str(completed_repairs),
+                    "icon": "faCheckCircle",
+                    "color": "green",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting completed repairs: {e}")
+            
+            # TOTAL REPAIR REVENUE
+            try:
+                repair_revenue = db.query(func.sum(Repair.cost)).filter(
+                    Repair.status.in_(['Completed', 'Delivered'])
+                ).scalar() or 0.0
+                cards.append({
+                    "id": "repair_revenue",
+                    "title": "Repair Revenue",
+                    "value": f"₵{repair_revenue:.2f}",
+                    "icon": "faWrench",
+                    "color": "teal",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting repair revenue: {e}")
+            
+            # PENDING SWAPS
+            try:
+                pending_swaps = db.query(Swap).filter(
+                    Swap.status == 'pending'
+                ).count()
+                cards.append({
+                    "id": "pending_swaps",
+                    "title": "Pending Swaps",
+                    "value": str(pending_swaps),
+                    "icon": "faExchangeAlt",
+                    "color": "yellow",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting pending swaps: {e}")
+            
+            # COMPLETED SWAPS
+            try:
+                completed_swaps = db.query(Swap).filter(
+                    Swap.status == 'completed'
+                ).count()
+                cards.append({
+                    "id": "completed_swaps",
+                    "title": "Completed Swaps",
+                    "value": str(completed_swaps),
+                    "icon": "faHandshake",
+                    "color": "green",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting completed swaps: {e}")
         
         elif current_user.role == UserRole.REPAIRER:
-            # Repairer cards - simplified
-            cards.extend([
-                {
-                    "id": "welcome_repairer",
-                    "title": "Welcome",
-                    "value": current_user.full_name or current_user.username,
-                    "icon": "faUser",
-                    "color": "blue",
-                    "visible_to": ["repairer"]
-                },
-                {
-                    "id": "repairer_role",
-                    "title": "Role",
-                    "value": "Repairer",
-                    "icon": "faTools",
-                    "color": "orange",
-                    "visible_to": ["repairer"]
-                }
-            ])
+            # Repairer cards - REAL REPAIR METRICS
             
+            # MY ACTIVE REPAIRS
             try:
-                # Simple repair count
-                repair_count = db.query(Repair).count()
+                my_active_repairs = db.query(Repair).filter(
+                    Repair.staff_id == current_user.id,
+                    Repair.status.in_(['Pending', 'In Progress'])
+                ).count()
                 cards.append({
-                    "id": "total_repairs",
-                    "title": "Total Repairs",
-                    "value": str(repair_count),
-                    "icon": "faWrench",
+                    "id": "my_active_repairs",
+                    "title": "My Active Repairs",
+                    "value": str(my_active_repairs),
+                    "icon": "faTools",
                     "color": "orange",
                     "visible_to": ["repairer"]
                 })
             except Exception as e:
-                print(f"Error getting repair count: {e}")
+                print(f"Error getting my active repairs: {e}")
+            
+            # MY COMPLETED REPAIRS
+            try:
+                my_completed_repairs = db.query(Repair).filter(
+                    Repair.staff_id == current_user.id,
+                    Repair.status.in_(['Completed', 'Delivered'])
+                ).count()
+                cards.append({
+                    "id": "my_completed_repairs",
+                    "title": "My Completed Repairs",
+                    "value": str(my_completed_repairs),
+                    "icon": "faCheckCircle",
+                    "color": "green",
+                    "visible_to": ["repairer"]
+                })
+            except Exception as e:
+                print(f"Error getting my completed repairs: {e}")
+            
+            # MY REPAIR REVENUE
+            try:
+                my_repair_revenue = db.query(func.sum(Repair.cost)).filter(
+                    Repair.staff_id == current_user.id,
+                    Repair.status.in_(['Completed', 'Delivered'])
+                ).scalar() or 0.0
+                cards.append({
+                    "id": "my_repair_revenue",
+                    "title": "My Repair Revenue",
+                    "value": f"₵{my_repair_revenue:.2f}",
+                    "icon": "faMoneyBillWave",
+                    "color": "blue",
+                    "visible_to": ["repairer"]
+                })
+            except Exception as e:
+                print(f"Error getting my repair revenue: {e}")
+            
+            # TODAY'S REPAIRS
+            try:
+                today = datetime.now().date()
+                today_repairs = db.query(Repair).filter(
+                    Repair.staff_id == current_user.id,
+                    func.date(Repair.created_at) == today
+                ).count()
+                cards.append({
+                    "id": "today_repairs",
+                    "title": "Today's Repairs",
+                    "value": str(today_repairs),
+                    "icon": "faCalendarDay",
+                    "color": "purple",
+                    "visible_to": ["repairer"]
+                })
+            except Exception as e:
+                print(f"Error getting today's repairs: {e}")
+            
+            # ITEMS SOLD IN REPAIRS
+            try:
+                items_sold = db.query(RepairSale).join(Repair).filter(
+                    Repair.staff_id == current_user.id
+                ).count()
+                cards.append({
+                    "id": "items_sold",
+                    "title": "Items Sold",
+                    "value": str(items_sold),
+                    "icon": "faShoppingCart",
+                    "color": "teal",
+                    "visible_to": ["repairer"]
+                })
+            except Exception as e:
+                print(f"Error getting items sold: {e}")
         
         elif current_user.role == UserRole.SHOP_KEEPER:
-            # Shop keeper cards - simplified
-            cards.extend([
-                {
-                    "id": "welcome_shopkeeper",
-                    "title": "Welcome",
-                    "value": current_user.full_name or current_user.username,
-                    "icon": "faUser",
-                    "color": "blue",
-                    "visible_to": ["shop_keeper"]
-                },
-                {
-                    "id": "shopkeeper_role",
-                    "title": "Role",
-                    "value": "Shop Keeper",
-                    "icon": "faStore",
+            # Shop keeper cards - REAL SALES METRICS
+            
+            # TODAY'S SALES
+            try:
+                today = datetime.now().date()
+                today_sales = db.query(ProductSale).filter(
+                    func.date(ProductSale.created_at) == today,
+                    ProductSale.created_by_user_id == current_user.id
+                ).count()
+                cards.append({
+                    "id": "today_sales",
+                    "title": "Today's Sales",
+                    "value": str(today_sales),
+                    "icon": "faShoppingCart",
                     "color": "green",
                     "visible_to": ["shop_keeper"]
-                }
-            ])
+                })
+            except Exception as e:
+                print(f"Error getting today's sales: {e}")
+            
+            # TODAY'S REVENUE
+            try:
+                today = datetime.now().date()
+                today_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
+                    func.date(ProductSale.created_at) == today,
+                    ProductSale.created_by_user_id == current_user.id
+                ).scalar() or 0.0
+                cards.append({
+                    "id": "today_revenue",
+                    "title": "Today's Revenue",
+                    "value": f"₵{today_revenue:.2f}",
+                    "icon": "faMoneyBillWave",
+                    "color": "blue",
+                    "visible_to": ["shop_keeper"]
+                })
+            except Exception as e:
+                print(f"Error getting today's revenue: {e}")
+            
+            # MY TOTAL SALES
+            try:
+                my_total_sales = db.query(ProductSale).filter(
+                    ProductSale.created_by_user_id == current_user.id
+                ).count()
+                cards.append({
+                    "id": "my_total_sales",
+                    "title": "My Total Sales",
+                    "value": str(my_total_sales),
+                    "icon": "faChartBar",
+                    "color": "purple",
+                    "visible_to": ["shop_keeper"]
+                })
+            except Exception as e:
+                print(f"Error getting my total sales: {e}")
+            
+            # MY TOTAL REVENUE
+            try:
+                my_total_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
+                    ProductSale.created_by_user_id == current_user.id
+                ).scalar() or 0.0
+                cards.append({
+                    "id": "my_total_revenue",
+                    "title": "My Total Revenue",
+                    "value": f"₵{my_total_revenue:.2f}",
+                    "icon": "faDollarSign",
+                    "color": "green",
+                    "visible_to": ["shop_keeper"]
+                })
+            except Exception as e:
+                print(f"Error getting my total revenue: {e}")
+            
+            # AVAILABLE PRODUCTS
+            try:
+                available_products = db.query(Product).filter(
+                    Product.quantity > 0,
+                    Product.is_active == True
+                ).count()
+                cards.append({
+                    "id": "available_products",
+                    "title": "Available Products",
+                    "value": str(available_products),
+                    "icon": "faBox",
+                    "color": "teal",
+                    "visible_to": ["shop_keeper"]
+                })
+            except Exception as e:
+                print(f"Error getting available products: {e}")
+            
+            # LOW STOCK ALERT
+            try:
+                low_stock = db.query(Product).filter(
+                    Product.quantity <= 5,
+                    Product.quantity > 0,
+                    Product.is_active == True
+                ).count()
+                cards.append({
+                    "id": "low_stock_alert",
+                    "title": "Low Stock Alert",
+                    "value": str(low_stock),
+                    "icon": "faExclamationTriangle",
+                    "color": "orange" if low_stock > 0 else "green",
+                    "visible_to": ["shop_keeper"]
+                })
+            except Exception as e:
+                print(f"Error getting low stock: {e}")
         
         # Always add a status card
         cards.append({
