@@ -185,6 +185,10 @@ def create_phone_product(
     # Generate unique ID
     db_phone_product.generate_unique_id(db)
     
+    # Commit the phone product first
+    db.commit()
+    db.refresh(db_phone_product)
+    
     # Create initial stock movement
     if phone_product.quantity > 0:
         stock_movement = StockMovement(
