@@ -142,6 +142,15 @@ const Products: React.FC = () => {
     return 'other';
   };
 
+  // Predefined phone brands
+  const phoneBrands = [
+    'Apple', 'iPhone', 'Samsung', 'Google', 'Pixel',
+    'Xiaomi', 'Redmi', 'Poco', 'Oppo', 'Realme',
+    'OnePlus', 'Huawei', 'Honor', 'Vivo', 'Tecno',
+    'Infinix', 'Nokia', 'Motorola', 'Sony', 'Asus',
+    'LG', 'HTC', 'BlackBerry', 'Nothing'
+  ];
+
   // Predefined options for phone specifications
   const phoneColors = [
     'Black', 'White', 'Silver', 'Gold', 'Rose Gold', 'Space Gray', 'Midnight',
@@ -938,17 +947,32 @@ const Products: React.FC = () => {
                     </select>
                   </div>
 
-                  {/* Brand */}
+                  {/* Brand - Smart dropdown for phones */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Brand
+                      {isPhoneCategory(formData.category_id) && (
+                        <span className="ml-2 text-xs text-blue-600">
+                          📱 Select from popular phone brands or type your own
+                        </span>
+                      )}
+                    </label>
                     <input
                       type="text"
+                      list={isPhoneCategory(formData.category_id) ? "phone-brands" : undefined}
                       value={formData.brand}
                       onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg p-2 disabled:bg-gray-50 disabled:cursor-not-allowed"
-                      placeholder="e.g., Apple, Samsung, Anker"
+                      className="w-full border border-gray-300 rounded-lg p-2 disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder={isPhoneCategory(formData.category_id) ? "e.g., Apple, Samsung, Google" : "e.g., Anker, Belkin, JBL"}
                       disabled={userRole === 'shop_keeper'}
                     />
+                    {isPhoneCategory(formData.category_id) && (
+                      <datalist id="phone-brands">
+                        {phoneBrands.map((brand, idx) => (
+                          <option key={idx} value={brand} />
+                        ))}
+                      </datalist>
+                    )}
                   </div>
 
                   {/* SKU */}
@@ -1116,13 +1140,15 @@ const Products: React.FC = () => {
 
                       {/* Phone Specifications - Dynamic based on brand */}
                       <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Phone Specifications
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <span>Phone Specifications</span>
                           {formData.brand && (
-                            <span className="ml-2 text-xs text-blue-600">
-                              (Optimized for {getBrandType(formData.brand) === 'iphone' ? 'iPhone' : 
-                               getBrandType(formData.brand) === 'samsung' ? 'Samsung' : 
-                               getBrandType(formData.brand).charAt(0).toUpperCase() + getBrandType(formData.brand).slice(1)})
+                            <span className="text-xs text-white bg-blue-600 px-2 py-1 rounded">
+                              {getBrandType(formData.brand) === 'iphone' ? '🍎 iPhone' : 
+                               getBrandType(formData.brand) === 'samsung' ? '📱 Samsung' : 
+                               getBrandType(formData.brand) === 'google' ? '🔍 Google Pixel' :
+                               getBrandType(formData.brand) === 'xiaomi' ? '📲 Xiaomi' :
+                               getBrandType(formData.brand).charAt(0).toUpperCase() + getBrandType(formData.brand).slice(1)}
                             </span>
                           )}
                         </label>
@@ -1231,6 +1257,146 @@ const Products: React.FC = () => {
                             </datalist>
                             <p className="text-xs text-gray-500 mt-1">💡 Select from list or type your own color</p>
                           </div>
+                          
+                          {/* Brand-Specific Fields */}
+                          {getBrandType(formData.brand) === 'iphone' && (
+                            <>
+                              {/* iOS Version */}
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">iOS Version</label>
+                                <input
+                                  type="text"
+                                  value={formData.phone_specs.ios_version || ''}
+                                  onChange={(e) => setFormData({ 
+                                    ...formData, 
+                                    phone_specs: { ...formData.phone_specs, ios_version: e.target.value }
+                                  })}
+                                  className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="e.g., iOS 17, iOS 16"
+                                  disabled={userRole === 'shop_keeper'}
+                                />
+                              </div>
+                              
+                              {/* Biometric */}
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Biometric</label>
+                                <input
+                                  type="text"
+                                  list="iphone-biometric"
+                                  value={formData.phone_specs.biometric || ''}
+                                  onChange={(e) => setFormData({ 
+                                    ...formData, 
+                                    phone_specs: { ...formData.phone_specs, biometric: e.target.value }
+                                  })}
+                                  className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Face ID or Touch ID"
+                                  disabled={userRole === 'shop_keeper'}
+                                />
+                                <datalist id="iphone-biometric">
+                                  <option value="Face ID" />
+                                  <option value="Touch ID" />
+                                  <option value="Face ID + Touch ID" />
+                                </datalist>
+                              </div>
+                            </>
+                          )}
+                          
+                          {getBrandType(formData.brand) === 'samsung' && (
+                            <>
+                              {/* One UI Version */}
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">One UI / Android</label>
+                                <input
+                                  type="text"
+                                  value={formData.phone_specs.android_version || ''}
+                                  onChange={(e) => setFormData({ 
+                                    ...formData, 
+                                    phone_specs: { ...formData.phone_specs, android_version: e.target.value }
+                                  })}
+                                  className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="e.g., One UI 6, Android 14"
+                                  disabled={userRole === 'shop_keeper'}
+                                />
+                              </div>
+                              
+                              {/* S Pen Support */}
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">S Pen Support</label>
+                                <select
+                                  value={formData.phone_specs.s_pen || ''}
+                                  onChange={(e) => setFormData({ 
+                                    ...formData, 
+                                    phone_specs: { ...formData.phone_specs, s_pen: e.target.value }
+                                  })}
+                                  className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  disabled={userRole === 'shop_keeper'}
+                                >
+                                  <option value="">Not Specified</option>
+                                  <option value="Yes">Yes</option>
+                                  <option value="No">No</option>
+                                </select>
+                              </div>
+                            </>
+                          )}
+                          
+                          {getBrandType(formData.brand) === 'google' && (
+                            <>
+                              {/* Android Version */}
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Android Version</label>
+                                <input
+                                  type="text"
+                                  value={formData.phone_specs.android_version || ''}
+                                  onChange={(e) => setFormData({ 
+                                    ...formData, 
+                                    phone_specs: { ...formData.phone_specs, android_version: e.target.value }
+                                  })}
+                                  className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="e.g., Android 15, Android 14"
+                                  disabled={userRole === 'shop_keeper'}
+                                />
+                              </div>
+                              
+                              {/* Pixel Features */}
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Pixel Features</label>
+                                <input
+                                  type="text"
+                                  value={formData.phone_specs.pixel_features || ''}
+                                  onChange={(e) => setFormData({ 
+                                    ...formData, 
+                                    phone_specs: { ...formData.phone_specs, pixel_features: e.target.value }
+                                  })}
+                                  className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="e.g., Call Screening, Magic Eraser"
+                                  disabled={userRole === 'shop_keeper'}
+                                />
+                              </div>
+                            </>
+                          )}
+                          
+                          {(getBrandType(formData.brand) === 'xiaomi' || 
+                            getBrandType(formData.brand) === 'oppo' || 
+                            getBrandType(formData.brand) === 'other') && 
+                           formData.brand && (
+                            <>
+                              {/* Android Version for other brands */}
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Android Version</label>
+                                <input
+                                  type="text"
+                                  value={formData.phone_specs.android_version || ''}
+                                  onChange={(e) => setFormData({ 
+                                    ...formData, 
+                                    phone_specs: { ...formData.phone_specs, android_version: e.target.value }
+                                  })}
+                                  className="w-full border border-gray-300 rounded-lg p-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="e.g., MIUI 15, ColorOS 14, Android 14"
+                                  disabled={userRole === 'shop_keeper'}
+                                />
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
