@@ -259,7 +259,7 @@ def delete_phone(
     from app.models.swap import Swap
     from app.models.pending_resale import PendingResale
     from app.models.repair import Repair
-    from app.models.phone_ownership_history import PhoneOwnershipHistory
+    from app.models.phone import PhoneOwnershipHistory
     
     # Count related records for logging
     sales_count = db.query(Sale).filter(Sale.phone_id == phone_id).count()
