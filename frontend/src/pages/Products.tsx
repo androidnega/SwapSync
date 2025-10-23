@@ -972,8 +972,8 @@ const Products: React.FC = () => {
 
         {/* Add/Edit Product Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4" onClick={() => setShowModal(false)}>
-            <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-4xl my-8" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4">
+            <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-4xl my-8">
               <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4 md:mb-6">
                 {userRole === 'shop_keeper' ? 'View Product Details' : (editingId ? 'Edit Product' : 'Add New Product')}
               </h2>
