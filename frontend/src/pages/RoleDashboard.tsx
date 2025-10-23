@@ -16,6 +16,7 @@ interface DashboardCardData {
   icon: string;
   color: string;
   visible_to: string[];
+  subtitle?: string;
 }
 
 interface DashboardData {
@@ -169,6 +170,7 @@ const RoleDashboard: React.FC = () => {
               value={card.value}
               icon={card.icon}
               color={card.color}
+              subtitle={card.subtitle}
               onClick={() => handleCardClick(card.id)}
             />
           ))}

@@ -604,22 +604,13 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # ✅ PHONE-SPECIFIC STATS
+        # ✅ PHONE INVENTORY - Combined card showing total and in stock
         # Total phones in inventory (filtered by company)
         total_phones = db.query(Product).filter(
             Product.created_by_user_id.in_(company_user_ids),
             Product.is_phone == True,
             Product.is_active == True
         ).count()
-        
-        cards.append({
-            "id": "total_phones",
-            "title": "Total Phones in Inventory",
-            "value": str(total_phones),
-            "icon": "faMobileAlt",
-            "color": "blue",
-            "visible_to": ["ceo", "manager"]
-        })
         
         # Phones in stock (available)
         phones_in_stock = db.query(Product).filter(
@@ -630,11 +621,12 @@ def get_dashboard_cards(
         ).count()
         
         cards.append({
-            "id": "phones_in_stock",
-            "title": "Phones In Stock",
-            "value": str(phones_in_stock),
-            "icon": "faBoxOpen",
-            "color": "green",
+            "id": "phone_inventory",
+            "title": "Phone Inventory",
+            "value": f"{phones_in_stock}/{total_phones}",
+            "subtitle": "In Stock / Total",
+            "icon": "faMobileAlt",
+            "color": "blue",
             "visible_to": ["ceo", "manager"]
         })
         
