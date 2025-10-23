@@ -1,6 +1,7 @@
 Railway Deployment Trigger
-Timestamp: 2025-10-20T18:30:00Z
-Trigger: Force Railway redeploy with permission fixes
-Commits: f1382b8, 824828f, 3131391
-Changes: Products and POS sales endpoints now allow shop_keeper role
+Timestamp: 2025-10-23T19:45:00Z
+Trigger: Force Railway redeploy - Fix dashboard error (products.is_phone)
+Commits: 2a80641, eeefbfb
+Changes: Added phone fields migration, all columns verified in database
+Migration Status: All phone fields exist, forcing service restart
 
