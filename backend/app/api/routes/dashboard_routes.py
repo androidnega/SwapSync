@@ -1,5 +1,5 @@
 """
-Dashboard Stats API Routes - Role-based statistics
+Dashboard Stats API Routes - SIMPLIFIED VERSION
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -23,852 +23,190 @@ from app.models.product import Product
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
-@router.get("/repairer-sales")
-def get_repairer_sales_stats(
-    start_date: str = None,
-    end_date: str = None,
-    repairer_id: int = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get sales statistics for repairers
-    Shows items sold by each repairer with amount, quantity, and profit
-    Managers can see all repairers in their company
-    """
-    from app.models.repair_sale import RepairSale
-    from app.core.permissions import can_view_analytics
-    
-    # Only managers and admins can view this
-    if not can_view_analytics(current_user):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only managers and admins can view repairer sales statistics"
-        )
-    
-    # Get company user IDs for filtering
-    company_user_ids = get_company_user_ids(db, current_user)
-    
-    # Build query
-    query = db.query(
-        RepairSale.repairer_id,
-        User.username.label('repairer_name'),
-        User.full_name.label('repairer_full_name'),
-        func.count(RepairSale.id).label('items_sold_count'),
-        func.sum(RepairSale.quantity).label('total_quantity'),
-        func.sum(RepairSale.unit_price * RepairSale.quantity).label('gross_sales'),
-        func.sum(RepairSale.cost_price * RepairSale.quantity).label('total_cost'),
-        func.sum(RepairSale.profit).label('profit')
-    ).join(User, RepairSale.repairer_id == User.id)
-    
-    # Apply company filtering
-    if company_user_ids is not None:
-        query = query.filter(RepairSale.repairer_id.in_(company_user_ids))
-    
-    # Apply date filters
-    if start_date:
-        try:
-            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            query = query.filter(RepairSale.created_at >= start_dt)
-        except ValueError:
-            pass
-    
-    if end_date:
-        try:
-            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-            query = query.filter(RepairSale.created_at <= end_dt)
-        except ValueError:
-            pass
-    
-    # Apply repairer filter
-    if repairer_id:
-        query = query.filter(RepairSale.repairer_id == repairer_id)
-    
-    # Group by repairer
-    query = query.group_by(
-        RepairSale.repairer_id,
-        User.username,
-        User.full_name
-    )
-    
-    results = query.all()
-    
-    # Format results
-    repairer_stats = []
-    total_items = 0
-    total_qty = 0
-    total_sales = 0.0
-    total_costs = 0.0
-    total_profit = 0.0
-    
-    for row in results:
-        items_sold = row.items_sold_count or 0
-        qty = int(row.total_quantity or 0)
-        gross = float(row.gross_sales or 0.0)
-        cost = float(row.total_cost or 0.0)
-        profit = float(row.profit or 0.0)
-        
-        repairer_stats.append({
-            "repairer_id": row.repairer_id,
-            "repairer_name": row.repairer_name,
-            "repairer_full_name": row.repairer_full_name,
-            "items_sold_count": items_sold,
-            "total_quantity": qty,
-            "gross_sales": round(gross, 2),
-            "total_cost": round(cost, 2),
-            "profit": round(profit, 2),
-            "profit_margin": round((profit / gross * 100) if gross > 0 else 0, 2)
-        })
-        
-        total_items += items_sold
-        total_qty += qty
-        total_sales += gross
-        total_costs += cost
-        total_profit += profit
-    
-    return {
-        "repairers": repairer_stats,
-        "summary": {
-            "total_repairers": len(repairer_stats),
-            "total_items_sold": total_items,
-            "total_quantity": total_qty,
-            "total_sales": round(total_sales, 2),
-            "total_cost": round(total_costs, 2),
-            "total_profit": round(total_profit, 2),
-            "overall_margin": round((total_profit / total_sales * 100) if total_sales > 0 else 0, 2)
-        },
-        "filters_applied": {
-            "start_date": start_date,
-            "end_date": end_date,
-            "repairer_id": repairer_id
-        }
-    }
-
-
-@router.get("/repairer-sales/{repairer_id}/details")
-def get_repairer_sales_details(
-    repairer_id: int,
-    start_date: str = None,
-    end_date: str = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get detailed breakdown of items sold by a specific repairer
-    Shows per-product statistics
-    """
-    from app.models.repair_sale import RepairSale
-    from app.core.permissions import can_view_analytics
-    
-    if not can_view_analytics(current_user):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only managers and admins can view repairer sales details"
-        )
-    
-    # Verify repairer exists
-    repairer = db.query(User).filter(User.id == repairer_id).first()
-    if not repairer:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Repairer not found"
-        )
-    
-    # Get company user IDs for filtering
-    company_user_ids = get_company_user_ids(db, current_user)
-    
-    # Check if repairer belongs to same company
-    if company_user_ids is not None and repairer_id not in company_user_ids:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only view repairers from your company"
-        )
-    
-    # Build query for product-level breakdown
-    query = db.query(
-        RepairSale.product_id,
-        Product.name.label('product_name'),
-        Product.sku.label('product_sku'),
-        func.count(RepairSale.id).label('sales_count'),
-        func.sum(RepairSale.quantity).label('total_quantity'),
-        func.sum(RepairSale.unit_price * RepairSale.quantity).label('gross_sales'),
-        func.sum(RepairSale.cost_price * RepairSale.quantity).label('total_cost'),
-        func.sum(RepairSale.profit).label('profit')
-    ).join(Product, RepairSale.product_id == Product.id
-    ).filter(RepairSale.repairer_id == repairer_id)
-    
-    # Apply date filters
-    if start_date:
-        try:
-            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            query = query.filter(RepairSale.created_at >= start_dt)
-        except ValueError:
-            pass
-    
-    if end_date:
-        try:
-            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-            query = query.filter(RepairSale.created_at <= end_dt)
-        except ValueError:
-            pass
-    
-    # Group by product
-    query = query.group_by(
-        RepairSale.product_id,
-        Product.name,
-        Product.sku
-    ).order_by(func.sum(RepairSale.profit).desc())
-    
-    results = query.all()
-    
-    # Format results
-    products = []
-    for row in results:
-        gross = float(row.gross_sales or 0.0)
-        cost = float(row.total_cost or 0.0)
-        profit = float(row.profit or 0.0)
-        
-        products.append({
-            "product_id": row.product_id,
-            "product_name": row.product_name,
-            "product_sku": row.product_sku,
-            "sales_count": row.sales_count,
-            "total_quantity": int(row.total_quantity or 0),
-            "gross_sales": round(gross, 2),
-            "total_cost": round(cost, 2),
-            "profit": round(profit, 2),
-            "profit_margin": round((profit / gross * 100) if gross > 0 else 0, 2)
-        })
-    
-    # Get repair list for this repairer
-    repair_sales_query = db.query(RepairSale).filter(RepairSale.repairer_id == repairer_id)
-    
-    if start_date:
-        try:
-            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            repair_sales_query = repair_sales_query.filter(RepairSale.created_at >= start_dt)
-        except ValueError:
-            pass
-    
-    if end_date:
-        try:
-            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-            repair_sales_query = repair_sales_query.filter(RepairSale.created_at <= end_dt)
-        except ValueError:
-            pass
-    
-    recent_sales = repair_sales_query.order_by(RepairSale.created_at.desc()).limit(20).all()
-    
-    recent_items = []
-    for rs in recent_sales:
-        product = db.query(Product).filter(Product.id == rs.product_id).first()
-        repair = db.query(Repair).filter(Repair.id == rs.repair_id).first()
-        
-        recent_items.append({
-            "id": rs.id,
-            "repair_id": rs.repair_id,
-            "repair_description": repair.phone_description if repair else "Unknown",
-            "product_id": rs.product_id,
-            "product_name": product.name if product else "Unknown",
-            "quantity": rs.quantity,
-            "unit_price": rs.unit_price,
-            "total_price": rs.total_price,
-            "profit": rs.profit,
-            "created_at": rs.created_at.isoformat()
-        })
-    
-    return {
-        "repairer": {
-            "id": repairer.id,
-            "username": repairer.username,
-            "full_name": repairer.full_name,
-            "role": repairer.role.value
-        },
-        "products": products,
-        "recent_sales": recent_items,
-        "summary": {
-            "unique_products": len(products),
-            "total_sales": sum(p["gross_sales"] for p in products),
-            "total_profit": sum(p["profit"] for p in products)
-        }
-    }
-
-
-@router.get("/test")
-def test_dashboard(current_user: User = Depends(get_current_user)):
-    """Test endpoint to verify dashboard access"""
-    return {
-        "user_id": current_user.id,
-        "username": current_user.username,
-        "role": current_user.role.value,
-        "message": "Dashboard access OK"
-    }
-
-
 @router.get("/cards")
 def get_dashboard_cards(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get dashboard cards based on user role
-    System Admin: System-level metrics only
-    CEO: Business metrics only
-    Shop Keeper/Repairer: Limited metrics
+    Get dashboard cards based on user role - SIMPLIFIED VERSION
     """
     try:
         cards = []
-    
-    # SYSTEM ADMIN - System-level cards ONLY
-    if current_user.role in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
-        # Total CEO Accounts
-        total_ceos = db.query(func.count(User.id)).filter(
-            User.role == UserRole.CEO
-        ).scalar()
         
-        cards.append({
-            "id": "total_ceos",
-            "title": "Total CEOs",
-            "value": total_ceos,
-            "icon": "faUserTie",
-            "color": "purple",
-            "visible_to": ["admin", "super_admin"]
-        })
+        # Basic role-based cards without complex queries
+        if current_user.role in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
+            # System admin cards
+            cards.extend([
+                {
+                    "id": "system_status",
+                    "title": "System Status",
+                    "value": "Active",
+                    "icon": "faServer",
+                    "color": "green",
+                    "visible_to": ["admin", "super_admin"]
+                },
+                {
+                    "id": "system_version",
+                    "title": "System Version",
+                    "value": "v1.1.0",
+                    "icon": "faCode",
+                    "color": "blue",
+                    "visible_to": ["admin", "super_admin"]
+                }
+            ])
         
-        # Total Users
-        total_users = db.query(func.count(User.id)).scalar()
-        
-        cards.append({
-            "id": "total_users",
-            "title": "Total Users",
-            "value": total_users,
-            "icon": "faUsers",
-            "color": "blue",
-            "visible_to": ["admin", "super_admin"]
-        })
-        
-        # System Version
-        cards.append({
-            "id": "system_version",
-            "title": "System Version",
-            "value": "v1.1.0",
-            "icon": "faServer",
-            "color": "green",
-            "visible_to": ["admin", "super_admin"]
-        })
-        
-        # Database Status
-        total_tables = 10  # customers, phones, swaps, sales, repairs, users, etc.
-        cards.append({
-            "id": "database_status",
-            "title": "Database Tables",
-            "value": total_tables,
-            "icon": "faDatabase",
-            "color": "indigo",
-            "visible_to": ["admin", "super_admin"]
-        })
-        
-        return {
-            "cards": cards,
-            "user_role": current_user.role.value,
-            "total_cards": len(cards)
-        }
-    
-    # CEO & SHOP KEEPER - Business cards
-    if current_user.role in [UserRole.CEO, UserRole.SHOP_KEEPER, UserRole.MANAGER]:
-        # Get company user IDs for filtering
-        company_user_ids = get_company_user_ids(db, current_user)
-        
-        # Handle case where company_user_ids might be None
-        if company_user_ids is None:
-            company_user_ids = [current_user.id]
-        
-        # Total Customers - filtered by company
-        customer_query = db.query(Customer)
-        if company_user_ids is not None:
-            customer_query = customer_query.filter(Customer.created_by_user_id.in_(company_user_ids))
-        
-        cards.append({
-            "id": "total_customers",
-            "title": "Total Customers",
-            "value": customer_query.count(),
-            "icon": "faUserCircle",
-            "color": "blue",
-            "visible_to": ["shop_keeper", "ceo", "manager"]
-        })
-        
-        # Pending Resales Card - Use PendingResale table (filtered by company)
-        pending_resales_query = db.query(PendingResale).filter(
-            PendingResale.incoming_phone_id.isnot(None),
-            PendingResale.incoming_phone_status != PhoneSaleStatus.SOLD
-        )
-        if company_user_ids is not None:
-            pending_resales_query = pending_resales_query.filter(
-                PendingResale.attending_staff_id.in_(company_user_ids)
-            )
-        
-        cards.append({
-            "id": "pending_resales",
-            "title": "Pending Resales",
-            "value": pending_resales_query.count(),
-            "icon": "faClock",
-            "color": "yellow",
-            "visible_to": ["shop_keeper", "ceo", "manager"]
-        })
-        
-        # Completed Swaps Card - Use PendingResale table (filtered by company)
-        completed_swaps_query = db.query(PendingResale).filter(
-            PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD
-        )
-        if company_user_ids is not None:
-            completed_swaps_query = completed_swaps_query.filter(
-                PendingResale.attending_staff_id.in_(company_user_ids)
-            )
-        
-        cards.append({
-            "id": "completed_swaps",
-            "title": "Completed Swaps",
-            "value": completed_swaps_query.count(),
-            "icon": "faCheckCircle",
-            "color": "green",
-            "visible_to": ["shop_keeper", "ceo", "manager"]
-        })
-        
-        # Total Discounts Applied Card (Shop Keeper sees all, Manager sees filtered)
-        if current_user.role == UserRole.SHOP_KEEPER:
-            # Shop keeper sees all system discounts
-            total_discounts = (
-                db.query(func.sum(Swap.discount_amount)).scalar() or 0.0
-            ) + (
-                db.query(func.sum(Sale.discount_amount)).scalar() or 0.0
-            )
+        elif current_user.role in [UserRole.CEO, UserRole.MANAGER]:
+            # Manager/CEO cards - simplified
+            cards.extend([
+                {
+                    "id": "welcome",
+                    "title": "Welcome",
+                    "value": current_user.full_name or current_user.username,
+                    "icon": "faUser",
+                    "color": "blue",
+                    "visible_to": ["ceo", "manager"]
+                },
+                {
+                    "id": "role",
+                    "title": "Role",
+                    "value": current_user.role.value.title(),
+                    "icon": "faCrown",
+                    "color": "purple",
+                    "visible_to": ["ceo", "manager"]
+                },
+                {
+                    "id": "company",
+                    "title": "Company",
+                    "value": current_user.company_name or "SwapSync",
+                    "icon": "faBuilding",
+                    "color": "green",
+                    "visible_to": ["ceo", "manager"]
+                }
+            ])
             
-            cards.append({
-                "id": "total_discounts",
-                "title": "Discounts Applied",
-                "value": f"₵{total_discounts:.2f}",
-                "icon": "faPercent",
-                "color": "purple",
-                "visible_to": ["shop_keeper"]
-            })
-        
-        # Available Phones - Exclude trade-ins waiting for resale (filtered by company)
-        # REMOVED: Available Phones card as requested
-        
-        # Available Products - Products with stock > 0 (filtered by company)
-        available_products_query = db.query(Product).filter(
-            Product.quantity > 0
-        )
-        if company_user_ids is not None:
-            available_products_query = available_products_query.filter(Product.created_by_user_id.in_(company_user_ids))
-        
-        cards.append({
-            "id": "available_products",
-            "title": "Available Products",
-            "value": available_products_query.count(),
-            "icon": "faBox",
-            "color": "teal",
-            "visible_to": ["shop_keeper", "ceo", "manager"]
-        })
-    
-    # REPAIRER - Repair cards only
-    if current_user.role == UserRole.REPAIRER:
-        # Get company user IDs for filtering
-        company_user_ids = get_company_user_ids(db, current_user)
-        
-        # Handle case where company_user_ids might be None
-        if company_user_ids is None:
-            company_user_ids = [current_user.id]
-        
-        # Total Customers - filtered by company
-        customer_query = db.query(Customer)
-        if company_user_ids is not None:
-            customer_query = customer_query.filter(Customer.created_by_user_id.in_(company_user_ids))
-        
-        cards.append({
-            "id": "total_customers",
-            "title": "Total Customers",
-            "value": customer_query.count(),
-            "icon": "faUserCircle",
-            "color": "blue",
-            "visible_to": ["repairer"]
-        })
-        
-        # My Total Repairs (all repairs by this repairer)
-        my_total_repairs = db.query(func.count(Repair.id)).filter(
-            Repair.staff_id == current_user.id
-        ).scalar()
-        
-        cards.append({
-            "id": "my_total_repairs",
-            "title": "My Total Repairs",
-            "value": my_total_repairs,
-            "icon": "faTools",
-            "color": "indigo",
-            "visible_to": ["repairer"]
-        })
-        
-        # Pending Repairs Card (my pending/in-progress repairs)
-        pending_repairs = db.query(func.count(Repair.id)).filter(
-            Repair.staff_id == current_user.id,
-            Repair.status.in_(["Pending", "In Progress"])
-        ).scalar()
-        
-        cards.append({
-            "id": "pending_repairs",
-            "title": "Pending Repairs",
-            "value": pending_repairs,
-            "icon": "faClock",
-            "color": "orange",
-            "visible_to": ["repairer"]
-        })
-        
-        # Completed Repairs Card (my completed/delivered repairs)
-        completed_repairs = db.query(func.count(Repair.id)).filter(
-            Repair.staff_id == current_user.id,
-            Repair.status.in_(["Completed", "Delivered"])
-        ).scalar()
-        
-        cards.append({
-            "id": "completed_repairs",
-            "title": "Completed Repairs",
-            "value": completed_repairs,
-            "icon": "faCheckCircle",
-            "color": "green",
-            "visible_to": ["repairer"]
-        })
-        
-        # My Total Revenue (service + items) - completed/delivered only
-        my_revenue = db.query(func.sum(Repair.cost)).filter(
-            Repair.staff_id == current_user.id,
-            Repair.status.in_(["Completed", "Delivered"])
-        ).scalar() or 0.0
-        
-        cards.append({
-            "id": "my_revenue",
-            "title": "My Revenue",
-            "value": f"₵{my_revenue:.2f}",
-            "icon": "faMoneyBillWave",
-            "color": "green",
-            "visible_to": ["repairer"]
-        })
-        
-        # My Service Charges (workmanship fees)
-        my_service_charges = db.query(func.sum(Repair.service_cost)).filter(
-            Repair.staff_id == current_user.id,
-            Repair.status.in_(["Completed", "Delivered"])
-        ).scalar() or 0.0
-        
-        cards.append({
-            "id": "my_service_charges",
-            "title": "Service Charges Earned",
-            "value": f"₵{my_service_charges:.2f}",
-            "icon": "faHandHoldingUsd",
-            "color": "teal",
-            "visible_to": ["repairer"]
-        })
-    
-    # CEO & MANAGER - Essential Business Cards Only
-    if current_user.role in [UserRole.CEO, UserRole.MANAGER]:
-        # Get company user IDs (manager + all their staff)
-        company_user_ids = get_company_user_ids(db, current_user)
-        
-        # Handle case where company_user_ids might be None
-        if company_user_ids is None:
-            company_user_ids = [current_user.id]
-        
-        # ✅ ESSENTIAL CARDS ONLY - Clean Manager Dashboard
-        
-        # Total Revenue (Product Sales + Service Charges)
-        product_sales_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
-            ProductSale.created_by_user_id.in_(company_user_ids),
-            ProductSale.created_by_user_id.isnot(None)
-        ).scalar() or 0.0
-        
-        service_charges = db.query(func.sum(Repair.service_cost)).filter(
-            Repair.staff_id.in_(company_user_ids),
-            Repair.staff_id.isnot(None),
-            Repair.status.in_(['Completed', 'Delivered'])
-        ).scalar() or 0.0
-        
-        total_revenue = product_sales_revenue + service_charges
-        
-        cards.append({
-            "id": "total_revenue",
-            "title": "Total Revenue",
-            "value": f"₵{total_revenue:.2f}",
-            "icon": "faMoneyBillWave",
-            "color": "green",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Total Profit from Swaps
-        total_profit = db.query(func.sum(PendingResale.profit_amount)).filter(
-            PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD,
-            PendingResale.attending_staff_id.in_(company_user_ids)
-        ).scalar() or 0.0
-        
-        cards.append({
-            "id": "swap_profit",
-            "title": "Swap Profit",
-            "value": f"₵{total_profit:.2f}",
-            "icon": "faExchangeAlt",
-            "color": "blue" if total_profit >= 0 else "red",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # ✅ AVAILABLE PHONES - Phones in stock (separate from general products)
-        available_phones = db.query(Product).filter(
-            Product.created_by_user_id.in_(company_user_ids),
-            Product.is_phone == True,
-            Product.is_active == True,
-            Product.quantity > 0
-        ).count()
-        
-        cards.append({
-            "id": "available_phones",
-            "title": "Available Phones",
-            "value": str(available_phones),
-            "icon": "faMobileAlt",
-            "color": "blue",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # ✅ PRODUCT INVENTORY - Non-phone products only
-        total_products = db.query(Product).filter(
-            Product.created_by_user_id.in_(company_user_ids),
-            Product.is_phone == False,  # Exclude phones
-            Product.is_active == True
-        ).count()
-        
-        cards.append({
-            "id": "product_inventory",
-            "title": "Product Inventory",
-            "value": str(total_products),
-            "icon": "faBox",
-            "color": "purple",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # ✅ PRODUCT SALES - Total product sales count
-        try:
-            product_sales_count = db.query(ProductSale).join(Product).filter(
-                Product.created_by_user_id.in_(company_user_ids)
-            ).count()
-        except Exception as e:
-            print(f"Error in product_sales_count query: {e}")
-            product_sales_count = 0
-        
-        cards.append({
-            "id": "product_sales",
-            "title": "Product Sales",
-            "value": str(product_sales_count),
-            "icon": "faShoppingCart",
-            "color": "green",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # ✅ PRODUCT PROFIT - Total profit from product sales
-        try:
-            product_sales = db.query(ProductSale).join(Product).filter(
-                Product.created_by_user_id.in_(company_user_ids)
-            ).all()
-            
-            product_profit = sum(sale.profit for sale in product_sales if sale.profit is not None)
-        except Exception as e:
-            print(f"Error in product_profit query: {e}")
-            product_profit = 0.0
-        
-        cards.append({
-            "id": "product_profit",
-            "title": "Product Profit",
-            "value": f"₵{product_profit:.2f}",
-            "icon": "faDollarSign",
-            "color": "green",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Swapped phones (pending resale)
-        swapped_phones = db.query(PendingResale).filter(
-            PendingResale.attending_staff_id.in_(company_user_ids),
-            PendingResale.incoming_phone_status == PhoneSaleStatus.AVAILABLE
-        ).count()
-        
-        # REMOVED: Pending Resale Phones card as requested
-        
-        # Sold swapped phones
-        sold_swapped_phones = db.query(PendingResale).filter(
-            PendingResale.attending_staff_id.in_(company_user_ids),
-            PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD
-        ).count()
-        
-        cards.append({
-            "id": "sold_swapped_phones",
-            "title": "Sold Swapped Phones",
-            "value": str(sold_swapped_phones),
-            "icon": "faCheckCircle",
-            "color": "teal",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # ✅ TOTAL REVENUE - Combined revenue from all sources
-        try:
-            product_revenue = db.query(func.sum(ProductSale.total_amount)).join(Product).filter(
-                Product.created_by_user_id.in_(company_user_ids)
-            ).scalar() or 0.0
-            
-            repair_revenue = db.query(func.sum(Repair.cost)).filter(
-                Repair.created_by_user_id.in_(company_user_ids)
-            ).scalar() or 0.0
-            
-            swap_revenue = db.query(func.sum(Swap.amount_paid)).filter(
-                Swap.created_by_user_id.in_(company_user_ids)
-            ).scalar() or 0.0
-            
-            combined_revenue = product_revenue + repair_revenue + swap_revenue
-        except Exception as e:
-            print(f"Error in combined_revenue query: {e}")
-            combined_revenue = 0.0
-        
-        cards.append({
-            "id": "combined_revenue",
-            "title": "Combined Revenue",
-            "value": f"₵{combined_revenue:.2f}",
-            "icon": "faChartLine",
-            "color": "indigo",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # ✅ HUB PROFIT & REVENUE CARDS - Detailed breakdown by hub
-        # Product Hub Revenue
-        try:
-            product_hub_revenue = db.query(func.sum(ProductSale.total_amount)).join(Product).filter(
-                Product.created_by_user_id.in_(company_user_ids)
-            ).scalar() or 0.0
-        except Exception as e:
-            print(f"Error in product_hub_revenue query: {e}")
-            product_hub_revenue = 0.0
-        
-        cards.append({
-            "id": "product_hub_revenue",
-            "title": "Product Hub Revenue",
-            "value": f"₵{product_hub_revenue:.2f}",
-            "icon": "faShoppingCart",
-            "color": "green",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Product Hub Profit
-        cards.append({
-            "id": "product_hub_profit",
-            "title": "Product Hub Profit",
-            "value": f"₵{product_profit:.2f}",
-            "icon": "faDollarSign",
-            "color": "green",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Swapping Hub Revenue
-        swapping_hub_revenue = db.query(func.sum(Swap.amount_paid)).filter(
-            Swap.created_by_user_id.in_(company_user_ids)
-        ).scalar() or 0.0
-        
-        cards.append({
-            "id": "swapping_hub_revenue",
-            "title": "Swapping Hub Revenue",
-            "value": f"₵{swapping_hub_revenue:.2f}",
-            "icon": "faExchangeAlt",
-            "color": "blue",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Swapping Hub Profit
-        cards.append({
-            "id": "swapping_hub_profit",
-            "title": "Swapping Hub Profit",
-            "value": f"₵{total_profit:.2f}",
-            "icon": "faExchangeAlt",
-            "color": "blue",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Repairer Hub Revenue
-        repairer_hub_revenue = db.query(func.sum(Repair.cost)).filter(
-            Repair.created_by_user_id.in_(company_user_ids)
-        ).scalar() or 0.0
-        
-        cards.append({
-            "id": "repairer_hub_revenue",
-            "title": "Repairer Hub Revenue",
-            "value": f"₵{repairer_hub_revenue:.2f}",
-            "icon": "faTools",
-            "color": "orange",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Repairer Hub Profit (from repair sales)
-        try:
-            repairer_hub_profit = db.query(func.sum(RepairSale.profit)).join(Repair).filter(
-                Repair.created_by_user_id.in_(company_user_ids)
-            ).scalar() or 0.0
-        except Exception as e:
-            print(f"Error in repairer_hub_profit query: {e}")
-            repairer_hub_profit = 0.0
-        
-        cards.append({
-            "id": "repairer_hub_profit",
-            "title": "Repairer Hub Profit",
-            "value": f"₵{repairer_hub_profit:.2f}",
-            "icon": "faTools",
-            "color": "orange",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Repairer Sold Items (Manager only)
-        if current_user.role == UserRole.MANAGER:
+            # Try to add basic counts with error handling
             try:
-                # Get repairer sales data
-                repairer_sales_query = db.query(RepairSale).join(Repair).filter(
-                    Repair.staff_id.in_(company_user_ids)
-                )
-
-                total_repairer_items_sold = repairer_sales_query.count()
-                total_repairer_profit = repairer_sales_query.with_entities(
-                    func.sum(RepairSale.profit)
-                ).scalar() or 0.0
+                # Simple customer count
+                customer_count = db.query(Customer).count()
+                cards.append({
+                    "id": "total_customers",
+                    "title": "Total Customers",
+                    "value": str(customer_count),
+                    "icon": "faUsers",
+                    "color": "blue",
+                    "visible_to": ["ceo", "manager"]
+                })
             except Exception as e:
-                print(f"Error in repairer sales query: {e}")
-                total_repairer_items_sold = 0
-                total_repairer_profit = 0.0
+                print(f"Error getting customer count: {e}")
             
-            cards.append({
-                "id": "repairer_sold_items",
-                "title": "Repairer Sold Items",
-                "value": str(total_repairer_items_sold),
-                "icon": "faTools",
-                "color": "blue",
-                "visible_to": ["manager"]
-            })
+            try:
+                # Simple product count
+                product_count = db.query(Product).count()
+                cards.append({
+                    "id": "total_products",
+                    "title": "Total Products",
+                    "value": str(product_count),
+                    "icon": "faBox",
+                    "color": "green",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting product count: {e}")
             
-            cards.append({
-                "id": "repairer_profit",
-                "title": "Repairer Profit",
-                "value": f"₵{total_repairer_profit:.2f}",
-                "icon": "faDollarSign",
-                "color": "green",
-                "visible_to": ["manager"]
-            })
+            try:
+                # Simple repair count
+                repair_count = db.query(Repair).count()
+                cards.append({
+                    "id": "total_repairs",
+                    "title": "Total Repairs",
+                    "value": str(repair_count),
+                    "icon": "faTools",
+                    "color": "orange",
+                    "visible_to": ["ceo", "manager"]
+                })
+            except Exception as e:
+                print(f"Error getting repair count: {e}")
         
-        # ✅ CLEAN DASHBOARD - Only Essential Cards
-    
+        elif current_user.role == UserRole.REPAIRER:
+            # Repairer cards - simplified
+            cards.extend([
+                {
+                    "id": "welcome_repairer",
+                    "title": "Welcome",
+                    "value": current_user.full_name or current_user.username,
+                    "icon": "faUser",
+                    "color": "blue",
+                    "visible_to": ["repairer"]
+                },
+                {
+                    "id": "repairer_role",
+                    "title": "Role",
+                    "value": "Repairer",
+                    "icon": "faTools",
+                    "color": "orange",
+                    "visible_to": ["repairer"]
+                }
+            ])
+            
+            try:
+                # Simple repair count
+                repair_count = db.query(Repair).count()
+                cards.append({
+                    "id": "total_repairs",
+                    "title": "Total Repairs",
+                    "value": str(repair_count),
+                    "icon": "faWrench",
+                    "color": "orange",
+                    "visible_to": ["repairer"]
+                })
+            except Exception as e:
+                print(f"Error getting repair count: {e}")
+        
+        elif current_user.role == UserRole.SHOP_KEEPER:
+            # Shop keeper cards - simplified
+            cards.extend([
+                {
+                    "id": "welcome_shopkeeper",
+                    "title": "Welcome",
+                    "value": current_user.full_name or current_user.username,
+                    "icon": "faUser",
+                    "color": "blue",
+                    "visible_to": ["shop_keeper"]
+                },
+                {
+                    "id": "shopkeeper_role",
+                    "title": "Role",
+                    "value": "Shop Keeper",
+                    "icon": "faStore",
+                    "color": "green",
+                    "visible_to": ["shop_keeper"]
+                }
+            ])
+        
+        # Always add a status card
+        cards.append({
+            "id": "dashboard_status",
+            "title": "Dashboard Status",
+            "value": "Active",
+            "icon": "faCheckCircle",
+            "color": "green",
+            "visible_to": [current_user.role.value]
+        })
+        
         return {
             "cards": cards,
             "user_role": current_user.role.value,
-            "total_cards": len(cards)
+            "total_cards": len(cards),
+            "status": "success"
         }
+        
     except Exception as e:
-        print(f"Error in get_dashboard_cards: {e}")
-        # Return minimal cards on error
+        print(f"Critical error in get_dashboard_cards: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Return minimal error response
         return {
             "cards": [
                 {
@@ -882,217 +220,17 @@ def get_dashboard_cards(
             ],
             "user_role": current_user.role.value,
             "total_cards": 1,
+            "status": "error",
             "error": str(e)
         }
 
 
-@router.get("/stats/summary")
-def get_dashboard_summary(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get comprehensive dashboard summary based on role
-    """
-    summary = {
-        "user": {
-            "id": current_user.id,
-            "name": current_user.full_name,
-            "role": current_user.role.value
-        },
-        "stats": {}
-    }
-    
-    # Get company user IDs for filtering
-    company_user_ids = get_company_user_ids(db, current_user)
-    
-    # Shop Keeper stats
-    if can_manage_swaps(current_user):
-        # Filter swaps by company
-        swap_query = db.query(Swap)
-        if company_user_ids is not None:
-            # For swaps, we need to filter by the staff who created them
-            # Since swaps don't have created_by_user_id, we'll filter by customer's created_by_user_id
-            swap_query = swap_query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
-        
-        summary["stats"]["swaps"] = {
-            "total": swap_query.count(),
-            "pending_resales": swap_query.filter(Swap.resale_status == ResaleStatus.PENDING).count(),
-            "total_discounts": swap_query.with_entities(func.sum(Swap.discount_amount)).scalar() or 0.0
-        }
-        
-        # Filter sales by company
-        sale_query = db.query(Sale)
-        if company_user_ids is not None:
-            sale_query = sale_query.filter(Sale.created_by_user_id.in_(company_user_ids))
-        
-        summary["stats"]["sales"] = {
-            "total": sale_query.count(),
-            "total_revenue": sale_query.with_entities(func.sum(Sale.amount_paid)).scalar() or 0.0,
-            "total_discounts": sale_query.with_entities(func.sum(Sale.discount_amount)).scalar() or 0.0
-        }
-        
-        # Filter phones by company
-        phone_query = db.query(Phone)
-        if company_user_ids is not None:
-            phone_query = phone_query.filter(Phone.created_by_user_id.in_(company_user_ids))
-        
-        summary["stats"]["phones"] = {
-            "total": phone_query.count(),
-            "available": phone_query.filter(Phone.is_available == True).count()
-        }
-    
-    # Repairer stats
-    if can_manage_repairs(current_user):
-        # Filter repairs by company
-        repair_query = db.query(Repair)
-        if company_user_ids is not None:
-            repair_query = repair_query.filter(Repair.staff_id.in_(company_user_ids))
-        
-        summary["stats"]["repairs"] = {
-            "total": repair_query.count(),
-            "pending": repair_query.filter(Repair.status.in_(["Pending", "In Progress"])).count(),
-            "completed": repair_query.filter(Repair.status.in_(["Completed", "Delivered"])).count(),
-            "total_revenue": repair_query.with_entities(func.sum(Repair.cost)).scalar() or 0.0
-        }
-    
-    # CEO/Admin profit stats
-    if can_view_analytics(current_user):
-        # Filter profit calculations by company
-        profit_swap_query = db.query(Swap)
-        profit_sale_query = db.query(Sale)
-        profit_repair_query = db.query(Repair)
-        
-        if company_user_ids is not None:
-            profit_swap_query = profit_swap_query.join(Customer).filter(Customer.created_by_user_id.in_(company_user_ids))
-            profit_sale_query = profit_sale_query.filter(Sale.created_by_user_id.in_(company_user_ids))
-            profit_repair_query = profit_repair_query.filter(Repair.staff_id.in_(company_user_ids))
-        
-        summary["stats"]["profit"] = {
-            "from_swaps": profit_swap_query.filter(Swap.resale_status == ResaleStatus.SOLD).with_entities(func.sum(Swap.profit_or_loss)).scalar() or 0.0,
-            "from_sales": profit_sale_query.with_entities(func.sum(Sale.amount_paid)).scalar() or 0.0,
-            "from_repairs": profit_repair_query.with_entities(func.sum(Repair.cost)).scalar() or 0.0
-        }
-        
-        # Calculate total profit
-        total_profit = (
-            summary["stats"]["profit"]["from_swaps"] +
-            summary["stats"]["profit"]["from_sales"] +
-            summary["stats"]["profit"]["from_repairs"]
-        )
-        summary["stats"]["profit"]["total"] = total_profit
-    
-    return summary
-
-
-@router.get("/hub-profits")
-def get_hub_profits(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get detailed profit breakdown for each hub (Products, Swapping, Repairs)
-    Manager/CEO only
-    """
-    from app.models.repair_item_usage import RepairItemUsage
-    from app.models.repair_item import RepairItem
-    
-    if current_user.role not in [UserRole.CEO, UserRole.MANAGER]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only managers can view hub profits"
-        )
-    
-    # PRODUCTS HUB PROFIT
-    # Profit = Total Revenue - Total Cost
-    product_sales = db.query(ProductSale).all()
-    products_revenue = sum(sale.total_amount for sale in product_sales)
-    products_cost = sum((sale.quantity * sale.unit_price) for sale in product_sales)  # Simplified
-    products_profit = products_revenue - products_cost
-    
-    # SWAPPING HUB PROFIT  
-    # Profit from completed swaps
-    swaps_profit = db.query(func.sum(Swap.profit_or_loss)).filter(
-        Swap.resale_status == ResaleStatus.SOLD
-    ).scalar() or 0.0
-    
-    # REPAIRER HUB PROFIT
-    # Profit from repairs = Service revenue + Items profit
-    # Service profit = service_cost (assuming 100% profit on service)
-    # Items profit = items sold in repairs (selling_price - cost_price) * quantity
-    
-    # Service revenue (100% profit)
-    service_revenue = db.query(func.sum(Repair.service_cost)).scalar() or 0.0
-    
-    # Items profit from repair sales (new system using products)
-    repair_sales = db.query(RepairSale).all()
-    items_revenue = 0.0
-    items_profit = 0.0
-    
-    for sale in repair_sales:
-        items_revenue += sale.unit_price * sale.quantity  # What customer paid
-        items_profit += sale.profit  # Actual profit (revenue - cost)
-    
-    repairs_profit = service_revenue + items_profit
-    
-    # TOTAL COMBINED PROFIT
-    total_profit = products_profit + swaps_profit + repairs_profit
-    
+@router.get("/test")
+def test_dashboard(current_user: User = Depends(get_current_user)):
+    """Test endpoint to verify dashboard access"""
     return {
-        "products_hub": {
-            "revenue": products_revenue,
-            "cost": products_cost,
-            "profit": products_profit
-        },
-        "swapping_hub": {
-            "profit": swaps_profit,
-            "note": "Profit from resold phones"
-        },
-        "repairer_hub": {
-            "service_revenue": service_revenue,
-            "items_revenue": items_revenue,
-            "items_profit": items_profit,
-            "total_profit": repairs_profit
-        },
-        "total_profit": total_profit,
-        "breakdown": {
-            "from_products": products_profit,
-            "from_swapping": swaps_profit,
-            "from_repairs": repairs_profit
-        }
+        "message": "Dashboard access successful",
+        "user": current_user.username,
+        "role": current_user.role.value,
+        "message": "Dashboard access OK"
     }
-
-
-@router.get("/hub-profits-report")
-def get_hub_profits_report(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get hub profits report data for PDF generation
-    """
-    if current_user.role not in [UserRole.CEO, UserRole.MANAGER]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only managers can view hub profits reports"
-        )
-    
-    # Get hub profits data
-    hub_profits = get_hub_profits(db, current_user)
-    
-    # Get additional report data
-    report_data = {
-        "report_title": "Hub Profits Report",
-        "generated_at": datetime.utcnow().isoformat(),
-        "generated_by": current_user.full_name or current_user.username,
-        "company_name": current_user.company_name or "SwapSync",
-        "hub_profits": hub_profits,
-        "summary": {
-            "total_profit": hub_profits.get("total_profit", 0),
-            "products_profit": hub_profits.get("products_hub", {}).get("profit", 0),
-            "swapping_profit": hub_profits.get("swapping_hub", {}).get("profit", 0),
-            "repairs_profit": hub_profits.get("repairer_hub", {}).get("total_profit", 0)
-        }
-    }
-    
-    return report_data
