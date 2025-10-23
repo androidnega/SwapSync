@@ -926,3 +926,38 @@ def get_hub_profits(
             "from_repairs": repairs_profit
         }
     }
+
+
+@router.get("/hub-profits-report")
+def get_hub_profits_report(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get hub profits report data for PDF generation
+    """
+    if current_user.role not in [UserRole.CEO, UserRole.MANAGER]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managers can view hub profits reports"
+        )
+    
+    # Get hub profits data
+    hub_profits = get_hub_profits(db, current_user)
+    
+    # Get additional report data
+    report_data = {
+        "report_title": "Hub Profits Report",
+        "generated_at": datetime.utcnow().isoformat(),
+        "generated_by": current_user.full_name or current_user.username,
+        "company_name": current_user.company_name or "SwapSync",
+        "hub_profits": hub_profits,
+        "summary": {
+            "total_profit": hub_profits.get("total_profit", 0),
+            "products_profit": hub_profits.get("products_hub", {}).get("profit", 0),
+            "swapping_profit": hub_profits.get("swapping_hub", {}).get("profit", 0),
+            "repairs_profit": hub_profits.get("repairer_hub", {}).get("total_profit", 0)
+        }
+    }
+    
+    return report_data

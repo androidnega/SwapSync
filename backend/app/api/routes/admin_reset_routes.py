@@ -26,14 +26,17 @@ def reset_customers(
         )
     
     try:
-        # Delete customers and related data
-        db.execute(text("DELETE FROM customers"))
-        db.execute(text("DELETE FROM product_sales WHERE customer_id IS NOT NULL"))
-        db.execute(text("DELETE FROM pos_sales WHERE customer_id IS NOT NULL"))
-        db.execute(text("DELETE FROM sales WHERE customer_id IS NOT NULL"))
-        db.execute(text("DELETE FROM swaps WHERE customer_id IS NOT NULL"))
+        # Delete in correct order to avoid foreign key constraints
+        # First delete records that reference customers
         db.execute(text("DELETE FROM repairs WHERE customer_id IS NOT NULL"))
+        db.execute(text("DELETE FROM swaps WHERE customer_id IS NOT NULL"))
+        db.execute(text("DELETE FROM sales WHERE customer_id IS NOT NULL"))
+        db.execute(text("DELETE FROM pos_sales WHERE customer_id IS NOT NULL"))
+        db.execute(text("DELETE FROM product_sales WHERE customer_id IS NOT NULL"))
         db.execute(text("DELETE FROM pending_resales WHERE customer_id IS NOT NULL"))
+        
+        # Then delete customers
+        db.execute(text("DELETE FROM customers"))
         
         db.commit()
         
@@ -237,25 +240,36 @@ def reset_all_data(
         )
     
     try:
-        # Delete all data except super admin user
+        # Delete all data except super admin user in correct order to avoid foreign key constraints
+        # First delete user sessions and activity logs
         db.execute(text("DELETE FROM user_sessions WHERE user_id NOT IN (SELECT id FROM users WHERE role = 'super_admin')"))
         db.execute(text("DELETE FROM activity_logs WHERE user_id NOT IN (SELECT id FROM users WHERE role = 'super_admin')"))
+        
+        # Delete system logs
         db.execute(text("DELETE FROM sms_logs"))
         db.execute(text("DELETE FROM audit_codes"))
         db.execute(text("DELETE FROM otp_sessions"))
-        db.execute(text("DELETE FROM pending_resales"))
+        
+        # Delete sales and transaction data (in order of dependencies)
         db.execute(text("DELETE FROM pos_sale_items"))
         db.execute(text("DELETE FROM pos_sales"))
         db.execute(text("DELETE FROM product_sales"))
         db.execute(text("DELETE FROM sales"))
         db.execute(text("DELETE FROM swaps"))
-        db.execute(text("DELETE FROM repairs"))
+        db.execute(text("DELETE FROM pending_resales"))
+        
+        # Delete repair data
         db.execute(text("DELETE FROM repair_sales"))
         db.execute(text("DELETE FROM repair_items_usage"))
+        db.execute(text("DELETE FROM repairs"))
         db.execute(text("DELETE FROM repair_items"))
+        
+        # Delete inventory data
         db.execute(text("DELETE FROM stock_movements"))
         db.execute(text("DELETE FROM products"))
         db.execute(text("DELETE FROM phones"))
+        
+        # Finally delete customers and users
         db.execute(text("DELETE FROM customers"))
         db.execute(text("DELETE FROM users WHERE role != 'super_admin'"))
         
