@@ -604,16 +604,8 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # ✅ PHONE INVENTORY - Combined card showing total and in stock
-        # Total phones in inventory (filtered by company)
-        total_phones = db.query(Product).filter(
-            Product.created_by_user_id.in_(company_user_ids),
-            Product.is_phone == True,
-            Product.is_active == True
-        ).count()
-        
-        # Phones in stock (available)
-        phones_in_stock = db.query(Product).filter(
+        # ✅ AVAILABLE PHONES - Phones in stock (separate from general products)
+        available_phones = db.query(Product).filter(
             Product.created_by_user_id.in_(company_user_ids),
             Product.is_phone == True,
             Product.is_active == True,
@@ -621,12 +613,57 @@ def get_dashboard_cards(
         ).count()
         
         cards.append({
-            "id": "phone_inventory",
-            "title": "Phone Inventory",
-            "value": f"{phones_in_stock}/{total_phones}",
-            "subtitle": "In Stock / Total",
+            "id": "available_phones",
+            "title": "Available Phones",
+            "value": str(available_phones),
             "icon": "faMobileAlt",
             "color": "blue",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # ✅ PRODUCT INVENTORY - Non-phone products only
+        total_products = db.query(Product).filter(
+            Product.created_by_user_id.in_(company_user_ids),
+            Product.is_phone == False,  # Exclude phones
+            Product.is_active == True
+        ).count()
+        
+        cards.append({
+            "id": "product_inventory",
+            "title": "Product Inventory",
+            "value": str(total_products),
+            "icon": "faBox",
+            "color": "purple",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # ✅ PRODUCT SALES - Total product sales count
+        product_sales_count = db.query(ProductSale).join(Product).filter(
+            Product.created_by_user_id.in_(company_user_ids)
+        ).count()
+        
+        cards.append({
+            "id": "product_sales",
+            "title": "Product Sales",
+            "value": str(product_sales_count),
+            "icon": "faShoppingCart",
+            "color": "green",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # ✅ PRODUCT PROFIT - Total profit from product sales
+        product_profit = db.query(ProductSale).join(Product).filter(
+            Product.created_by_user_id.in_(company_user_ids)
+        ).with_entities(
+            func.sum(ProductSale.total_amount - (ProductSale.quantity * Product.cost_price))
+        ).scalar() or 0.0
+        
+        cards.append({
+            "id": "product_profit",
+            "title": "Product Profit",
+            "value": f"₵{product_profit:.2f}",
+            "icon": "faDollarSign",
+            "color": "green",
             "visible_to": ["ceo", "manager"]
         })
         
@@ -650,6 +687,28 @@ def get_dashboard_cards(
             "value": str(sold_swapped_phones),
             "icon": "faCheckCircle",
             "color": "teal",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # ✅ TOTAL REVENUE - Combined revenue from all sources
+        total_revenue = (
+            db.query(func.sum(ProductSale.total_amount)).join(Product).filter(
+                Product.created_by_user_id.in_(company_user_ids)
+            ).scalar() or 0.0 +
+            db.query(func.sum(Repair.cost)).filter(
+                Repair.created_by_user_id.in_(company_user_ids)
+            ).scalar() or 0.0 +
+            db.query(func.sum(Swap.amount_paid)).filter(
+                Swap.created_by_user_id.in_(company_user_ids)
+            ).scalar() or 0.0
+        )
+        
+        cards.append({
+            "id": "total_revenue",
+            "title": "Total Revenue",
+            "value": f"₵{total_revenue:.2f}",
+            "icon": "faChartLine",
+            "color": "indigo",
             "visible_to": ["ceo", "manager"]
         })
         
