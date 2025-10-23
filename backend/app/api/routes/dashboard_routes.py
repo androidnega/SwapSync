@@ -712,6 +712,83 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
+        # ✅ HUB PROFIT & REVENUE CARDS - Detailed breakdown by hub
+        # Product Hub Revenue
+        product_hub_revenue = db.query(func.sum(ProductSale.total_amount)).join(Product).filter(
+            Product.created_by_user_id.in_(company_user_ids)
+        ).scalar() or 0.0
+        
+        cards.append({
+            "id": "product_hub_revenue",
+            "title": "Product Hub Revenue",
+            "value": f"₵{product_hub_revenue:.2f}",
+            "icon": "faShoppingCart",
+            "color": "green",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Product Hub Profit
+        cards.append({
+            "id": "product_hub_profit",
+            "title": "Product Hub Profit",
+            "value": f"₵{product_profit:.2f}",
+            "icon": "faDollarSign",
+            "color": "green",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Swapping Hub Revenue
+        swapping_hub_revenue = db.query(func.sum(Swap.amount_paid)).filter(
+            Swap.created_by_user_id.in_(company_user_ids)
+        ).scalar() or 0.0
+        
+        cards.append({
+            "id": "swapping_hub_revenue",
+            "title": "Swapping Hub Revenue",
+            "value": f"₵{swapping_hub_revenue:.2f}",
+            "icon": "faExchangeAlt",
+            "color": "blue",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Swapping Hub Profit
+        cards.append({
+            "id": "swapping_hub_profit",
+            "title": "Swapping Hub Profit",
+            "value": f"₵{total_profit:.2f}",
+            "icon": "faExchangeAlt",
+            "color": "blue",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Repairer Hub Revenue
+        repairer_hub_revenue = db.query(func.sum(Repair.cost)).filter(
+            Repair.created_by_user_id.in_(company_user_ids)
+        ).scalar() or 0.0
+        
+        cards.append({
+            "id": "repairer_hub_revenue",
+            "title": "Repairer Hub Revenue",
+            "value": f"₵{repairer_hub_revenue:.2f}",
+            "icon": "faTools",
+            "color": "orange",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Repairer Hub Profit (from repair sales)
+        repairer_hub_profit = db.query(func.sum(RepairSale.profit)).join(Repair).filter(
+            Repair.created_by_user_id.in_(company_user_ids)
+        ).scalar() or 0.0
+        
+        cards.append({
+            "id": "repairer_hub_profit",
+            "title": "Repairer Hub Profit",
+            "value": f"₵{repairer_hub_profit:.2f}",
+            "icon": "faTools",
+            "color": "orange",
+            "visible_to": ["ceo", "manager"]
+        })
+        
         # Repairer Sold Items (Manager only)
         if current_user.role == UserRole.MANAGER:
             # Get repairer sales data

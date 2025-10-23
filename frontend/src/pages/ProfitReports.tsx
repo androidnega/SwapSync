@@ -47,12 +47,47 @@ const ProfitReports: React.FC = () => {
 
   const fetchSummary = async () => {
     try {
-      const response = await axios.get(`${API_URL}/profit-reports/summary`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
-      setSummary(response.data);
+      // Fetch today, weekly, and monthly stats from the new endpoints
+      const [todayResponse, weeklyResponse, monthlyResponse] = await Promise.all([
+        axios.get(`${API_URL}/dashboard/today-stats`, {
+          headers: { Authorization: `Bearer ${getToken()}` }
+        }),
+        axios.get(`${API_URL}/dashboard/weekly-stats`, {
+          headers: { Authorization: `Bearer ${getToken()}` }
+        }),
+        axios.get(`${API_URL}/dashboard/monthly-stats`, {
+          headers: { Authorization: `Bearer ${getToken()}` }
+        })
+      ]);
+      
+      // Transform the data to match the expected format
+      const summaryData = {
+        today: {
+          revenue: todayResponse.data.sales_total || 0,
+          profit: todayResponse.data.total_profit || 0,
+          sales_count: todayResponse.data.sales_count || 0
+        },
+        week: {
+          revenue: weeklyResponse.data.sales_total || 0,
+          profit: weeklyResponse.data.total_profit || 0,
+          sales_count: weeklyResponse.data.sales_count || 0
+        },
+        month: {
+          revenue: monthlyResponse.data.sales_total || 0,
+          profit: monthlyResponse.data.total_profit || 0,
+          sales_count: monthlyResponse.data.sales_count || 0
+        }
+      };
+      
+      setSummary(summaryData);
     } catch (error: any) {
       console.error('Failed to fetch summary:', error);
+      // Set default values on error
+      setSummary({
+        today: { revenue: 0, profit: 0, sales_count: 0 },
+        week: { revenue: 0, profit: 0, sales_count: 0 },
+        month: { revenue: 0, profit: 0, sales_count: 0 }
+      });
     }
   };
 
