@@ -299,7 +299,13 @@ def list_products(
     # Filter by company (data isolation)
     company_user_ids = get_company_user_ids(db, current_user)
     if company_user_ids is not None:
-        query = query.filter(Product.created_by_user_id.in_(company_user_ids))
+        # Include products with NULL created_by_user_id (legacy products) for the current user's company
+        query = query.filter(
+            or_(
+                Product.created_by_user_id.in_(company_user_ids),
+                Product.created_by_user_id == None  # Include legacy products without creator
+            )
+        )
     
     # Apply filters
     if category_id:
@@ -346,7 +352,13 @@ def get_product_summary(
     # Build base query with company filtering
     base_query = db.query(Product).filter(Product.is_active == True)
     if company_user_ids is not None:
-        base_query = base_query.filter(Product.created_by_user_id.in_(company_user_ids))
+        # Include products with NULL created_by_user_id (legacy products)
+        base_query = base_query.filter(
+            or_(
+                Product.created_by_user_id.in_(company_user_ids),
+                Product.created_by_user_id == None
+            )
+        )
     
     # Total products (filtered by company)
     total_products = base_query.count()
@@ -367,7 +379,13 @@ def get_product_summary(
     ).join(Product).filter(Product.is_active == True)
     
     if company_user_ids is not None:
-        category_query = category_query.filter(Product.created_by_user_id.in_(company_user_ids))
+        # Include products with NULL created_by_user_id (legacy products)
+        category_query = category_query.filter(
+            or_(
+                Product.created_by_user_id.in_(company_user_ids),
+                Product.created_by_user_id == None
+            )
+        )
     
     category_counts = category_query.group_by(Category.name).all()
     
@@ -403,7 +421,13 @@ def get_low_stock_products(
     )
     
     if company_user_ids is not None:
-        query = query.filter(Product.created_by_user_id.in_(company_user_ids))
+        # Include products with NULL created_by_user_id (legacy products)
+        query = query.filter(
+            or_(
+                Product.created_by_user_id.in_(company_user_ids),
+                Product.created_by_user_id == None
+            )
+        )
     
     products = query.all()
     
@@ -428,7 +452,13 @@ def get_out_of_stock_products(
     )
     
     if company_user_ids is not None:
-        query = query.filter(Product.created_by_user_id.in_(company_user_ids))
+        # Include products with NULL created_by_user_id (legacy products)
+        query = query.filter(
+            or_(
+                Product.created_by_user_id.in_(company_user_ids),
+                Product.created_by_user_id == None
+            )
+        )
     
     products = query.all()
     
