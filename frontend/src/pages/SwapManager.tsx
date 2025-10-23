@@ -49,6 +49,7 @@ const SwapManager = () => {
   const [companyName, setCompanyName] = useState<string>('SwapSync Shop');
   const [userRole, setUserRole] = useState<string>('');
   const [totalProfit, setTotalProfit] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [form, setForm] = useState({
     customer_id: '',
@@ -86,6 +87,8 @@ const SwapManager = () => {
       setUserRole(response.data.role || '');
     } catch (error) {
       console.error('Failed to fetch company name:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -294,7 +297,7 @@ const SwapManager = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Swap Form */}
-          {!isManager && (
+          {!isLoading && !isManager && (
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-4 sm:p-5 md:p-6 space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">New Swap Transaction</h2>
@@ -766,13 +769,6 @@ const SwapManager = () => {
                       <p className="text-sm font-mono font-medium text-gray-900">{selectedPhone.imei}</p>
                     </div>
                   )}
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm p-4 md:p-5 border-2 border-dashed border-gray-300">
-                <div className="text-center py-8">
-                  <p className="text-4xl mb-3">📱</p>
-                  <p className="text-sm text-gray-600">Select a phone to see details</p>
                 </div>
               </div>
             )}

@@ -10,12 +10,12 @@ interface ProfitSummary {
     profit: number;
     sales_count: number;
   };
-  this_week: {
+  week: {
     revenue: number;
     profit: number;
     sales_count: number;
   };
-  this_month: {
+  month: {
     revenue: number;
     profit: number;
     sales_count: number;
@@ -235,15 +235,15 @@ END OF REPORT
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-blue-700">Revenue:</span>
-                  <span className="text-lg font-bold text-blue-900">₵{summary.today.revenue.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-blue-900">₵{summary.today?.revenue?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-blue-700">Profit:</span>
-                  <span className="text-lg font-bold text-blue-900">₵{summary.today.profit.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-blue-900">₵{summary.today?.profit?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-blue-700">Sales:</span>
-                  <span className="text-lg font-bold text-blue-900">{summary.today.sales_count}</span>
+                  <span className="text-lg font-bold text-blue-900">{summary.today?.sales_count || 0}</span>
                 </div>
               </div>
             </div>
@@ -259,15 +259,15 @@ END OF REPORT
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-emerald-700">Revenue:</span>
-                  <span className="text-lg font-bold text-emerald-900">₵{summary.this_week.revenue.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-emerald-900">₵{summary.week?.revenue?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-emerald-700">Profit:</span>
-                  <span className="text-lg font-bold text-emerald-900">₵{summary.this_week.profit.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-emerald-900">₵{summary.week?.profit?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-emerald-700">Sales:</span>
-                  <span className="text-lg font-bold text-emerald-900">{summary.this_week.sales_count}</span>
+                  <span className="text-lg font-bold text-emerald-900">{summary.week?.sales_count || 0}</span>
                 </div>
               </div>
             </div>
@@ -283,15 +283,15 @@ END OF REPORT
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-purple-700">Revenue:</span>
-                  <span className="text-lg font-bold text-purple-900">₵{summary.this_month.revenue.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-purple-900">₵{summary.month?.revenue?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-purple-700">Profit:</span>
-                  <span className="text-lg font-bold text-purple-900">₵{summary.this_month.profit.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-purple-900">₵{summary.month?.profit?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-purple-700">Sales:</span>
-                  <span className="text-lg font-bold text-purple-900">{summary.this_month.sales_count}</span>
+                  <span className="text-lg font-bold text-purple-900">{summary.month?.sales_count || 0}</span>
                 </div>
               </div>
             </div>

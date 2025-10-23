@@ -428,18 +428,6 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
           <h1 className="text-2xl font-semibold text-gray-800">Phone Inventory</h1>
           {(userRole === 'manager' || userRole === 'ceo') && (
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={openNewModal}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
-              >
-                + Add Phone
-              </button>
-              <button
-                onClick={() => setShowBulkUpload(true)}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
-              >
-                📤 Bulk Upload
-              </button>
               {selectedPhones.length > 0 && (
                 <button
                   onClick={handleBulkDelete}

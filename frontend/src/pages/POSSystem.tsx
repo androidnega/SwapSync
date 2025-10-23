@@ -914,14 +914,14 @@ const POSSystem: React.FC = () => {
 
         {/* Cart & Checkout Section (Right) */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <FontAwesomeIcon icon={faShoppingCart} />
+          <div className="bg-white rounded-lg border border-gray-300 p-4 sticky top-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <FontAwesomeIcon icon={faShoppingCart} className="text-blue-600" />
               Cart ({cart.length})
             </h2>
 
             {/* Cart Items */}
-            <div className="max-h-[300px] overflow-y-auto mb-4 border-t border-b py-2">
+            <div className="max-h-[400px] overflow-y-auto mb-4 border border-gray-200 rounded-lg p-2">
               {cart.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <FontAwesomeIcon icon={faShoppingCart} className="text-3xl mb-2" />
@@ -930,16 +930,16 @@ const POSSystem: React.FC = () => {
                 </div>
               ) : (
                 cart.map((item) => (
-                  <div key={item.product.id} className="mb-3 pb-3 border-b last:border-b-0">
+                  <div key={item.product.id} className="mb-3 pb-3 border-b border-gray-100 last:border-b-0 bg-gray-50 rounded-lg p-3">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <p className="font-semibold text-sm">{item.product.name}</p>
+                        <p className="font-semibold text-sm text-gray-900">{item.product.name}</p>
                         {(() => {
                           const category = categories.find(c => c.id === item.product.category_id);
                           return category && (
-                            <p className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded inline-block">
+                            <span className="text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded-full inline-block mt-1">
                               {category.name}
-                            </p>
+                            </span>
                           );
                         })()}
                         
@@ -995,55 +995,58 @@ const POSSystem: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <button
                         onClick={() => updateCartItemQuantity(item.product.id, item.quantity - 1)}
-                        className="w-8 h-8 bg-gray-200 rounded hover:bg-gray-300"
+                        className="w-8 h-8 bg-gray-200 rounded hover:bg-gray-300 flex items-center justify-center"
                       >
-                        <FontAwesomeIcon icon={faMinus} />
+                        <FontAwesomeIcon icon={faMinus} className="text-xs" />
                       </button>
                       <input
                         type="number"
                         value={item.quantity}
                         onChange={(e) => updateCartItemQuantity(item.product.id, parseInt(e.target.value) || 1)}
-                        className="w-16 text-center border rounded py-1"
+                        className="w-16 text-center border border-gray-300 rounded py-1 text-sm"
                         min="1"
                         max={item.product.quantity}
                       />
                       <button
                         onClick={() => updateCartItemQuantity(item.product.id, item.quantity + 1)}
-                        className="w-8 h-8 bg-gray-200 rounded hover:bg-gray-300"
+                        className="w-8 h-8 bg-gray-200 rounded hover:bg-gray-300 flex items-center justify-center"
                       >
-                        <FontAwesomeIcon icon={faPlus} />
+                        <FontAwesomeIcon icon={faPlus} className="text-xs" />
                       </button>
                     </div>
 
-                    {/* Price */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-gray-600">Price:</span>
-                      <input
-                        type="number"
-                        value={item.unit_price}
-                        onChange={(e) => updateCartItemPrice(item.product.id, parseFloat(e.target.value) || 0)}
-                        className="w-20 text-sm border rounded px-2 py-1"
-                        step="0.01"
-                        min="0"
-                      />
-                    </div>
-
-                    {/* Discount */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-gray-600">Discount:</span>
-                      <input
-                        type="number"
-                        value={item.discount_amount}
-                        onChange={(e) => updateCartItemDiscount(item.product.id, parseFloat(e.target.value) || 0)}
-                        className="w-20 text-sm border rounded px-2 py-1"
-                        step="0.01"
-                        min="0"
-                      />
+                    {/* Price and Discount */}
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div>
+                        <label className="text-xs text-gray-600 block mb-1">Price</label>
+                        <input
+                          type="number"
+                          value={item.unit_price}
+                          onChange={(e) => updateCartItemPrice(item.product.id, parseFloat(e.target.value) || 0)}
+                          className="w-full text-sm border border-gray-300 rounded px-2 py-1"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600 block mb-1">Discount</label>
+                        <input
+                          type="number"
+                          value={item.discount_amount}
+                          onChange={(e) => updateCartItemDiscount(item.product.id, parseFloat(e.target.value) || 0)}
+                          className="w-full text-sm border border-gray-300 rounded px-2 py-1"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
                     </div>
 
                     {/* Item Total */}
-                    <div className="text-right font-bold text-green-600">
-                      ₵{((item.unit_price * item.quantity) - item.discount_amount).toFixed(2)}
+                    <div className="text-right">
+                      <span className="text-sm text-gray-600">Total: </span>
+                      <span className="font-bold text-green-600">
+                        ₵{((item.unit_price * item.quantity) - item.discount_amount).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 ))

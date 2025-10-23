@@ -609,12 +609,6 @@ const Repairs: React.FC = () => {
             </button>
           )}
           {activeTab === 'items' && (userRole === 'manager' || userRole === 'ceo') && (
-            <button
-              onClick={() => openItemModal()}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
-            >
-              + Add Repair Item
-            </button>
           )}
         </div>
 
