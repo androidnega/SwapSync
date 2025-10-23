@@ -308,15 +308,22 @@ const Products: React.FC = () => {
 
       if (editingId) {
         await axios.put(`${API_URL}/products/${editingId}`, productData, {
-          headers: { Authorization: `Bearer ${getToken()}` }
+          headers: { Authorization: `Bearer ${getToken()}` },
+          timeout: 30000 // 30 second timeout
         });
         setMessage('✅ Product updated successfully!');
       } else {
         // Use phone endpoint for phone products, regular endpoint for others
         const endpoint = isPhoneCategory(formData.category_id) ? '/products/phone' : '/products/';
-        await axios.post(`${API_URL}${endpoint}`, productData, {
-          headers: { Authorization: `Bearer ${getToken()}` }
+        console.log('🚀 Submitting to:', `${API_URL}${endpoint}`);
+        console.log('📦 Payload:', productData);
+        
+        const response = await axios.post(`${API_URL}${endpoint}`, productData, {
+          headers: { Authorization: `Bearer ${getToken()}` },
+          timeout: 30000 // 30 second timeout
         });
+        
+        console.log('✅ Response:', response.data);
         setMessage('✅ Product created successfully!');
       }
 
@@ -325,18 +332,29 @@ const Products: React.FC = () => {
       fetchProducts();
       fetchSummary();
     } catch (error: any) {
-      console.error('Product submission error:', error);
-      console.error('Error response:', error.response);
+      console.error('❌ Product submission error:', error);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error code:', error.code);
       
+      // Handle timeout errors
+      if (error.code === 'ECONNABORTED') {
+        setMessage('❌ Request timeout. Please check your internet connection and try again.');
+      }
+      // Handle network errors
+      else if (error.message === 'Network Error') {
+        setMessage('❌ Network error. Please check your internet connection.');
+      }
       // Handle validation errors
-      if (error.response?.data?.errors) {
+      else if (error.response?.data?.errors) {
         const validationErrors = error.response.data.errors;
         const errorMessages = validationErrors.map((err: any) => {
           const field = err.loc?.join(' > ') || 'unknown field';
           return `${field}: ${err.msg}`;
         }).join(', ');
         setMessage(`❌ Validation Error: ${errorMessages}`);
-      } else {
+      }
+      // Handle other errors
+      else {
         setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
       }
     } finally {
