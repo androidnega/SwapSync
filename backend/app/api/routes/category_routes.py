@@ -84,12 +84,23 @@ def create_category(
             detail="Only Managers can create categories"
         )
     
-    # Check if category name already exists
-    existing = db.query(Category).filter(Category.name == category_data.name).first()
+    # Check if category name already exists within this company
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    if company_user_ids is None:
+        # Super admin - check globally
+        existing = db.query(Category).filter(Category.name == category_data.name).first()
+    else:
+        # Check within company only
+        existing = db.query(Category).filter(
+            Category.name == category_data.name,
+            Category.created_by_user_id.in_(company_user_ids)
+        ).first()
+    
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Category '{category_data.name}' already exists"
+            detail=f"Category '{category_data.name}' already exists in your company"
         )
     
     # Create category
@@ -142,15 +153,27 @@ def update_category(
     
     # Update fields
     if category_data.name:
-        # Check if new name conflicts
-        existing = db.query(Category).filter(
-            Category.name == category_data.name,
-            Category.id != category_id
-        ).first()
+        # Check if new name conflicts within company
+        company_user_ids = get_company_user_ids(db, current_user)
+        
+        if company_user_ids is None:
+            # Super admin - check globally
+            existing = db.query(Category).filter(
+                Category.name == category_data.name,
+                Category.id != category_id
+            ).first()
+        else:
+            # Check within company only
+            existing = db.query(Category).filter(
+                Category.name == category_data.name,
+                Category.created_by_user_id.in_(company_user_ids),
+                Category.id != category_id
+            ).first()
+        
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Category '{category_data.name}' already exists"
+                detail=f"Category '{category_data.name}' already exists in your company"
             )
         category.name = category_data.name
     

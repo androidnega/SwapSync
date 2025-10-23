@@ -15,11 +15,13 @@ class Category(Base):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, nullable=False, index=True)  # e.g., "Phones", "Earbuds"
+    name = Column(String, nullable=False, index=True)  # e.g., "Phones", "Earbuds" - NOT globally unique
     description = Column(String, nullable=True)
     icon = Column(String, nullable=True)  # Icon name for UI
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Note: name is unique per company, not globally
     
     # Relationships
     created_by = relationship("User", foreign_keys=[created_by_user_id])

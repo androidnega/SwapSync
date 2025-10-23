@@ -155,39 +155,51 @@ class ForceCORSMiddleware(BaseHTTPMiddleware):
         # Handle OPTIONS preflight requests immediately
         if request.method == "OPTIONS":
             origin = request.headers.get("origin", "https://swapsync.digitstec.store")
-            allowed_origin = origin if origin in all_origins else "https://swapsync.digitstec.store"
+            
+            # Be explicit about allowed origins for Railway
+            if origin and (origin in all_origins or "digitstec.store" in origin):
+                allowed_origin = origin
+            else:
+                allowed_origin = "https://swapsync.digitstec.store"
             
             return Response(
                 status_code=200,
                 headers={
                     "Access-Control-Allow-Origin": allowed_origin,
                     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, Origin, X-Requested-With",
                     "Access-Control-Allow-Credentials": "true",
-                    "Access-Control-Max-Age": "3600"
+                    "Access-Control-Max-Age": "3600",
+                    "Vary": "Origin"
                 }
             )
         
         # Get origin from request
-        origin = request.headers.get("origin", "https://swapsync.digitstec.store")
+        origin = request.headers.get("origin")
         
-        # Determine allowed origin
-        if origin in all_origins:
-            allowed_origin = origin
-        elif "swapsync.digitstec.store" in origin:
-            allowed_origin = "https://swapsync.digitstec.store"
+        # Determine allowed origin - be more permissive for digitstec.store domains
+        if origin:
+            if origin in all_origins or "digitstec.store" in origin:
+                allowed_origin = origin
+            else:
+                allowed_origin = "https://swapsync.digitstec.store"
         else:
             allowed_origin = "https://swapsync.digitstec.store"
         
         # Process request
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception as e:
+            logger.error(f"Error processing request: {e}")
+            raise
         
         # Force add CORS headers to response
         response.headers["Access-Control-Allow-Origin"] = allowed_origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
         response.headers["Access-Control-Expose-Headers"] = "*"
+        response.headers["Vary"] = "Origin"
         
         return response
 
