@@ -95,25 +95,46 @@ def get_low_stock_items(
     
     return repair_items
 
-@router.get("/{item_id}", response_model=RepairItemResponse)
+@router.get("/{item_id}")
 def get_repair_item(
     item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get a specific repair item by ID"""
-    item = db.query(RepairItem).filter(RepairItem.id == item_id).first()
-    if not item:
+    """Get a specific repair item by ID - Uses unified Product model"""
+    # Get product that is NOT a phone (repair item)
+    product = db.query(Product).filter(
+        Product.id == item_id,
+        Product.is_active == True,
+        Product.is_phone == False
+    ).first()
+    
+    if not product:
         raise HTTPException(status_code=404, detail="Repair item not found")
-    return item
+    
+    # Convert to repair item format for backward compatibility
+    return {
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "category": product.brand,
+        "cost_price": product.cost_price,
+        "selling_price": product.selling_price,
+        "stock_quantity": product.quantity,
+        "min_stock_level": product.min_stock_level,
+        "created_by_user_id": product.created_by_user_id,
+        "created_at": product.created_at,
+        "sku": product.sku,
+        "barcode": product.barcode
+    }
 
-@router.post("/", response_model=RepairItemResponse)
+@router.post("/")
 def create_repair_item(
-    item_data: RepairItemCreate,
+    item_data: dict,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new repair item (Manager/Repairer)"""
+    """Create a new repair item (Manager/Repairer) - Redirects to Product API"""
     from app.models.user import UserRole
     if current_user.role not in [UserRole.MANAGER, UserRole.CEO, UserRole.REPAIRER]:
         raise HTTPException(
@@ -121,24 +142,20 @@ def create_repair_item(
             detail="Only managers and repairers can add repair items"
         )
     
-    # Create new item with company tracking
-    item_dict = item_data.dict()
-    item_dict['created_by_user_id'] = current_user.id
-    new_item = RepairItem(**item_dict)
-    db.add(new_item)
-    db.commit()
-    db.refresh(new_item)
-    
-    return new_item
+    # Redirect to Product API for creating repair items
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Repair items are now managed through the Product API. Use POST /api/products/ with is_phone=false"
+    )
 
-@router.put("/{item_id}", response_model=RepairItemResponse)
+@router.put("/{item_id}")
 def update_repair_item(
     item_id: int,
-    item_data: RepairItemUpdate,
+    item_data: dict,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Update a repair item (Manager/Repairer)"""
+    """Update a repair item (Manager/Repairer) - Redirects to Product API"""
     from app.models.user import UserRole
     if current_user.role not in [UserRole.MANAGER, UserRole.CEO, UserRole.REPAIRER]:
         raise HTTPException(
@@ -146,18 +163,11 @@ def update_repair_item(
             detail="Only managers and repairers can update repair items"
         )
     
-    item = db.query(RepairItem).filter(RepairItem.id == item_id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail="Repair item not found")
-    
-    # Update fields
-    update_data = item_data.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(item, field, value)
-    
-    db.commit()
-    db.refresh(item)
-    return item
+    # Redirect to Product API for updating repair items
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Repair items are now managed through the Product API. Use PUT /api/products/{id}"
+    )
 
 @router.delete("/{item_id}")
 def delete_repair_item(
@@ -165,7 +175,7 @@ def delete_repair_item(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Delete a repair item (Manager/Repairer)"""
+    """Delete a repair item (Manager/Repairer) - Redirects to Product API"""
     from app.models.user import UserRole
     if current_user.role not in [UserRole.MANAGER, UserRole.CEO, UserRole.REPAIRER]:
         raise HTTPException(
@@ -173,20 +183,11 @@ def delete_repair_item(
             detail="Only managers and repairers can delete repair items"
         )
     
-    item = db.query(RepairItem).filter(RepairItem.id == item_id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail="Repair item not found")
-    
-    # Check if item is used in any repairs
-    if item.usage_history:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete item that has been used in repairs. Consider setting stock to 0 instead."
-        )
-    
-    db.delete(item)
-    db.commit()
-    return {"message": "Repair item deleted successfully"}
+    # Redirect to Product API for deleting repair items
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Repair items are now managed through the Product API. Use DELETE /api/products/{id}"
+    )
 
 @router.patch("/{item_id}/adjust-stock")
 def adjust_stock(
@@ -195,27 +196,16 @@ def adjust_stock(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Adjust stock quantity (positive = add, negative = remove)"""
+    """Adjust stock quantity (positive = add, negative = remove) - Redirects to Product API"""
     if current_user.role not in ["manager", "ceo"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only managers can adjust stock"
         )
     
-    item = db.query(RepairItem).filter(RepairItem.id == item_id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail="Repair item not found")
-    
-    new_stock = item.stock_quantity + adjustment
-    if new_stock < 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Insufficient stock for this adjustment"
-        )
-    
-    item.stock_quantity = new_stock
-    db.commit()
-    db.refresh(item)
-    
-    return {"message": f"Stock adjusted successfully. New quantity: {new_stock}", "item": item}
+    # Redirect to Product API for stock adjustments
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Repair items are now managed through the Product API. Use PATCH /api/products/{id}/adjust-stock"
+    )
 
