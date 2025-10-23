@@ -185,34 +185,36 @@ def create_phone_product(
     # Generate unique ID
     db_phone_product.generate_unique_id(db)
     
-    # Commit the phone product first
+    # Create initial stock movement (phones always have quantity 1)
+    stock_movement = StockMovement(
+        product_id=db_phone_product.id,
+        movement_type="purchase",
+        quantity=1,
+        unit_price=phone_product.cost_price,
+        total_amount=phone_product.cost_price,
+        reference_type="initial_stock",
+        notes=f"Initial stock for phone {db_phone_product.name}",
+        created_by_user_id=current_user.id
+    )
+    db.add(stock_movement)
+    
+    # Commit everything in one transaction
     db.commit()
     db.refresh(db_phone_product)
     
-    # Create initial stock movement
-    if phone_product.quantity > 0:
-        stock_movement = StockMovement(
-            product_id=db_phone_product.id,
-            movement_type="purchase",
-            quantity=phone_product.quantity,
-            unit_price=phone_product.cost_price,
-            total_amount=phone_product.cost_price * phone_product.quantity,
-            reference_type="initial_stock",
-            notes=f"Initial stock for phone {db_phone_product.name}",
-            created_by_user_id=current_user.id
+    # Log activity (non-blocking)
+    try:
+        log_activity(
+            db=db,
+            user=current_user,
+            action=f"created phone product",
+            module="products",
+            target_id=db_phone_product.id,
+            details=f"{db_phone_product.name} - IMEI: {db_phone_product.imei}, Condition: {db_phone_product.phone_condition}"
         )
-        db.add(stock_movement)
-        db.commit()
-    
-    # Log activity
-    log_activity(
-        db=db,
-        user=current_user,
-        action=f"created phone product",
-        module="products",
-        target_id=db_phone_product.id,
-        details=f"{db_phone_product.name} - IMEI: {db_phone_product.imei}, Condition: {db_phone_product.phone_condition}"
-    )
+    except Exception as e:
+        # Don't fail the request if logging fails
+        print(f"Warning: Failed to log activity: {e}")
     
     return db_phone_product
 

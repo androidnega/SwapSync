@@ -40,7 +40,7 @@ class PhoneProductCreate(ProductBase):
     is_phone: bool = Field(default=True)
     phone_condition: str = Field(..., description="New, Used, Refurbished")
     phone_specs: Optional[Dict[str, Any]] = Field(None, description="Phone specifications")
-    is_swappable: bool = Field(default=True, description="Can this phone be used in swaps?")
+    is_swappable: bool = Field(default=False, description="Can this phone be used in swaps?")
     quantity: int = Field(default=1, ge=0, le=1, description="For phones, quantity is always 1")
 
 

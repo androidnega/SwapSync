@@ -270,6 +270,14 @@ const Products: React.FC = () => {
     try {
       // Validate phone-specific fields if it's a phone product
       const isPhone = isPhoneCategory(formData.category_id);
+      console.log('🔍 Phone validation:', { 
+        categoryId: formData.category_id, 
+        isPhone, 
+        imei: formData.imei, 
+        phone_condition: formData.phone_condition,
+        is_swappable: formData.is_swappable 
+      });
+      
       if (isPhone) {
         if (!formData.imei || formData.imei.trim() === '') {
           setMessage('❌ IMEI is required for phone products');
@@ -312,7 +320,7 @@ const Products: React.FC = () => {
       if (editingId) {
         await axios.put(`${API_URL}/products/${editingId}`, productData, {
           headers: { Authorization: `Bearer ${getToken()}` },
-          timeout: 60000 // 60 second timeout for slow networks
+          timeout: 120000 // 120 second timeout for slow networks
         });
         setMessage('✅ Product updated successfully!');
       } else {
@@ -323,7 +331,7 @@ const Products: React.FC = () => {
         
         const response = await axios.post(`${API_URL}${endpoint}`, productData, {
           headers: { Authorization: `Bearer ${getToken()}` },
-          timeout: 60000 // 60 second timeout for slow networks
+          timeout: 120000 // 120 second timeout for slow networks
         });
         
         console.log('✅ Response:', response.data);
