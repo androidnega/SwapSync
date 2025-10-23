@@ -378,6 +378,10 @@ def get_dashboard_cards(
         # Get company user IDs for filtering
         company_user_ids = get_company_user_ids(db, current_user)
         
+        # Handle case where company_user_ids might be None
+        if company_user_ids is None:
+            company_user_ids = [current_user.id]
+        
         # Total Customers - filtered by company
         customer_query = db.query(Customer)
         if company_user_ids is not None:
@@ -470,6 +474,10 @@ def get_dashboard_cards(
     if current_user.role == UserRole.REPAIRER:
         # Get company user IDs for filtering
         company_user_ids = get_company_user_ids(db, current_user)
+        
+        # Handle case where company_user_ids might be None
+        if company_user_ids is None:
+            company_user_ids = [current_user.id]
         
         # Total Customers - filtered by company
         customer_query = db.query(Customer)
@@ -564,6 +572,10 @@ def get_dashboard_cards(
         # Get company user IDs (manager + all their staff)
         company_user_ids = get_company_user_ids(db, current_user)
         
+        # Handle case where company_user_ids might be None
+        if company_user_ids is None:
+            company_user_ids = [current_user.id]
+        
         # ✅ ESSENTIAL CARDS ONLY - Clean Manager Dashboard
         
         # Total Revenue (Product Sales + Service Charges)
@@ -652,11 +664,11 @@ def get_dashboard_cards(
         })
         
         # ✅ PRODUCT PROFIT - Total profit from product sales
-        product_profit = db.query(ProductSale).join(Product).filter(
+        product_sales = db.query(ProductSale).join(Product).filter(
             Product.created_by_user_id.in_(company_user_ids)
-        ).with_entities(
-            func.sum(ProductSale.total_amount - (ProductSale.quantity * Product.cost_price))
-        ).scalar() or 0.0
+        ).all()
+        
+        product_profit = sum(sale.profit for sale in product_sales if sale.profit is not None)
         
         cards.append({
             "id": "product_profit",
@@ -691,7 +703,7 @@ def get_dashboard_cards(
         })
         
         # ✅ TOTAL REVENUE - Combined revenue from all sources
-        total_revenue = (
+        combined_revenue = (
             db.query(func.sum(ProductSale.total_amount)).join(Product).filter(
                 Product.created_by_user_id.in_(company_user_ids)
             ).scalar() or 0.0 +
@@ -704,9 +716,9 @@ def get_dashboard_cards(
         )
         
         cards.append({
-            "id": "total_revenue",
-            "title": "Total Revenue",
-            "value": f"₵{total_revenue:.2f}",
+            "id": "combined_revenue",
+            "title": "Combined Revenue",
+            "value": f"₵{combined_revenue:.2f}",
             "icon": "faChartLine",
             "color": "indigo",
             "visible_to": ["ceo", "manager"]
