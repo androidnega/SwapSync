@@ -139,7 +139,7 @@ const POSMonitor: React.FC = () => {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       
-      const cards = response.data;
+      const cards = response?.data || [];
       
       // Extract metrics from dashboard cards
       const metrics: ManagerMetrics = {
@@ -170,61 +170,69 @@ const POSMonitor: React.FC = () => {
         }
       };
       
-      // Parse dashboard cards to extract metrics
-      cards.forEach((card: any) => {
-        switch (card.id) {
-          case 'today_revenue':
-            metrics.pos_metrics.today_revenue = parseFloat(card.value.replace('₵', '').replace(',', ''));
-            break;
-          case 'total_customers':
-            metrics.system_metrics.total_customers = parseInt(card.value);
-            break;
-          case 'inventory_status':
-            const inventoryMatch = card.value.match(/(\d+) items/);
-            if (inventoryMatch) {
-              metrics.system_metrics.inventory_status.total_items = parseInt(inventoryMatch[1]);
+      // Parse dashboard cards to extract metrics with null safety
+      if (cards && Array.isArray(cards)) {
+        cards.forEach((card: any) => {
+          if (!card || !card.id || !card.value) return;
+          
+          try {
+            switch (card.id) {
+              case 'today_revenue':
+                metrics.pos_metrics.today_revenue = parseFloat((card.value || '0').replace('₵', '').replace(',', '')) || 0;
+                break;
+              case 'total_customers':
+                metrics.system_metrics.total_customers = parseInt(card.value || '0') || 0;
+                break;
+              case 'inventory_status':
+                const inventoryMatch = (card.value || '').match(/(\d+) items/);
+                if (inventoryMatch) {
+                  metrics.system_metrics.inventory_status.total_items = parseInt(inventoryMatch[1]) || 0;
+                }
+                const lowStockMatch = (card.subtitle || '').match(/(\d+) low stock/);
+                if (lowStockMatch) {
+                  metrics.system_metrics.inventory_status.low_stock_items = parseInt(lowStockMatch[1]) || 0;
+                }
+                break;
+              case 'product_hub_profit':
+                metrics.hub_metrics.product_hub_profit = parseFloat((card.value || '0').replace('₵', '').replace(',', '')) || 0;
+                break;
+              case 'repairer_hub_profit':
+                metrics.hub_metrics.repairer_hub_profit = parseFloat((card.value || '0').replace('₵', '').replace(',', '')) || 0;
+                break;
+              case 'swapping_hub_profit':
+                metrics.hub_metrics.swapping_hub_profit = parseFloat((card.value || '0').replace('₵', '').replace(',', '')) || 0;
+                break;
+              case 'total_system_profit':
+                metrics.system_metrics.total_system_profit = parseFloat((card.value || '0').replace('₵', '').replace(',', '')) || 0;
+                break;
+              case 'total_inventory_value':
+                metrics.system_metrics.total_inventory_value = parseFloat((card.value || '0').replace('₵', '').replace(',', '')) || 0;
+                break;
+              case 'shopkeeper_performance':
+                const shopkeeperMatch = (card.value || '').match(/(\d+) sales/);
+                if (shopkeeperMatch) {
+                  metrics.staff_metrics.shopkeeper_sales = parseInt(shopkeeperMatch[1]) || 0;
+                }
+                break;
+              case 'repairer_performance':
+                const repairerMatch = (card.value || '').match(/(\d+) repairs/);
+                if (repairerMatch) {
+                  metrics.staff_metrics.repairer_repairs = parseInt(repairerMatch[1]) || 0;
+                }
+                break;
             }
-            const lowStockMatch = card.subtitle?.match(/(\d+) low stock/);
-            if (lowStockMatch) {
-              metrics.system_metrics.inventory_status.low_stock_items = parseInt(lowStockMatch[1]);
-            }
-            break;
-          case 'product_hub_profit':
-            metrics.hub_metrics.product_hub_profit = parseFloat(card.value.replace('₵', '').replace(',', ''));
-            break;
-          case 'repairer_hub_profit':
-            metrics.hub_metrics.repairer_hub_profit = parseFloat(card.value.replace('₵', '').replace(',', ''));
-            break;
-          case 'swapping_hub_profit':
-            metrics.hub_metrics.swapping_hub_profit = parseFloat(card.value.replace('₵', '').replace(',', ''));
-            break;
-          case 'total_system_profit':
-            metrics.system_metrics.total_system_profit = parseFloat(card.value.replace('₵', '').replace(',', ''));
-            break;
-          case 'total_inventory_value':
-            metrics.system_metrics.total_inventory_value = parseFloat(card.value.replace('₵', '').replace(',', ''));
-            break;
-          case 'shopkeeper_performance':
-            const shopkeeperMatch = card.value.match(/(\d+) sales/);
-            if (shopkeeperMatch) {
-              metrics.staff_metrics.shopkeeper_sales = parseInt(shopkeeperMatch[1]);
-            }
-            break;
-          case 'repairer_performance':
-            const repairerMatch = card.value.match(/(\d+) repairs/);
-            if (repairerMatch) {
-              metrics.staff_metrics.repairer_repairs = parseInt(repairerMatch[1]);
-            }
-            break;
-        }
-      });
+          } catch (error) {
+            console.warn(`Error parsing card ${card.id}:`, error);
+          }
+        });
+      }
       
-      // Calculate POS metrics from summary
+      // Calculate POS metrics from summary with null safety
       if (summary) {
-        metrics.pos_metrics.total_pos_revenue = summary.total_revenue;
-        metrics.pos_metrics.total_pos_profit = summary.total_profit;
-        metrics.pos_metrics.today_transactions = summary.total_transactions;
-        metrics.pos_metrics.today_profit = summary.total_profit;
+        metrics.pos_metrics.total_pos_revenue = summary.total_revenue || 0;
+        metrics.pos_metrics.total_pos_profit = summary.total_profit || 0;
+        metrics.pos_metrics.today_transactions = summary.total_transactions || 0;
+        metrics.pos_metrics.today_profit = summary.total_profit || 0;
       }
       
       setManagerMetrics(metrics);
@@ -390,7 +398,7 @@ const POSMonitor: React.FC = () => {
                 <FontAwesomeIcon icon={faChartLine} className="text-3xl text-green-600" />
                 <span className="text-sm text-green-600">System Profit</span>
               </div>
-              <div className="text-3xl font-bold text-green-800">{formatCurrency(managerMetrics.system_metrics.total_system_profit)}</div>
+              <div className="text-3xl font-bold text-green-800">{formatCurrency(managerMetrics.system_metrics.total_system_profit || 0)}</div>
               <div className="text-sm text-green-600 mt-2">All hubs combined</div>
             </div>
 
@@ -399,7 +407,7 @@ const POSMonitor: React.FC = () => {
                 <FontAwesomeIcon icon={faWarehouse} className="text-3xl text-purple-600" />
                 <span className="text-sm text-purple-600">Inventory Value</span>
               </div>
-              <div className="text-3xl font-bold text-purple-800">{formatCurrency(managerMetrics.system_metrics.total_inventory_value)}</div>
+              <div className="text-3xl font-bold text-purple-800">{formatCurrency(managerMetrics.system_metrics.total_inventory_value || 0)}</div>
               <div className="text-sm text-purple-600 mt-2">Current stock worth</div>
             </div>
 
@@ -408,9 +416,9 @@ const POSMonitor: React.FC = () => {
                 <FontAwesomeIcon icon={faBox} className="text-3xl text-orange-600" />
                 <span className="text-sm text-orange-600">Inventory Status</span>
               </div>
-              <div className="text-3xl font-bold text-orange-800">{managerMetrics.system_metrics.inventory_status.total_items}</div>
+              <div className="text-3xl font-bold text-orange-800">{managerMetrics.system_metrics.inventory_status.total_items || 0}</div>
               <div className="text-sm text-orange-600 mt-2">
-                {managerMetrics.system_metrics.inventory_status.low_stock_items} low stock
+                {managerMetrics.system_metrics.inventory_status.low_stock_items || 0} low stock
               </div>
             </div>
           </div>
@@ -422,7 +430,7 @@ const POSMonitor: React.FC = () => {
                 <FontAwesomeIcon icon={faShoppingCart} className="text-3xl text-emerald-600" />
                 <span className="text-sm text-emerald-600">Product Hub</span>
               </div>
-              <div className="text-3xl font-bold text-emerald-800">{formatCurrency(managerMetrics.hub_metrics.product_hub_profit)}</div>
+              <div className="text-3xl font-bold text-emerald-800">{formatCurrency(managerMetrics.hub_metrics.product_hub_profit || 0)}</div>
               <div className="text-sm text-emerald-600 mt-2">Sales profit</div>
             </div>
 
@@ -431,7 +439,7 @@ const POSMonitor: React.FC = () => {
                 <FontAwesomeIcon icon={faTools} className="text-3xl text-teal-600" />
                 <span className="text-sm text-teal-600">Repairer Hub</span>
               </div>
-              <div className="text-3xl font-bold text-teal-800">{formatCurrency(managerMetrics.hub_metrics.repairer_hub_profit)}</div>
+              <div className="text-3xl font-bold text-teal-800">{formatCurrency(managerMetrics.hub_metrics.repairer_hub_profit || 0)}</div>
               <div className="text-sm text-teal-600 mt-2">Service + items profit</div>
             </div>
 
@@ -440,7 +448,7 @@ const POSMonitor: React.FC = () => {
                 <FontAwesomeIcon icon={faExchangeAlt} className="text-3xl text-cyan-600" />
                 <span className="text-sm text-cyan-600">Swapping Hub</span>
               </div>
-              <div className="text-3xl font-bold text-cyan-800">{formatCurrency(managerMetrics.hub_metrics.swapping_hub_profit)}</div>
+              <div className="text-3xl font-bold text-cyan-800">{formatCurrency(managerMetrics.hub_metrics.swapping_hub_profit || 0)}</div>
               <div className="text-sm text-cyan-600 mt-2">Phone swap profit</div>
             </div>
           </div>
@@ -452,7 +460,7 @@ const POSMonitor: React.FC = () => {
                 <FontAwesomeIcon icon={faStore} className="text-3xl text-indigo-600" />
                 <span className="text-sm text-indigo-600">Shopkeeper Performance</span>
               </div>
-              <div className="text-3xl font-bold text-indigo-800">{managerMetrics.staff_metrics.shopkeeper_sales}</div>
+              <div className="text-3xl font-bold text-indigo-800">{managerMetrics.staff_metrics.shopkeeper_sales || 0}</div>
               <div className="text-sm text-indigo-600 mt-2">Total sales made</div>
             </div>
 
@@ -461,7 +469,7 @@ const POSMonitor: React.FC = () => {
                 <FontAwesomeIcon icon={faTools} className="text-3xl text-amber-600" />
                 <span className="text-sm text-amber-600">Repairer Performance</span>
               </div>
-              <div className="text-3xl font-bold text-amber-800">{managerMetrics.staff_metrics.repairer_repairs}</div>
+              <div className="text-3xl font-bold text-amber-800">{managerMetrics.staff_metrics.repairer_repairs || 0}</div>
               <div className="text-sm text-amber-600 mt-2">Total repairs completed</div>
             </div>
           </div>
