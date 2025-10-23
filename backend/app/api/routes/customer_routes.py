@@ -198,6 +198,83 @@ def get_customer(
             creator_username = creator.username
             creator_role = creator.role.value
     
+    # Get purchase history for this customer
+    from app.models.sale import Sale
+    from app.models.swap import Swap
+    from app.models.pos_sale import POSSale
+    from app.models.product_sale import ProductSale
+    from app.models.phone import Phone
+    from app.models.product import Product
+    from datetime import datetime, timedelta
+    
+    purchase_history = []
+    
+    # Get phone sales
+    phone_sales = db.query(Sale).filter(Sale.customer_id == customer_id).order_by(Sale.created_at.desc()).all()
+    for sale in phone_sales:
+        phone = db.query(Phone).filter(Phone.id == sale.phone_id).first()
+        purchase_history.append({
+            "id": sale.id,
+            "type": "phone_sale",
+            "date": sale.created_at.isoformat() if sale.created_at else None,
+            "item": f"{phone.brand} {phone.model}" if phone else "Phone",
+            "amount": sale.amount_paid,
+            "discount": sale.discount_amount,
+            "invoice_number": sale.invoice_number
+        })
+    
+    # Get swaps
+    swaps = db.query(Swap).filter(Swap.customer_id == customer_id).order_by(Swap.created_at.desc()).all()
+    for swap in swaps:
+        phone = db.query(Phone).filter(Phone.id == swap.new_phone_id).first()
+        purchase_history.append({
+            "id": swap.id,
+            "type": "swap",
+            "date": swap.created_at.isoformat() if swap.created_at else None,
+            "item": f"{phone.brand} {phone.model}" if phone else "Phone (Swap)",
+            "amount": swap.balance_paid,
+            "discount": swap.discount_amount,
+            "given_phone": swap.given_phone_description
+        })
+    
+    # Get POS sales
+    pos_sales = db.query(POSSale).filter(POSSale.customer_id == customer_id).order_by(POSSale.created_at.desc()).all()
+    for pos_sale in pos_sales:
+        purchase_history.append({
+            "id": pos_sale.id,
+            "type": "pos_sale",
+            "date": pos_sale.created_at.isoformat() if pos_sale.created_at else None,
+            "item": f"{pos_sale.items_count} items",
+            "amount": pos_sale.total_amount,
+            "discount": pos_sale.overall_discount,
+            "transaction_id": pos_sale.transaction_id,
+            "items_count": pos_sale.items_count
+        })
+    
+    # Get product sales
+    product_sales = db.query(ProductSale).filter(ProductSale.customer_id == customer_id).order_by(ProductSale.created_at.desc()).all()
+    for prod_sale in product_sales:
+        product = db.query(Product).filter(Product.id == prod_sale.product_id).first()
+        purchase_history.append({
+            "id": prod_sale.id,
+            "type": "product_sale",
+            "date": prod_sale.created_at.isoformat() if prod_sale.created_at else None,
+            "item": f"{product.name}" if product else "Product",
+            "amount": prod_sale.total_amount,
+            "discount": prod_sale.discount_amount,
+            "quantity": prod_sale.quantity
+        })
+    
+    # Sort purchase history by date (most recent first)
+    purchase_history.sort(key=lambda x: x["date"] if x["date"] else "", reverse=True)
+    
+    # Calculate purchase statistics
+    total_purchases = len(purchase_history)
+    total_spent = sum(item["amount"] for item in purchase_history)
+    total_savings = sum(item.get("discount", 0) for item in purchase_history)
+    recent_purchases = [p for p in purchase_history if p["date"] and 
+                       datetime.fromisoformat(p["date"]) > datetime.utcnow() - timedelta(days=30)]
+    
     # Build response with proper permissions
     customer_dict = {
         "id": customer.id,
@@ -211,7 +288,16 @@ def get_customer(
         "created_by_role": creator_role,
         "is_editable": is_creator,  # Only creator can edit
         "deletion_code": None,  # Default: hide
-        "code_generated_at": None
+        "code_generated_at": None,
+        # Purchase history
+        "purchase_history": purchase_history[:20],  # Limit to 20 most recent
+        "purchase_stats": {
+            "total_purchases": total_purchases,
+            "total_spent": total_spent,
+            "total_savings": total_savings,
+            "recent_purchases_count": len(recent_purchases),
+            "last_purchase_date": purchase_history[0]["date"] if purchase_history else None
+        }
     }
     
     # Deletion code visibility:
