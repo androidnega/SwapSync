@@ -312,7 +312,7 @@ const Products: React.FC = () => {
       if (editingId) {
         await axios.put(`${API_URL}/products/${editingId}`, productData, {
           headers: { Authorization: `Bearer ${getToken()}` },
-          timeout: 30000 // 30 second timeout
+          timeout: 60000 // 60 second timeout for slow networks
         });
         setMessage('✅ Product updated successfully!');
       } else {
@@ -323,7 +323,7 @@ const Products: React.FC = () => {
         
         const response = await axios.post(`${API_URL}${endpoint}`, productData, {
           headers: { Authorization: `Bearer ${getToken()}` },
-          timeout: 30000 // 30 second timeout
+          timeout: 60000 // 60 second timeout for slow networks
         });
         
         console.log('✅ Response:', response.data);
@@ -341,7 +341,12 @@ const Products: React.FC = () => {
       
       // Handle timeout errors
       if (error.code === 'ECONNABORTED') {
-        setMessage('❌ Request timeout. Please check your internet connection and try again.');
+        setMessage('⚠️ Request timeout. Product may have been created. Refreshing list...');
+        // Close modal and refresh - product might have been created before timeout
+        setShowModal(false);
+        resetForm();
+        fetchProducts();
+        fetchSummary();
       }
       // Handle network errors
       else if (error.message === 'Network Error') {
