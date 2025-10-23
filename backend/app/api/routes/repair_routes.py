@@ -119,46 +119,53 @@ def create_repair(
     
     print(f"✅ Repair record created in database")
     
-    # Process repair items if any
+    # Process repair items if any (these are actually products from inventory)
     if repair_items_data:
-        from app.models.repair_item import RepairItem
-        from app.models.repair_item_usage import RepairItemUsage
+        from app.models.product import Product
+        from app.models.repair_sale import RepairSale
         
         for item_data in repair_items_data:
-            # Get the repair item
-            repair_item = db.query(RepairItem).filter(
-                RepairItem.id == item_data.repair_item_id
+            # Get the product (repair items are actually products)
+            product = db.query(Product).filter(
+                Product.id == item_data.repair_item_id
             ).first()
             
-            if not repair_item:
+            if not product:
                 db.rollback()
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Repair item {item_data.repair_item_id} not found"
+                    detail=f"Product {item_data.repair_item_id} not found"
                 )
             
             # Check stock
-            if repair_item.stock_quantity < item_data.quantity:
+            if product.quantity < item_data.quantity:
                 db.rollback()
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Insufficient stock for {repair_item.name}. Available: {repair_item.stock_quantity}"
+                    detail=f"Insufficient stock for {product.name}. Available: {product.quantity}"
                 )
             
-            # Create usage record
-            item_usage = RepairItemUsage(
+            # Calculate profit
+            unit_price = product.selling_price
+            cost_price = product.cost_price
+            profit = (unit_price - cost_price) * item_data.quantity
+            
+            # Create repair sale record
+            repair_sale = RepairSale(
                 repair_id=new_repair.id,
-                repair_item_id=repair_item.id,
+                product_id=product.id,
+                repairer_id=current_user.id,
                 quantity=item_data.quantity,
-                unit_cost=repair_item.selling_price,
-                total_cost=repair_item.selling_price * item_data.quantity
+                unit_price=unit_price,
+                cost_price=cost_price,
+                profit=profit
             )
-            db.add(item_usage)
+            db.add(repair_sale)
             
             # Deduct from stock
-            repair_item.stock_quantity -= item_data.quantity
+            product.quantity -= item_data.quantity
             
-            print(f"✅ Added {item_data.quantity}x {repair_item.name} to repair")
+            print(f"✅ Added {item_data.quantity}x {product.name} to repair")
     
     # Generate unique ID and tracking code
     new_repair.generate_unique_id(db)

@@ -31,7 +31,8 @@ import {
   faUser,
   faSms,
   faComment,
-  faCashRegister
+  faCashRegister,
+  faTrash
 } from '@fortawesome/free-solid-svg-icons';
 
 interface SidebarItem {
@@ -94,6 +95,7 @@ const sidebarMenus: { [key: string]: SidebarItem[] } = {
     { name: 'Categories', icon: faBox, route: '/categories' },
     { name: 'Activity Logs', icon: faServer, route: '/activity-logs' },
     { name: 'Audit Code', icon: faKey, route: '/audit-code' },
+    { name: 'System Reset', icon: faTrash, route: '/system-reset' },
     { name: 'Profile', icon: faUser, route: '/profile' }
   ],
   

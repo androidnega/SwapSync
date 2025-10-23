@@ -32,6 +32,7 @@ import SMSBroadcast from './pages/SMSBroadcast';
 import POSSystem from './pages/POSSystem';
 import POSMonitor from './pages/POSMonitor';
 import POSTransactions from './pages/POSTransactions';
+import SystemReset from './pages/SystemReset';
 import FirstLoginPasswordChange from './components/FirstLoginPasswordChange';
 // import OfflineIndicator from './components/OfflineIndicator';
 import { getToken, removeToken, initializeSession, updateLastActivity } from './services/authService';
@@ -342,6 +343,13 @@ function AppContent() {
           <Route path="/repairs" element={
             <ProtectedRoute allowedRoles={['manager', 'ceo', 'repairer']} userRole={user.role}>
               <Repairs />
+            </ProtectedRoute>
+          } />
+          
+          {/* System Reset - Manager & Super Admin ONLY */}
+          <Route path="/system-reset" element={
+            <ProtectedRoute allowedRoles={['manager', 'ceo', 'super_admin', 'admin']} userRole={user.role}>
+              <SystemReset />
             </ProtectedRoute>
           } />
           
