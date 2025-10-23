@@ -9,7 +9,7 @@ from app.core.auth import get_current_user
 from app.core.permissions import can_manage_customers, can_create_customers, can_view_customers, can_delete_customers
 from app.core.activity_logger import log_activity
 from app.core.company_filter import get_company_user_ids
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.customer import Customer
 from app.schemas.customer import CustomerCreate, CustomerUpdate, CustomerResponse
 
