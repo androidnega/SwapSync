@@ -78,11 +78,16 @@ def add_phone_fields_migration(
         
         db.commit()
         
+        # Get product count
+        from app.models.product import Product
+        total_products = db.query(Product).count()
+        
         return {
             "success": True,
             "message": f"Migration completed successfully. Added {len(added_fields)} new fields.",
             "added_fields": added_fields,
-            "total_products": db.query(db.query().count()).scalar() if hasattr(db, 'query') else 0
+            "existing_fields": [f for f, _ in phone_fields if f in existing_columns],
+            "total_products": total_products
         }
         
     except Exception as e:
