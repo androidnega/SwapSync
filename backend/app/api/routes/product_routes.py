@@ -338,24 +338,38 @@ def get_product_summary(
 ):
     """
     Get product inventory summary statistics (Manager and Shopkeeper)
+    ✅ SECURITY FIX: Now filters by company for data isolation
     """
-    # Total products
-    total_products = db.query(func.count(Product.id)).filter(Product.is_active == True).scalar()
+    # 🔒 CRITICAL: Filter by company for data isolation
+    company_user_ids = get_company_user_ids(db, current_user)
     
-    # Total inventory value (cost price * quantity)
-    products = db.query(Product).filter(Product.is_active == True).all()
+    # Build base query with company filtering
+    base_query = db.query(Product).filter(Product.is_active == True)
+    if company_user_ids is not None:
+        base_query = base_query.filter(Product.created_by_user_id.in_(company_user_ids))
+    
+    # Total products (filtered by company)
+    total_products = base_query.count()
+    
+    # Total inventory value (cost price * quantity) - filtered by company
+    products = base_query.all()
     total_value = sum(p.cost_price * p.quantity for p in products)
     total_selling_value = sum(p.selling_price * p.quantity for p in products)
     
-    # Low stock and out of stock counts
+    # Low stock and out of stock counts (filtered by company)
     low_stock_count = sum(1 for p in products if p.is_low_stock and not p.is_out_of_stock)
     out_of_stock_count = sum(1 for p in products if p.is_out_of_stock)
     
-    # Count by category
+    # Count by category (filtered by company)
     by_category = {}
-    category_counts = db.query(
+    category_query = db.query(
         Category.name, func.count(Product.id)
-    ).join(Product).filter(Product.is_active == True).group_by(Category.name).all()
+    ).join(Product).filter(Product.is_active == True)
+    
+    if company_user_ids is not None:
+        category_query = category_query.filter(Product.created_by_user_id.in_(company_user_ids))
+    
+    category_counts = category_query.group_by(Category.name).all()
     
     for cat_name, count in category_counts:
         by_category[cat_name] = count
@@ -377,12 +391,21 @@ def get_low_stock_products(
 ):
     """
     Get all low stock products for alerts
+    ✅ SECURITY FIX: Now filters by company for data isolation
     """
-    products = db.query(Product).filter(
+    # 🔒 CRITICAL: Filter by company for data isolation
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    query = db.query(Product).filter(
         Product.is_active == True,
         Product.quantity > 0,
         Product.quantity <= Product.min_stock_level
-    ).all()
+    )
+    
+    if company_user_ids is not None:
+        query = query.filter(Product.created_by_user_id.in_(company_user_ids))
+    
+    products = query.all()
     
     return products
 
@@ -394,11 +417,20 @@ def get_out_of_stock_products(
 ):
     """
     Get all out of stock products for alerts
+    ✅ SECURITY FIX: Now filters by company for data isolation
     """
-    products = db.query(Product).filter(
+    # 🔒 CRITICAL: Filter by company for data isolation
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    query = db.query(Product).filter(
         Product.is_active == True,
         Product.quantity == 0
-    ).all()
+    )
+    
+    if company_user_ids is not None:
+        query = query.filter(Product.created_by_user_id.in_(company_user_ids))
+    
+    products = query.all()
     
     return products
 
