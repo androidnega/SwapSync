@@ -238,7 +238,7 @@ def create_repair(
 def list_repairs(
     status_filter: str = None,
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 10,  # ✅ Reduced from 100 to 10 for better performance
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

@@ -266,6 +266,26 @@ const Products: React.FC = () => {
     setMessage('');
 
     try {
+      // Validate phone-specific fields if it's a phone product
+      const isPhone = isPhoneCategory(formData.category_id);
+      if (isPhone) {
+        if (!formData.imei || formData.imei.trim() === '') {
+          setMessage('❌ IMEI is required for phone products');
+          setLoading(false);
+          return;
+        }
+        if (!formData.phone_condition || formData.phone_condition.trim() === '') {
+          setMessage('❌ Phone condition is required for phone products');
+          setLoading(false);
+          return;
+        }
+        if (!formData.phone_specs.cpu || !formData.phone_specs.ram || !formData.phone_specs.storage || !formData.phone_specs.color) {
+          setMessage('❌ Please fill in all required phone specifications (CPU, RAM, Storage, Color)');
+          setLoading(false);
+          return;
+        }
+      }
+
       const productData = {
         ...formData,
         category_id: parseInt(formData.category_id),
@@ -279,11 +299,11 @@ const Products: React.FC = () => {
         brand: formData.brand || null,
         description: formData.description || null,
         // Phone-specific fields
-        imei: formData.imei || null,
-        is_phone: isPhoneCategory(formData.category_id),
+        imei: isPhone ? formData.imei : null,
+        is_phone: isPhone,
         is_swappable: formData.is_swappable,
-        phone_condition: formData.phone_condition || null,
-        phone_specs: formData.phone_specs
+        phone_condition: isPhone ? formData.phone_condition : null,
+        phone_specs: isPhone ? formData.phone_specs : null
       };
 
       if (editingId) {

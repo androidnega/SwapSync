@@ -1745,6 +1745,7 @@ const Repairs: React.FC = () => {
                             .filter(product => 
                               product.quantity > 0 && 
                               product.is_active &&
+                              !product.is_phone && // ✅ ONLY show repair items, exclude phones
                               !selectedItems.find(si => si.item_id === product.id) &&
                               (itemSearchTerm === '' || 
                                product.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||

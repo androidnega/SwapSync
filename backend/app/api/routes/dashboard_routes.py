@@ -650,6 +650,70 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
+        # ✅ PHONE-SPECIFIC STATS
+        # Total phones in inventory (filtered by company)
+        total_phones = db.query(Product).filter(
+            Product.created_by_user_id.in_(company_user_ids),
+            Product.is_phone == True,
+            Product.is_active == True
+        ).count()
+        
+        cards.append({
+            "id": "total_phones",
+            "title": "Total Phones in Inventory",
+            "value": str(total_phones),
+            "icon": "faMobileAlt",
+            "color": "blue",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Phones in stock (available)
+        phones_in_stock = db.query(Product).filter(
+            Product.created_by_user_id.in_(company_user_ids),
+            Product.is_phone == True,
+            Product.is_active == True,
+            Product.quantity > 0
+        ).count()
+        
+        cards.append({
+            "id": "phones_in_stock",
+            "title": "Phones In Stock",
+            "value": str(phones_in_stock),
+            "icon": "faBoxOpen",
+            "color": "green",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Swapped phones (pending resale)
+        swapped_phones = db.query(PendingResale).filter(
+            PendingResale.attending_staff_id.in_(company_user_ids),
+            PendingResale.incoming_phone_status == PhoneSaleStatus.PENDING
+        ).count()
+        
+        cards.append({
+            "id": "swapped_phones_pending",
+            "title": "Pending Resale Phones",
+            "value": str(swapped_phones),
+            "icon": "faExchangeAlt",
+            "color": "yellow",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Sold swapped phones
+        sold_swapped_phones = db.query(PendingResale).filter(
+            PendingResale.attending_staff_id.in_(company_user_ids),
+            PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD
+        ).count()
+        
+        cards.append({
+            "id": "sold_swapped_phones",
+            "title": "Sold Swapped Phones",
+            "value": str(sold_swapped_phones),
+            "icon": "faCheckCircle",
+            "color": "teal",
+            "visible_to": ["ceo", "manager"]
+        })
+        
         # Repair Items Profit - Calculate from actual usage
         # Get all completed/delivered repairs for this manager's staff
         from app.models.repair_item_usage import RepairItemUsage

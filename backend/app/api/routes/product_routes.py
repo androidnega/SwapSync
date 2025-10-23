@@ -213,6 +213,58 @@ def create_phone_product(
     return db_phone_product
 
 
+@router.get("/init-data")
+def get_products_init_data(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all initial data needed for product pages in one request
+    Includes: categories, brands list, and basic stats
+    ✅ PERFORMANCE OPTIMIZATION: Reduces multiple API calls to one
+    """
+    from app.models.category import Category
+    from app.middleware.caching import cache_response
+    
+    # Filter by company
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    # Get categories
+    categories_query = db.query(Category).filter(Category.is_active == True)
+    if company_user_ids is not None:
+        categories_query = categories_query.filter(Category.created_by_user_id.in_(company_user_ids))
+    categories = categories_query.order_by(Category.name).all()
+    
+    # Get unique brands
+    brands_query = db.query(Product.brand).filter(
+        Product.is_active == True,
+        Product.brand.isnot(None)
+    )
+    if company_user_ids is not None:
+        brands_query = brands_query.filter(Product.created_by_user_id.in_(company_user_ids))
+    brands = [b[0] for b in brands_query.distinct().all() if b[0]]
+    
+    # Get summary stats
+    products_query = db.query(Product).filter(Product.is_active == True)
+    if company_user_ids is not None:
+        products_query = products_query.filter(Product.created_by_user_id.in_(company_user_ids))
+    
+    total_products = products_query.count()
+    in_stock = products_query.filter(Product.quantity > 0).count()
+    phones = products_query.filter(Product.is_phone == True).count()
+    
+    return {
+        "categories": [{"id": c.id, "name": c.name, "icon": getattr(c, 'icon', None)} for c in categories],
+        "brands": sorted(brands),
+        "stats": {
+            "total_products": total_products,
+            "in_stock": in_stock,
+            "phones": phones,
+            "out_of_stock": total_products - in_stock
+        }
+    }
+
+
 @router.get("/", response_model=List[ProductResponse])
 def list_products(
     category_id: Optional[int] = Query(None, description="Filter by category"),
@@ -220,7 +272,7 @@ def list_products(
     in_stock_only: bool = Query(True, description="Show only in-stock products"),
     search: Optional[str] = Query(None, description="Search by name, SKU, or brand"),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=5000),
+    limit: int = Query(20, ge=1, le=100),  # ✅ Reduced default from 100 to 20
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
