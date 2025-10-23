@@ -375,8 +375,78 @@ def delete_customer(
         if creator:
             creator_info = f" (created by {creator.username})"
     
-    db.delete(customer)
-    db.commit()
+    # ✅ CASCADE DELETE: Remove all related records when deleting customer
+    try:
+        from app.models.sale import Sale
+        from app.models.swap import Swap
+        from app.models.repair import Repair
+        from app.models.invoice import Invoice
+        from app.models.pending_resale import PendingResale
+        from app.models.phone import Phone, PhoneOwnershipHistory
+        
+        # Count related records for logging
+        sales_count = db.query(Sale).filter(Sale.customer_id == customer_id).count()
+        swaps_count = db.query(Swap).filter(Swap.customer_id == customer_id).count()
+        repairs_count = db.query(Repair).filter(Repair.customer_id == customer_id).count()
+        invoices_count = db.query(Invoice).filter(Invoice.customer_id == customer_id).count()
+        phones_owned_count = db.query(Phone).filter(Phone.current_owner_id == customer_id).count()
+        ownership_history_count = db.query(PhoneOwnershipHistory).filter(PhoneOwnershipHistory.owner_id == customer_id).count()
+        
+        # Log what will be deleted
+        deleted_records = []
+        if sales_count > 0:
+            deleted_records.append(f"{sales_count} sale(s)")
+        if swaps_count > 0:
+            deleted_records.append(f"{swaps_count} swap(s)")
+        if repairs_count > 0:
+            deleted_records.append(f"{repairs_count} repair(s)")
+        if invoices_count > 0:
+            deleted_records.append(f"{invoices_count} invoice(s)")
+        if phones_owned_count > 0:
+            deleted_records.append(f"{phones_owned_count} phone(s) owned")
+        if ownership_history_count > 0:
+            deleted_records.append(f"{ownership_history_count} ownership history record(s)")
+        
+        # Delete related records in proper order (respecting foreign key constraints)
+        # 1. Clear phone ownership references
+        db.query(Phone).filter(Phone.current_owner_id == customer_id).update({"current_owner_id": None})
+        
+        # 2. Delete phone ownership history
+        db.query(PhoneOwnershipHistory).filter(PhoneOwnershipHistory.owner_id == customer_id).delete()
+        
+        # 3. Delete invoices
+        db.query(Invoice).filter(Invoice.customer_id == customer_id).delete()
+        
+        # 4. Delete pending resales (if swap references exist)
+        swaps = db.query(Swap).filter(Swap.customer_id == customer_id).all()
+        swap_ids = [swap.id for swap in swaps]
+        if swap_ids:
+            db.query(PendingResale).filter(PendingResale.swap_id.in_(swap_ids)).delete()
+        
+        # 5. Delete repairs
+        db.query(Repair).filter(Repair.customer_id == customer_id).delete()
+        
+        # 6. Delete sales
+        db.query(Sale).filter(Sale.customer_id == customer_id).delete()
+        
+        # 7. Delete swaps
+        db.query(Swap).filter(Swap.customer_id == customer_id).delete()
+        
+        # 8. Finally delete the customer
+        db.delete(customer)
+        
+        db.commit()
+        
+        print(f"✅ Customer deleted with cascade: {customer_details}")
+        if deleted_records:
+            print(f"   Deleted related records: {', '.join(deleted_records)}")
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete customer and related records: {str(e)}"
+        )
     
     # Log activity
     log_activity(
