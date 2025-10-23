@@ -72,7 +72,8 @@ def get_dashboard_cards(
             try:
                 today = datetime.now().date()
                 today_sales = db.query(func.sum(ProductSale.total_amount)).filter(
-                    func.date(ProductSale.created_at) == today
+                    func.date(ProductSale.created_at) == today,
+                    ProductSale.created_by_user_id.in_(company_user_ids)
                 ).scalar() or 0.0
                 
                 cards.append({
@@ -88,7 +89,9 @@ def get_dashboard_cards(
             
             # TOTAL REVENUE (ALL TIME)
             try:
-                total_revenue = db.query(func.sum(ProductSale.total_amount)).scalar() or 0.0
+                total_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
+                    ProductSale.created_by_user_id.in_(company_user_ids)
+                ).scalar() or 0.0
                 cards.append({
                     "id": "total_revenue",
                     "title": "Total Revenue",
@@ -102,7 +105,9 @@ def get_dashboard_cards(
             
             # TOTAL SALES COUNT
             try:
-                total_sales_count = db.query(ProductSale).count()
+                total_sales_count = db.query(ProductSale).filter(
+                    ProductSale.created_by_user_id.in_(company_user_ids)
+                ).count()
                 cards.append({
                     "id": "total_sales",
                     "title": "Total Sales",
@@ -118,7 +123,8 @@ def get_dashboard_cards(
             try:
                 available_products = db.query(Product).filter(
                     Product.quantity > 0,
-                    Product.is_active == True
+                    Product.is_active == True,
+                    Product.created_by_user_id.in_(company_user_ids)
                 ).count()
                 cards.append({
                     "id": "available_products",
@@ -136,7 +142,8 @@ def get_dashboard_cards(
                 low_stock_products = db.query(Product).filter(
                     Product.quantity <= 5,
                     Product.quantity > 0,
-                    Product.is_active == True
+                    Product.is_active == True,
+                    Product.created_by_user_id.in_(company_user_ids)
                 ).count()
                 cards.append({
                     "id": "low_stock",
@@ -151,7 +158,9 @@ def get_dashboard_cards(
             
             # TOTAL CUSTOMERS
             try:
-                customer_count = db.query(Customer).count()
+                customer_count = db.query(Customer).filter(
+                    Customer.created_by_user_id.in_(company_user_ids)
+                ).count()
                 cards.append({
                     "id": "total_customers",
                     "title": "Total Customers",
@@ -166,7 +175,8 @@ def get_dashboard_cards(
             # ACTIVE REPAIRS
             try:
                 active_repairs = db.query(Repair).filter(
-                    Repair.status.in_(['Pending', 'In Progress'])
+                    Repair.status.in_(['Pending', 'In Progress']),
+                    Repair.created_by_user_id.in_(company_user_ids)
                 ).count()
                 cards.append({
                     "id": "active_repairs",
@@ -182,7 +192,8 @@ def get_dashboard_cards(
             # COMPLETED REPAIRS
             try:
                 completed_repairs = db.query(Repair).filter(
-                    Repair.status.in_(['Completed', 'Delivered'])
+                    Repair.status.in_(['Completed', 'Delivered']),
+                    Repair.created_by_user_id.in_(company_user_ids)
                 ).count()
                 cards.append({
                     "id": "completed_repairs",
@@ -198,7 +209,8 @@ def get_dashboard_cards(
             # TOTAL REPAIR REVENUE
             try:
                 repair_revenue = db.query(func.sum(Repair.cost)).filter(
-                    Repair.status.in_(['Completed', 'Delivered'])
+                    Repair.status.in_(['Completed', 'Delivered']),
+                    Repair.created_by_user_id.in_(company_user_ids)
                 ).scalar() or 0.0
                 cards.append({
                     "id": "repair_revenue",
@@ -214,7 +226,8 @@ def get_dashboard_cards(
             # PENDING SWAPS
             try:
                 pending_swaps = db.query(Swap).filter(
-                    Swap.status == 'pending'
+                    Swap.status == 'pending',
+                    Swap.created_by_user_id.in_(company_user_ids)
                 ).count()
                 cards.append({
                     "id": "pending_swaps",
@@ -230,7 +243,8 @@ def get_dashboard_cards(
             # COMPLETED SWAPS
             try:
                 completed_swaps = db.query(Swap).filter(
-                    Swap.status == 'completed'
+                    Swap.status == 'completed',
+                    Swap.created_by_user_id.in_(company_user_ids)
                 ).count()
                 cards.append({
                     "id": "completed_swaps",
@@ -404,9 +418,15 @@ def get_dashboard_cards(
             
             # AVAILABLE PRODUCTS
             try:
+                # Get company user IDs for shop keeper
+                company_user_ids = get_company_user_ids(db, current_user)
+                if company_user_ids is None:
+                    company_user_ids = [current_user.id]
+                
                 available_products = db.query(Product).filter(
                     Product.quantity > 0,
-                    Product.is_active == True
+                    Product.is_active == True,
+                    Product.created_by_user_id.in_(company_user_ids)
                 ).count()
                 cards.append({
                     "id": "available_products",
@@ -424,7 +444,8 @@ def get_dashboard_cards(
                 low_stock = db.query(Product).filter(
                     Product.quantity <= 5,
                     Product.quantity > 0,
-                    Product.is_active == True
+                    Product.is_active == True,
+                    Product.created_by_user_id.in_(company_user_ids)
                 ).count()
                 cards.append({
                     "id": "low_stock_alert",
