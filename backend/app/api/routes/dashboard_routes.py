@@ -531,6 +531,129 @@ def get_dashboard_cards(
                 
             except Exception as e:
                 print(f"Error getting repairer metrics: {e}")
+            
+            # ========== TOTAL SYSTEM METRICS ==========
+            
+            # TOTAL SYSTEM PROFIT (All Hubs Combined)
+            try:
+                # Calculate total profit from all sources
+                total_system_profit = 0.0
+                
+                # Product Hub Profit (already calculated above)
+                product_hub_profit = product_hub_revenue - product_hub_cost
+                total_system_profit += product_hub_profit
+                
+                # Repairer Hub Profit (already calculated above)
+                repairer_total_profit = repairer_service_revenue + repairer_items_profit
+                total_system_profit += repairer_total_profit
+                
+                # Swapping Hub Profit (already calculated above)
+                swapping_hub_profit = db.query(func.sum(PendingResale.profit_amount)).filter(
+                    PendingResale.attending_staff_id.in_(company_user_ids),
+                    PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD
+                ).scalar() or 0.0
+                total_system_profit += swapping_hub_profit
+                
+                cards.append({
+                    "id": "total_system_profit",
+                    "title": "Total System Profit",
+                    "value": f"₵{total_system_profit:.2f}",
+                    "icon": "faChartLine",
+                    "color": "green" if total_system_profit >= 0 else "red",
+                    "visible_to": ["ceo", "manager"]
+                })
+                
+            except Exception as e:
+                print(f"Error getting total system profit: {e}")
+            
+            # TOTAL PRODUCT VALUE (All Inventory Value)
+            try:
+                # Total value of all products (phones + accessories)
+                # This includes both phones and other accessories
+                total_product_value = db.query(func.sum(Product.quantity * Product.selling_price)).filter(
+                    Product.created_by_user_id.in_(company_user_ids),
+                    Product.is_active == True,
+                    Product.quantity > 0
+                ).scalar() or 0.0
+                
+                cards.append({
+                    "id": "total_product_value",
+                    "title": "Total Product Value",
+                    "value": f"₵{total_product_value:.2f}",
+                    "icon": "faWarehouse",
+                    "color": "blue",
+                    "visible_to": ["ceo", "manager"]
+                })
+                
+                # Total cost value of all products
+                total_product_cost_value = db.query(func.sum(Product.quantity * Product.cost_price)).filter(
+                    Product.created_by_user_id.in_(company_user_ids),
+                    Product.is_active == True,
+                    Product.quantity > 0
+                ).scalar() or 0.0
+                
+                cards.append({
+                    "id": "total_product_cost_value",
+                    "title": "Total Product Cost Value",
+                    "value": f"₵{total_product_cost_value:.2f}",
+                    "icon": "faDollarSign",
+                    "color": "orange",
+                    "visible_to": ["ceo", "manager"]
+                })
+                
+                # Potential profit from inventory
+                potential_inventory_profit = total_product_value - total_product_cost_value
+                
+                cards.append({
+                    "id": "potential_inventory_profit",
+                    "title": "Potential Inventory Profit",
+                    "value": f"₵{potential_inventory_profit:.2f}",
+                    "icon": "faCoins",
+                    "color": "green" if potential_inventory_profit >= 0 else "red",
+                    "visible_to": ["ceo", "manager"]
+                })
+                
+            except Exception as e:
+                print(f"Error getting total product value: {e}")
+            
+            # INVENTORY BREAKDOWN
+            try:
+                # Phones inventory value
+                phones_value = db.query(func.sum(Product.quantity * Product.selling_price)).filter(
+                    Product.created_by_user_id.in_(company_user_ids),
+                    Product.is_active == True,
+                    Product.quantity > 0,
+                    Product.is_phone == True
+                ).scalar() or 0.0
+                
+                cards.append({
+                    "id": "phones_inventory_value",
+                    "title": "Phones Inventory Value",
+                    "value": f"₵{phones_value:.2f}",
+                    "icon": "faMobileAlt",
+                    "color": "blue",
+                    "visible_to": ["ceo", "manager"]
+                })
+                
+                # Accessories inventory value
+                accessories_value = db.query(func.sum(Product.quantity * Product.selling_price)).filter(
+                    Product.created_by_user_id.in_(company_user_ids),
+                    Product.is_active == True,
+                    Product.quantity > 0,
+                    Product.is_phone == False
+                ).scalar() or 0.0
+                
+                cards.append({
+                    "id": "accessories_inventory_value",
+                    "title": "Accessories Inventory Value",
+                    "value": f"₵{accessories_value:.2f}",
+                    "icon": "faBox",
+                    "color": "purple",
+                    "visible_to": ["ceo", "manager"]
+                })
+                
+            except Exception as e:
+                print(f"Error getting inventory breakdown: {e}")
         
         elif current_user.role == UserRole.REPAIRER:
             # Repairer cards - REAL REPAIR METRICS
