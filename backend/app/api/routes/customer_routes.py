@@ -383,6 +383,8 @@ def delete_customer(
         from app.models.invoice import Invoice
         from app.models.pending_resale import PendingResale
         from app.models.phone import Phone, PhoneOwnershipHistory
+        from app.models.pos_sale import POSSale, POSSaleItem
+        from app.models.product_sale import ProductSale
         
         # Count related records for logging
         sales_count = db.query(Sale).filter(Sale.customer_id == customer_id).count()
@@ -391,6 +393,8 @@ def delete_customer(
         invoices_count = db.query(Invoice).filter(Invoice.customer_id == customer_id).count()
         phones_owned_count = db.query(Phone).filter(Phone.current_owner_id == customer_id).count()
         ownership_history_count = db.query(PhoneOwnershipHistory).filter(PhoneOwnershipHistory.owner_id == customer_id).count()
+        pos_sales_count = db.query(POSSale).filter(POSSale.customer_id == customer_id).count()
+        product_sales_count = db.query(ProductSale).filter(ProductSale.customer_id == customer_id).count()
         
         # Log what will be deleted
         deleted_records = []
@@ -406,6 +410,10 @@ def delete_customer(
             deleted_records.append(f"{phones_owned_count} phone(s) owned")
         if ownership_history_count > 0:
             deleted_records.append(f"{ownership_history_count} ownership history record(s)")
+        if pos_sales_count > 0:
+            deleted_records.append(f"{pos_sales_count} POS sale(s)")
+        if product_sales_count > 0:
+            deleted_records.append(f"{product_sales_count} product sale(s)")
         
         # Delete related records in proper order (respecting foreign key constraints)
         # 1. Clear phone ownership references
@@ -414,25 +422,37 @@ def delete_customer(
         # 2. Delete phone ownership history
         db.query(PhoneOwnershipHistory).filter(PhoneOwnershipHistory.owner_id == customer_id).delete()
         
-        # 3. Delete invoices
+        # 3. Delete POS sale items first (child of POSSale)
+        pos_sales = db.query(POSSale).filter(POSSale.customer_id == customer_id).all()
+        pos_sale_ids = [ps.id for ps in pos_sales]
+        if pos_sale_ids:
+            db.query(POSSaleItem).filter(POSSaleItem.pos_sale_id.in_(pos_sale_ids)).delete()
+        
+        # 4. Delete POS sales
+        db.query(POSSale).filter(POSSale.customer_id == customer_id).delete()
+        
+        # 5. Delete product sales
+        db.query(ProductSale).filter(ProductSale.customer_id == customer_id).delete()
+        
+        # 6. Delete invoices
         db.query(Invoice).filter(Invoice.customer_id == customer_id).delete()
         
-        # 4. Delete pending resales (if swap references exist)
+        # 7. Delete pending resales (if swap references exist)
         swaps = db.query(Swap).filter(Swap.customer_id == customer_id).all()
         swap_ids = [swap.id for swap in swaps]
         if swap_ids:
             db.query(PendingResale).filter(PendingResale.swap_id.in_(swap_ids)).delete()
         
-        # 5. Delete repairs
+        # 8. Delete repairs
         db.query(Repair).filter(Repair.customer_id == customer_id).delete()
         
-        # 6. Delete sales
+        # 9. Delete sales
         db.query(Sale).filter(Sale.customer_id == customer_id).delete()
         
-        # 7. Delete swaps
+        # 10. Delete swaps
         db.query(Swap).filter(Swap.customer_id == customer_id).delete()
         
-        # 8. Finally delete the customer
+        # 11. Finally delete the customer
         db.delete(customer)
         
         db.commit()
