@@ -532,8 +532,7 @@ def get_repair_hub_stats(
     Get comprehensive repair hub statistics
     Shows service charges, items profit, and repairer-specific earnings
     """
-    from app.models.repair_item_usage import RepairItemUsage
-    from app.models.repair_item import RepairItem
+    from app.models.repair_sale import RepairSale
     from sqlalchemy import func
     
     # Base query - filter by user role
@@ -556,20 +555,17 @@ def get_repair_hub_stats(
     # Calculate service charges (workmanship only - not profit)
     total_service_charges = sum(r.service_cost for r in repairs)
     
-    # Calculate items profit from actual usage
-    items_usage_query = db.query(RepairItemUsage).join(Repair).filter(Repair.id.in_([r.id for r in repairs]))
-    items_used = items_usage_query.all()
+    # Calculate items profit from repair sales (new system using products)
+    repair_sales_query = db.query(RepairSale).join(Repair).filter(Repair.id.in_([r.id for r in repairs]))
+    repair_sales = repair_sales_query.all()
     
-    # Calculate actual items profit (selling price - cost price) * quantity used
+    # Calculate actual items profit from repair sales
     items_profit = 0.0
     items_revenue = 0.0
     
-    for usage in items_used:
-        item = db.query(RepairItem).filter(RepairItem.id == usage.repair_item_id).first()
-        if item:
-            profit_per_unit = item.selling_price - item.cost_price
-            items_profit += profit_per_unit * usage.quantity
-            items_revenue += usage.total_cost
+    for sale in repair_sales:
+        items_profit += sale.profit
+        items_revenue += sale.unit_price * sale.quantity
     
     # Total revenue
     total_revenue = sum(r.cost for r in repairs)
@@ -580,6 +576,11 @@ def get_repair_hub_stats(
     completed_count = len([r for r in repairs if r.status.lower() == 'completed'])
     delivered_count = len([r for r in repairs if r.status.lower() == 'delivered'])
     
+    # For repairers, also include items sold count (without profit details)
+    items_sold_count = 0
+    if current_user.role.value == 'repairer':
+        items_sold_count = len(repair_sales)
+    
     return {
         "total_repairs": len(repairs),
         "total_revenue": round(total_revenue, 2),
@@ -587,6 +588,7 @@ def get_repair_hub_stats(
         "items_revenue": round(items_revenue, 2),
         "items_profit": round(items_profit, 2),
         "total_profit": round(items_profit, 2),  # Only items have profit, service is just charge
+        "items_sold_count": items_sold_count,  # For repairers only
         "repairs_by_status": {
             "pending": pending_count,
             "in_progress": in_progress_count,

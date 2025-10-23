@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.core.database import get_db
-from app.core.auth import get_current_user, verify_password
+from app.core.auth import get_current_user
 from app.models.user import User, UserRole
 from app.models.pos_sale import POSSale, POSSaleItem
 from app.models.product_sale import ProductSale
@@ -35,7 +35,7 @@ def verify_manager_password(
     
     try:
         # Verify the provided password against the current user's password
-        is_valid = verify_password(request.password, current_user.hashed_password)
+        is_valid = current_user.verify_password(request.password)
         
         if is_valid:
             # Log the password verification attempt

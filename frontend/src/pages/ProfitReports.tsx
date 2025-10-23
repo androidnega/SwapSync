@@ -202,8 +202,140 @@ const ProfitReports: React.FC = () => {
           </div>
         )}
 
-        {/* Report Generation Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* System Reports Section */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">📊 System Reports</h2>
+          <p className="text-gray-600 mb-6">Comprehensive system-wide reports and analytics</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Hub Profits Report */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-xl">
+                  🏪
+                </div>
+                <div>
+                  <h3 className="font-semibold text-blue-900">Hub Profits</h3>
+                  <p className="text-xs text-blue-600">All hubs breakdown</p>
+                </div>
+              </div>
+              <button
+                onClick={() => downloadReport('/dashboard/hub-profits', 'Hub_Profits_Report.pdf')}
+                disabled={loading}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:bg-gray-300 transition-all"
+              >
+                📥 Download
+              </button>
+            </div>
+
+            {/* Sales Analytics */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-xl">
+                  💰
+                </div>
+                <div>
+                  <h3 className="font-semibold text-green-900">Sales Analytics</h3>
+                  <p className="text-xs text-green-600">Sales performance</p>
+                </div>
+              </div>
+              <button
+                onClick={() => downloadReport('/analytics/sales', 'Sales_Analytics_Report.pdf')}
+                disabled={loading}
+                className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:bg-gray-300 transition-all"
+              >
+                📥 Download
+              </button>
+            </div>
+
+            {/* Inventory Report */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-xl">
+                  📦
+                </div>
+                <div>
+                  <h3 className="font-semibold text-purple-900">Inventory Report</h3>
+                  <p className="text-xs text-purple-600">Stock analysis</p>
+                </div>
+              </div>
+              <button
+                onClick={() => downloadReport('/analytics/inventory', 'Inventory_Report.pdf')}
+                disabled={loading}
+                className="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:bg-gray-300 transition-all"
+              >
+                📥 Download
+              </button>
+            </div>
+
+            {/* Customer Analytics */}
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 border border-orange-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-xl">
+                  👥
+                </div>
+                <div>
+                  <h3 className="font-semibold text-orange-900">Customer Analytics</h3>
+                  <p className="text-xs text-orange-600">Customer insights</p>
+                </div>
+              </div>
+              <button
+                onClick={() => downloadReport('/analytics/customers', 'Customer_Analytics_Report.pdf')}
+                disabled={loading}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:bg-gray-300 transition-all"
+              >
+                📥 Download
+              </button>
+            </div>
+
+            {/* Repair Analytics */}
+            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 border border-teal-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center text-xl">
+                  🔧
+                </div>
+                <div>
+                  <h3 className="font-semibold text-teal-900">Repair Analytics</h3>
+                  <p className="text-xs text-teal-600">Repair performance</p>
+                </div>
+              </div>
+              <button
+                onClick={() => downloadReport('/repairs/stats/hub', 'Repair_Analytics_Report.pdf')}
+                disabled={loading}
+                className="w-full bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:bg-gray-300 transition-all"
+              >
+                📥 Download
+              </button>
+            </div>
+
+            {/* Pending Resales */}
+            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl p-4 border border-yellow-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center text-xl">
+                  ⏳
+                </div>
+                <div>
+                  <h3 className="font-semibold text-yellow-900">Pending Resales</h3>
+                  <p className="text-xs text-yellow-600">Swap status report</p>
+                </div>
+              </div>
+              <button
+                onClick={() => downloadReport('/reports/pending-resales-detailed', 'Pending_Resales_Report.pdf')}
+                disabled={loading}
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:bg-gray-300 transition-all"
+              >
+                📥 Download
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Profit Reports Section */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">💰 Profit Reports</h2>
+          <p className="text-gray-600 mb-6">Detailed profit analysis by time period</p>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Daily Report */}
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex items-center gap-3 mb-5">
@@ -356,18 +488,35 @@ const ProfitReports: React.FC = () => {
             </div>
           </div>
         </div>
+        </div>
 
         {/* Info Box */}
         <div className="bg-blue-50 border-2 border-blue-400 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-2">📋 Report Features</h3>
-          <ul className="text-blue-800 space-y-1 list-disc list-inside">
-            <li>Comprehensive profit analysis with phone and product sales</li>
-            <li>Summary tables with revenue, costs, and profit margins</li>
-            <li>Top performing items (phones and products)</li>
-            <li>Company branding with your company name</li>
-            <li>Professional PDF format ready to print or share</li>
-            <li>Manager-only access for confidentiality</li>
-          </ul>
+          <h3 className="text-lg font-semibold text-blue-900 mb-2">📋 Comprehensive Report Features</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-semibold text-blue-800 mb-2">System Reports:</h4>
+              <ul className="text-blue-700 space-y-1 list-disc list-inside text-sm">
+                <li>Hub profits breakdown (Products, Swapping, Repairs)</li>
+                <li>Sales analytics and performance metrics</li>
+                <li>Inventory analysis and stock reports</li>
+                <li>Customer insights and analytics</li>
+                <li>Repair performance and item sales</li>
+                <li>Pending resales and swap status</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-blue-800 mb-2">Profit Reports:</h4>
+              <ul className="text-blue-700 space-y-1 list-disc list-inside text-sm">
+                <li>Daily, weekly, monthly, and yearly analysis</li>
+                <li>Revenue, costs, and profit margins</li>
+                <li>Top performing items and categories</li>
+                <li>Company branding and professional formatting</li>
+                <li>PDF format ready to print or share</li>
+                <li>Manager-only access for confidentiality</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>

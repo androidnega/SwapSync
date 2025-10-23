@@ -830,18 +830,16 @@ def get_hub_profits(
     # Service revenue (100% profit)
     service_revenue = db.query(func.sum(Repair.service_cost)).scalar() or 0.0
     
-    # Items profit from repair items used
-    item_usages = db.query(RepairItemUsage).all()
+    # Items profit from repair sales (new system using products)
+    repair_sales = db.query(RepairSale).all()
     items_revenue = 0.0
-    items_cost = 0.0
+    items_profit = 0.0
     
-    for usage in item_usages:
-        repair_item = db.query(RepairItem).filter(RepairItem.id == usage.repair_item_id).first()
-        if repair_item:
-            items_revenue += usage.total_cost  # What customer paid
-            items_cost += repair_item.cost_price * usage.quantity  # What we paid
+    for sale in repair_sales:
+        items_revenue += sale.unit_price * sale.quantity  # What customer paid
+        items_profit += sale.profit  # Actual profit (revenue - cost)
     
-    repairs_profit = service_revenue + (items_revenue - items_cost)
+    repairs_profit = service_revenue + items_profit
     
     # TOTAL COMBINED PROFIT
     total_profit = products_profit + swaps_profit + repairs_profit
@@ -859,8 +857,7 @@ def get_hub_profits(
         "repairer_hub": {
             "service_revenue": service_revenue,
             "items_revenue": items_revenue,
-            "items_cost": items_cost,
-            "items_profit": items_revenue - items_cost,
+            "items_profit": items_profit,
             "total_profit": repairs_profit
         },
         "total_profit": total_profit,
