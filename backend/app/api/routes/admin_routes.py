@@ -3,14 +3,70 @@ Admin Routes - Special administrative functions
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, verify_password
 from app.models.user import User, UserRole
 from app.models.pos_sale import POSSale, POSSaleItem
 from app.models.product_sale import ProductSale
 from app.models.product import StockMovement
+from app.core.permissions import is_manager_or_above
+from app.core.activity_logger import log_activity
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+
+
+class PasswordVerificationRequest(BaseModel):
+    password: str
+
+
+@router.post("/verify-manager-password")
+def verify_manager_password(
+    request: PasswordVerificationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Verify manager password before allowing reset operations"""
+    if not is_manager_or_above(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managers and admins can verify passwords for reset operations"
+        )
+    
+    try:
+        # Verify the provided password against the current user's password
+        is_valid = verify_password(request.password, current_user.hashed_password)
+        
+        if is_valid:
+            # Log the password verification attempt
+            log_activity(
+                db=db,
+                user=current_user,
+                action="verified manager password for reset operation",
+                module="admin_reset",
+                target_id=None,
+                details="Password verification successful"
+            )
+            
+            return {"verified": True, "message": "Password verified successfully"}
+        else:
+            # Log failed password verification attempt
+            log_activity(
+                db=db,
+                user=current_user,
+                action="failed manager password verification for reset operation",
+                module="admin_reset",
+                target_id=None,
+                details="Invalid password provided"
+            )
+            
+            return {"verified": False, "message": "Invalid password"}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to verify password: {str(e)}"
+        )
 
 
 @router.post("/clear-pos-sales")

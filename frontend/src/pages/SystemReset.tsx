@@ -26,6 +26,8 @@ const SystemReset: React.FC = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedReset, setSelectedReset] = useState<ResetOption | null>(null);
   const [confirmText, setConfirmText] = useState('');
+  const [managerPassword, setManagerPassword] = useState('');
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const resetOptions: ResetOption[] = [
     {
@@ -86,8 +88,39 @@ const SystemReset: React.FC = () => {
 
   const handleResetClick = (option: ResetOption) => {
     setSelectedReset(option);
-    setShowConfirmModal(true);
-    setConfirmText('');
+    setShowPasswordModal(true);
+    setManagerPassword('');
+  };
+
+  const handlePasswordVerification = async () => {
+    if (!selectedReset || !managerPassword.trim()) {
+      setMessage('❌ Please enter your manager password');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+
+    try {
+      // Verify manager password
+      const response = await api.post('/admin/verify-manager-password', {
+        password: managerPassword
+      });
+
+      if (response.data.verified) {
+        setShowPasswordModal(false);
+        setShowConfirmModal(true);
+        setConfirmText('');
+        setManagerPassword('');
+      } else {
+        setMessage('❌ Invalid manager password');
+      }
+    } catch (error: any) {
+      console.error('Password verification error:', error);
+      setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleConfirmReset = async () => {
@@ -138,10 +171,10 @@ const SystemReset: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-3 bg-red-100 rounded-lg">
               <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-600 text-xl" />
@@ -176,7 +209,7 @@ const SystemReset: React.FC = () => {
         )}
 
         {/* Reset Options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {resetOptions.map((option) => (
             <div
               key={option.id}
@@ -209,6 +242,76 @@ const SystemReset: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Password Verification Modal */}
+        {showPasswordModal && selectedReset && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FontAwesomeIcon icon={faLock} className="text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Manager Password Required</h3>
+              </div>
+
+              <div className="mb-4">
+                <h4 className="font-medium text-gray-900 mb-2">{selectedReset.title}</h4>
+                <p className="text-sm text-gray-600 mb-3">{selectedReset.description}</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <FontAwesomeIcon icon={faShieldAlt} className="mr-2" />
+                    Please enter your manager password to proceed with this reset operation.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Manager Password:
+                </label>
+                <input
+                  type="password"
+                  value={managerPassword}
+                  onChange={(e) => setManagerPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your manager password"
+                  onKeyPress={(e) => e.key === 'Enter' && handlePasswordVerification()}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setSelectedReset(null);
+                    setManagerPassword('');
+                  }}
+                  className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordVerification}
+                  disabled={loading || !managerPassword.trim()}
+                  className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? (
+                    <>
+                      <FontAwesomeIcon icon={faKey} className="mr-2 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                      Verify Password
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Confirmation Modal */}
         {showConfirmModal && selectedReset && (
