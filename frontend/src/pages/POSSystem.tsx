@@ -756,14 +756,14 @@ const POSSystem: React.FC = () => {
                                   {product.name}
                                 </h3>
                                 <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                                  {product.brand && (
-                                    <span className="font-medium">{product.brand}</span>
-                                  )}
-                                  {product.category && (
-                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                                      {product.category.name}
-                                    </span>
-                                  )}
+                                  {(() => {
+                                    const category = categories.find(c => c.id === product.category_id);
+                                    return category && (
+                                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                        {category.name}
+                                      </span>
+                                    );
+                                  })()}
                                   <span className={`px-2 py-1 rounded-full text-xs border ${getStockColorClass(product)}`}>
                                     Stock: {getAvailableStock(product)}
                                   </span>
@@ -934,9 +934,14 @@ const POSSystem: React.FC = () => {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <p className="font-semibold text-sm">{item.product.name}</p>
-                        {item.product.brand && (
-                          <p className="text-xs text-gray-500">{item.product.brand}</p>
-                        )}
+                        {(() => {
+                          const category = categories.find(c => c.id === item.product.category_id);
+                          return category && (
+                            <p className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded inline-block">
+                              {category.name}
+                            </p>
+                          );
+                        })()}
                         
                         {/* Swap Badge */}
                         {item.isSwap && (
@@ -1398,6 +1403,7 @@ const POSSystem: React.FC = () => {
           paymentMethod={lastSale.payment_method}
           createdAt={lastSale.created_at}
           companyName={companyName}
+          sellerName={lastSale.created_by?.full_name || lastSale.created_by?.username}
           onClose={() => setShowReceipt(false)}
           onResendSMS={async () => {
             try {

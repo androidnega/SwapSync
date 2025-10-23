@@ -1849,9 +1849,14 @@ const Repairs: React.FC = () => {
                                 <div className="flex-1 min-w-0">
                                   <div className="text-sm font-medium text-gray-900">{product.name}</div>
                                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                    {product.brand && (
-                                      <span className="text-xs text-gray-600">{product.brand}</span>
-                                    )}
+                                    {(() => {
+                                      const category = categories.find(c => c.id === product.category_id);
+                                      return category && (
+                                        <span className="text-xs text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">
+                                          {category.name}
+                                        </span>
+                                      );
+                                    })()}
                                     {product.sku && (
                                       <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">SKU: {product.sku}</span>
                                     )}

@@ -26,6 +26,7 @@ interface POSReceiptProps {
   paymentMethod: string;
   createdAt: string;
   companyName: string;
+  sellerName?: string;
   onClose: () => void;
   onPrint?: () => void;
   onResendSMS?: () => void;
@@ -42,6 +43,7 @@ const POSThermalReceipt: React.FC<POSReceiptProps> = ({
   paymentMethod,
   createdAt,
   companyName,
+  sellerName,
   onClose,
   onPrint,
   onResendSMS
@@ -127,6 +129,12 @@ const POSThermalReceipt: React.FC<POSReceiptProps> = ({
               <span className="font-medium">Payment:</span>
               <span className="uppercase font-semibold">{paymentMethod}</span>
             </div>
+            {sellerName && (
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Sold by:</span>
+                <span className="font-bold text-blue-600">{sellerName}</span>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-dashed border-gray-400 my-3"></div>
