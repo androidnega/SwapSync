@@ -1,6 +1,7 @@
 """
 Repair Items API Routes
 Manages inventory of repair items (screens, batteries, etc.)
+✅ UPDATED: Now uses unified Product model instead of RepairItem
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -9,45 +10,90 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.company_filter import get_company_user_ids
 from app.models.user import User
-from app.models.repair_item import RepairItem
-from app.schemas.repair_item import RepairItemCreate, RepairItemUpdate, RepairItemResponse
+from app.models.product import Product
 
 router = APIRouter(prefix="/repair-items", tags=["Repair Items"])
 
-@router.get("/", response_model=List[RepairItemResponse])
+@router.get("/")
 def get_all_repair_items(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get all repair items in inventory (filtered by company)"""
+    """Get all repair items in inventory (filtered by company) - Uses unified Product model"""
     # Filter by company (data isolation)
     company_user_ids = get_company_user_ids(db, current_user)
     
-    query = db.query(RepairItem)
-    if company_user_ids is not None:
-        query = query.filter(RepairItem.created_by_user_id.in_(company_user_ids))
+    # Get products that are NOT phones (repair items only)
+    query = db.query(Product).filter(
+        Product.is_active == True,
+        Product.is_phone == False  # Only non-phone products (repair items)
+    )
     
-    items = query.order_by(RepairItem.name).all()
-    return items
+    if company_user_ids is not None:
+        query = query.filter(Product.created_by_user_id.in_(company_user_ids))
+    
+    items = query.order_by(Product.name).all()
+    
+    # Convert to repair item format for backward compatibility
+    repair_items = []
+    for product in items:
+        repair_items.append({
+            "id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "category": product.brand,  # Use brand as category for repair items
+            "cost_price": product.cost_price,
+            "selling_price": product.selling_price,
+            "stock_quantity": product.quantity,
+            "min_stock_level": product.min_stock_level,
+            "created_by_user_id": product.created_by_user_id,
+            "created_at": product.created_at,
+            "sku": product.sku,
+            "barcode": product.barcode
+        })
+    
+    return repair_items
 
-@router.get("/low-stock", response_model=List[RepairItemResponse])
+@router.get("/low-stock")
 def get_low_stock_items(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get repair items with stock below minimum level (filtered by company)"""
+    """Get repair items with stock below minimum level (filtered by company) - Uses unified Product model"""
     # Filter by company (data isolation)
     company_user_ids = get_company_user_ids(db, current_user)
     
-    query = db.query(RepairItem).filter(
-        RepairItem.stock_quantity <= RepairItem.min_stock_level
+    # Get products that are NOT phones and have low stock
+    query = db.query(Product).filter(
+        Product.is_active == True,
+        Product.is_phone == False,  # Only non-phone products (repair items)
+        Product.quantity <= Product.min_stock_level
     )
     
     if company_user_ids is not None:
-        query = query.filter(RepairItem.created_by_user_id.in_(company_user_ids))
+        query = query.filter(Product.created_by_user_id.in_(company_user_ids))
     
     items = query.all()
-    return items
+    
+    # Convert to repair item format for backward compatibility
+    repair_items = []
+    for product in items:
+        repair_items.append({
+            "id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "category": product.brand,
+            "cost_price": product.cost_price,
+            "selling_price": product.selling_price,
+            "stock_quantity": product.quantity,
+            "min_stock_level": product.min_stock_level,
+            "created_by_user_id": product.created_by_user_id,
+            "created_at": product.created_at,
+            "sku": product.sku,
+            "barcode": product.barcode
+        })
+    
+    return repair_items
 
 @router.get("/{item_id}", response_model=RepairItemResponse)
 def get_repair_item(

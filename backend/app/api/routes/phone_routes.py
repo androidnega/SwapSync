@@ -285,23 +285,23 @@ def delete_phone(
     
     # Delete related records in proper order (respecting foreign key constraints)
     try:
-        # 1. Delete sales
+        # 1. Clear swapped_from_id references in other phones FIRST
+        db.query(Phone).filter(Phone.swapped_from_id == phone_id).update({"swapped_from_id": None})
+        
+        # 2. Delete sales
         db.query(Sale).filter(Sale.phone_id == phone_id).delete()
         
-        # 2. Delete pending resales
+        # 3. Delete pending resales
         db.query(PendingResale).filter(
             (PendingResale.sold_phone_id == phone_id) | 
             (PendingResale.incoming_phone_id == phone_id)
         ).delete()
         
-        # 3. Delete swaps
-        db.query(Swap).filter(Swap.new_phone_id == phone_id).delete()
-        
         # 4. Delete repairs
         db.query(Repair).filter(Repair.phone_id == phone_id).delete()
         
-        # 5. Clear swapped_from_id references in other phones
-        db.query(Phone).filter(Phone.swapped_from_id == phone_id).update({"swapped_from_id": None})
+        # 5. Delete swaps (now safe - no phones reference them)
+        db.query(Swap).filter(Swap.new_phone_id == phone_id).delete()
         
         # 6. Finally delete the phone
         db.query(Phone).filter(Phone.id == phone_id).delete()
