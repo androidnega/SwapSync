@@ -222,7 +222,7 @@ END OF REPORT
         )}
 
         {/* Quick Summary */}
-        {summary && (
+        {summary ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Today */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl border border-blue-200 p-6 shadow-sm hover:shadow-md transition-all duration-300">
@@ -235,15 +235,15 @@ END OF REPORT
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-blue-700">Revenue:</span>
-                  <span className="text-lg font-bold text-blue-900">₵{summary.today?.revenue?.toFixed(2) || '0.00'}</span>
+                  <span className="text-lg font-bold text-blue-900">₵{summary?.today?.revenue?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-blue-700">Profit:</span>
-                  <span className="text-lg font-bold text-blue-900">₵{summary.today?.profit?.toFixed(2) || '0.00'}</span>
+                  <span className="text-lg font-bold text-blue-900">₵{summary?.today?.profit?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-blue-700">Sales:</span>
-                  <span className="text-lg font-bold text-blue-900">{summary.today?.sales_count || 0}</span>
+                  <span className="text-lg font-bold text-blue-900">{summary?.today?.sales_count || 0}</span>
                 </div>
               </div>
             </div>
@@ -259,15 +259,15 @@ END OF REPORT
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-emerald-700">Revenue:</span>
-                  <span className="text-lg font-bold text-emerald-900">₵{summary.week?.revenue?.toFixed(2) || '0.00'}</span>
+                  <span className="text-lg font-bold text-emerald-900">₵{summary?.week?.revenue?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-emerald-700">Profit:</span>
-                  <span className="text-lg font-bold text-emerald-900">₵{summary.week?.profit?.toFixed(2) || '0.00'}</span>
+                  <span className="text-lg font-bold text-emerald-900">₵{summary?.week?.profit?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-emerald-700">Sales:</span>
-                  <span className="text-lg font-bold text-emerald-900">{summary.week?.sales_count || 0}</span>
+                  <span className="text-lg font-bold text-emerald-900">{summary?.week?.sales_count || 0}</span>
                 </div>
               </div>
             </div>
@@ -283,18 +283,44 @@ END OF REPORT
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-purple-700">Revenue:</span>
-                  <span className="text-lg font-bold text-purple-900">₵{summary.month?.revenue?.toFixed(2) || '0.00'}</span>
+                  <span className="text-lg font-bold text-purple-900">₵{summary?.month?.revenue?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-purple-700">Profit:</span>
-                  <span className="text-lg font-bold text-purple-900">₵{summary.month?.profit?.toFixed(2) || '0.00'}</span>
+                  <span className="text-lg font-bold text-purple-900">₵{summary?.month?.profit?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-purple-700">Sales:</span>
-                  <span className="text-lg font-bold text-purple-900">{summary.month?.sales_count || 0}</span>
+                  <span className="text-lg font-bold text-purple-900">{summary?.month?.sales_count || 0}</span>
                 </div>
               </div>
             </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Loading placeholders */}
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-100 rounded-2xl border border-gray-200 p-6 animate-pulse">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-gray-300"></div>
+                  <div className="h-6 bg-gray-300 rounded w-32"></div>
+                </div>
+                <div className="space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 bg-gray-300 rounded w-16"></div>
+                    <div className="h-6 bg-gray-300 rounded w-20"></div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 bg-gray-300 rounded w-12"></div>
+                    <div className="h-6 bg-gray-300 rounded w-20"></div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 bg-gray-300 rounded w-10"></div>
+                    <div className="h-6 bg-gray-300 rounded w-8"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
