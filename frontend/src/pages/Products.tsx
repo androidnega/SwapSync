@@ -325,7 +325,20 @@ const Products: React.FC = () => {
       fetchProducts();
       fetchSummary();
     } catch (error: any) {
-      setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
+      console.error('Product submission error:', error);
+      console.error('Error response:', error.response);
+      
+      // Handle validation errors
+      if (error.response?.data?.errors) {
+        const validationErrors = error.response.data.errors;
+        const errorMessages = validationErrors.map((err: any) => {
+          const field = err.loc?.join(' > ') || 'unknown field';
+          return `${field}: ${err.msg}`;
+        }).join(', ');
+        setMessage(`❌ Validation Error: ${errorMessages}`);
+      } else {
+        setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
+      }
     } finally {
       setLoading(false);
     }
