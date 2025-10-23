@@ -572,81 +572,48 @@ def get_dashboard_cards(
             "visible_to": ["repairer"]
         })
     
-    # CEO & MANAGER - Profit/Stats cards
+    # CEO & MANAGER - Essential Business Cards Only
     if current_user.role in [UserRole.CEO, UserRole.MANAGER]:
         # Get company user IDs (manager + all their staff)
         company_user_ids = get_company_user_ids(db, current_user)
         
-        # Total Profit from Swaps - Use PendingResale table (filtered by company)
+        # ✅ ESSENTIAL CARDS ONLY - Clean Manager Dashboard
+        
+        # Total Revenue (Product Sales + Service Charges)
+        product_sales_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
+            ProductSale.created_by_user_id.in_(company_user_ids),
+            ProductSale.created_by_user_id.isnot(None)
+        ).scalar() or 0.0
+        
+        service_charges = db.query(func.sum(Repair.service_cost)).filter(
+            Repair.staff_id.in_(company_user_ids),
+            Repair.staff_id.isnot(None),
+            Repair.status.in_(['Completed', 'Delivered'])
+        ).scalar() or 0.0
+        
+        total_revenue = product_sales_revenue + service_charges
+        
+        cards.append({
+            "id": "total_revenue",
+            "title": "Total Revenue",
+            "value": f"₵{total_revenue:.2f}",
+            "icon": "faMoneyBillWave",
+            "color": "green",
+            "visible_to": ["ceo", "manager"]
+        })
+        
+        # Total Profit from Swaps
         total_profit = db.query(func.sum(PendingResale.profit_amount)).filter(
             PendingResale.incoming_phone_status == PhoneSaleStatus.SOLD,
             PendingResale.attending_staff_id.in_(company_user_ids)
         ).scalar() or 0.0
         
         cards.append({
-            "id": "total_profit",
-            "title": "Total Profit (Swaps)",
+            "id": "swap_profit",
+            "title": "Swap Profit",
             "value": f"₵{total_profit:.2f}",
-            "icon": "faMoneyBillWave",
-            "color": "green" if total_profit >= 0 else "red",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Product Sales Revenue (filtered by company)
-        # Only count sales that have created_by_user_id set
-        product_sales_revenue = db.query(func.sum(ProductSale.total_amount)).filter(
-            ProductSale.created_by_user_id.in_(company_user_ids),
-            ProductSale.created_by_user_id.isnot(None)
-        ).scalar() or 0.0
-        
-        cards.append({
-            "id": "product_sales_revenue",
-            "title": "Product Sales Revenue",
-            "value": f"₵{product_sales_revenue:.2f}",
-            "icon": "faShoppingCart",
-            "color": "purple",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Product Sales Profit - Calculate from actual sales
-        # Get all product sales by company
-        product_sales = db.query(ProductSale).filter(
-            ProductSale.created_by_user_id.in_(company_user_ids),
-            ProductSale.created_by_user_id.isnot(None)
-        ).all()
-        
-        product_sales_profit = 0.0
-        for sale in product_sales:
-            # Get the product to find cost_price
-            product = db.query(Product).filter(Product.id == sale.product_id).first()
-            if product:
-                cost = product.cost_price * sale.quantity
-                revenue = sale.total_amount
-                product_sales_profit += (revenue - cost)
-        
-        cards.append({
-            "id": "product_sales_profit",
-            "title": "Product Sales Profit",
-            "value": f"₵{product_sales_profit:.2f}",
-            "icon": "faMoneyBillWave",
-            "color": "green",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Service Charges (workmanship fees) - filtered by company
-        # Only count completed/delivered repairs
-        total_service_charges = db.query(func.sum(Repair.service_cost)).filter(
-            Repair.staff_id.in_(company_user_ids),
-            Repair.staff_id.isnot(None),
-            Repair.status.in_(['Completed', 'Delivered'])
-        ).scalar() or 0.0
-        
-        cards.append({
-            "id": "service_charges",
-            "title": "Repair Service Charges",
-            "value": f"₵{total_service_charges:.2f}",
-            "icon": "faTools",
-            "color": "orange",
+            "icon": "faExchangeAlt",
+            "color": "blue" if total_profit >= 0 else "red",
             "visible_to": ["ceo", "manager"]
         })
         
@@ -714,76 +681,7 @@ def get_dashboard_cards(
             "visible_to": ["ceo", "manager"]
         })
         
-        # Repair Items Profit - Calculate from actual usage
-        # Get all completed/delivered repairs for this manager's staff
-        from app.models.repair_item_usage import RepairItemUsage
-        from app.models.repair_item import RepairItem
-        
-        completed_repairs = db.query(Repair).filter(
-            Repair.staff_id.in_(company_user_ids),
-            Repair.staff_id.isnot(None),
-            Repair.status.in_(['Completed', 'Delivered'])
-        ).all()
-        
-        repair_ids = [r.id for r in completed_repairs]
-        items_profit = 0.0
-        
-        if repair_ids:
-            items_used = db.query(RepairItemUsage).filter(RepairItemUsage.repair_id.in_(repair_ids)).all()
-            
-            for usage in items_used:
-                item = db.query(RepairItem).filter(RepairItem.id == usage.repair_item_id).first()
-                if item:
-                    profit_per_unit = item.selling_price - item.cost_price
-                    items_profit += profit_per_unit * usage.quantity
-        
-        cards.append({
-            "id": "repair_items_profit",
-            "title": "Repair Items Profit",
-            "value": f"₵{items_profit:.2f}",
-            "icon": "faBoxOpen",
-            "color": "purple",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Swap Discounts Applied (filtered by company)
-        # Only count records that have proper staff tracking
-        swap_discounts = db.query(func.sum(PendingResale.discount_amount)).filter(
-            PendingResale.attending_staff_id.in_(company_user_ids),
-            PendingResale.attending_staff_id.isnot(None)
-        ).scalar() or 0.0
-        
-        # Phone sale discounts (filtered by company) - also part of swap discounts
-        phone_sale_discounts = db.query(func.sum(Sale.discount_amount)).filter(
-            Sale.created_by_user_id.in_(company_user_ids),
-            Sale.created_by_user_id.isnot(None)
-        ).scalar() or 0.0
-        
-        total_swap_discounts = swap_discounts + phone_sale_discounts
-        
-        cards.append({
-            "id": "swap_discounts",
-            "title": "Discount Applied (Swap)",
-            "value": f"₵{total_swap_discounts:.2f}",
-            "icon": "faExchangeAlt",
-            "color": "indigo",
-            "visible_to": ["ceo", "manager"]
-        })
-        
-        # Product sale discounts (filtered by company)
-        product_sale_discounts = db.query(func.sum(ProductSale.discount_amount)).filter(
-            ProductSale.created_by_user_id.in_(company_user_ids),
-            ProductSale.created_by_user_id.isnot(None)
-        ).scalar() or 0.0
-        
-        cards.append({
-            "id": "product_discounts",
-            "title": "Discount Applied (Product)",
-            "value": f"₵{product_sale_discounts:.2f}",
-            "icon": "faShoppingCart",
-            "color": "pink",
-            "visible_to": ["ceo", "manager"]
-        })
+        # ✅ CLEAN DASHBOARD - Only Essential Cards
     
     return {
         "cards": cards,

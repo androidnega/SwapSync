@@ -254,72 +254,75 @@ def delete_phone(
             detail="Phone not found"
         )
     
-    # Check for dependent records before deletion
+    # ✅ CASCADE DELETE: Remove all related records when deleting phone
     from app.models.sale import Sale
     from app.models.swap import Swap
     from app.models.pending_resale import PendingResale
     from app.models.repair import Repair
     
-    dependent_checks = []
-    
-    # Check sales
+    # Count related records for logging
     sales_count = db.query(Sale).filter(Sale.phone_id == phone_id).count()
-    if sales_count > 0:
-        dependent_checks.append(f"{sales_count} sale(s)")
-    
-    # Check swaps (phone given to customer)
     swaps_count = db.query(Swap).filter(Swap.new_phone_id == phone_id).count()
-    if swaps_count > 0:
-        dependent_checks.append(f"{swaps_count} swap(s)")
-    
-    # Check pending resales
     pending_resales_count = db.query(PendingResale).filter(
         (PendingResale.sold_phone_id == phone_id) | 
         (PendingResale.incoming_phone_id == phone_id)
     ).count()
-    if pending_resales_count > 0:
-        dependent_checks.append(f"{pending_resales_count} pending resale(s)")
-    
-    # Check repairs
     repairs_count = db.query(Repair).filter(Repair.phone_id == phone_id).count()
-    if repairs_count > 0:
-        dependent_checks.append(f"{repairs_count} repair(s)")
-    
-    # Check if any phones reference this via swapped_from_id
     phones_from_swaps = db.query(Phone).filter(Phone.swapped_from_id == phone_id).count()
+    
+    # Log what will be deleted
+    deleted_records = []
+    if sales_count > 0:
+        deleted_records.append(f"{sales_count} sale(s)")
+    if swaps_count > 0:
+        deleted_records.append(f"{swaps_count} swap(s)")
+    if pending_resales_count > 0:
+        deleted_records.append(f"{pending_resales_count} pending resale(s)")
+    if repairs_count > 0:
+        deleted_records.append(f"{repairs_count} repair(s)")
     if phones_from_swaps > 0:
-        dependent_checks.append(f"{phones_from_swaps} phone(s) created from swaps")
+        deleted_records.append(f"{phones_from_swaps} phone(s) created from swaps")
     
-    # If dependent records exist, return 409 Conflict
-    if dependent_checks:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot delete phone because it has related records: {', '.join(dependent_checks)}. Archive this phone instead or remove dependent records first."
-        )
-    
-    # Store details before deletion
-    phone_details = f"{phone.brand} {phone.model} - IMEI: {phone.imei}"
-    
+    # Delete related records in proper order (respecting foreign key constraints)
     try:
-        db.delete(phone)
+        # 1. Delete sales
+        db.query(Sale).filter(Sale.phone_id == phone_id).delete()
+        
+        # 2. Delete pending resales
+        db.query(PendingResale).filter(
+            (PendingResale.sold_phone_id == phone_id) | 
+            (PendingResale.incoming_phone_id == phone_id)
+        ).delete()
+        
+        # 3. Delete swaps
+        db.query(Swap).filter(Swap.new_phone_id == phone_id).delete()
+        
+        # 4. Delete repairs
+        db.query(Repair).filter(Repair.phone_id == phone_id).delete()
+        
+        # 5. Clear swapped_from_id references in other phones
+        db.query(Phone).filter(Phone.swapped_from_id == phone_id).update({"swapped_from_id": None})
+        
+        # 6. Finally delete the phone
+        db.query(Phone).filter(Phone.id == phone_id).delete()
+        
         db.commit()
         
-        # Log activity
+        # Log the cascade deletion
         log_activity(
             db=db,
             user=current_user,
-            action=f"deleted phone from inventory",
+            action=f"deleted phone with cascade",
             module="phones",
             target_id=phone_id,
-            details=phone_details
+            details=f"Deleted {phone.brand} {phone.model} and related records: {', '.join(deleted_records) if deleted_records else 'no related records'}"
         )
         
-        return None
     except Exception as e:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete phone: {str(e)}"
+            detail=f"Failed to delete phone and related records: {str(e)}"
         )
 
 
