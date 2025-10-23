@@ -233,6 +233,8 @@ const Products: React.FC = () => {
   const fetchProducts = async () => {
     try {
       const response = await productAPI.getAll({ in_stock_only: false, limit: 500 });
+      console.log('📦 Fetched products:', response.data);
+      console.log('📊 Total products:', response.data?.length || 0);
       setProducts(response.data);
     } catch (error: any) {
       console.error('Failed to fetch products:', error);
@@ -567,6 +569,14 @@ const Products: React.FC = () => {
 
     return true;
   });
+
+  // Debug logging
+  console.log('🔍 Filter Debug:');
+  console.log('  - Total products:', products.length);
+  console.log('  - Filtered products:', filteredProducts.length);
+  console.log('  - Filter category:', filterCategory);
+  console.log('  - Filter stock:', filterStock);
+  console.log('  - Search query:', searchQuery);
 
   const getCategoryName = (id: number) => {
     const category = categories.find(c => c.id === id);
