@@ -136,8 +136,10 @@ def create_phone_product(
             detail=f"Category with ID {phone_product.category_id} not found"
         )
     
-    # Check for duplicate IMEI
-    existing_phone = db.query(Product).filter(Product.imei == phone_product.imei).first()
+    # Check for duplicate IMEI (case-insensitive)
+    existing_phone = db.query(Product).filter(
+        func.lower(Product.imei) == func.lower(phone_product.imei)
+    ).first()
     if existing_phone:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -163,7 +165,7 @@ def create_phone_product(
         cost_price=phone_product.cost_price,
         selling_price=phone_product.selling_price,
         discount_price=phone_product.discount_price,
-        quantity=1,  # Phones are always quantity 1
+        quantity=phone_product.quantity,  # Use the provided quantity
         min_stock_level=1,  # Minimum stock for phones
         description=phone_product.description,
         specs=phone_product.specs,
@@ -185,15 +187,15 @@ def create_phone_product(
     # Generate unique ID
     db_phone_product.generate_unique_id(db)
     
-    # Create initial stock movement (phones always have quantity 1)
+    # Create initial stock movement
     stock_movement = StockMovement(
         product_id=db_phone_product.id,
         movement_type="purchase",
-        quantity=1,
+        quantity=phone_product.quantity,
         unit_price=phone_product.cost_price,
-        total_amount=phone_product.cost_price,
+        total_amount=phone_product.cost_price * phone_product.quantity,
         reference_type="initial_stock",
-        notes=f"Initial stock for phone {db_phone_product.name}",
+        notes=f"Initial stock for phone {db_phone_product.name} (Qty: {phone_product.quantity})",
         created_by_user_id=current_user.id
     )
     db.add(stock_movement)

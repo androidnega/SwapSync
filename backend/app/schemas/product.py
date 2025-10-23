@@ -36,12 +36,12 @@ class ProductCreate(ProductBase):
 
 class PhoneProductCreate(ProductBase):
     """Schema for creating a phone product"""
-    imei: str = Field(..., description="IMEI number for the phone")
+    imei: str = Field(..., min_length=1, max_length=50, description="IMEI number for the phone")
     is_phone: bool = Field(default=True)
     phone_condition: str = Field(..., description="New, Used, Refurbished")
     phone_specs: Optional[Dict[str, Any]] = Field(None, description="Phone specifications")
     is_swappable: bool = Field(default=False, description="Can this phone be used in swaps?")
-    quantity: int = Field(default=1, ge=0, le=1, description="For phones, quantity is always 1")
+    quantity: int = Field(default=1, ge=0, le=100, description="Quantity of phones (typically 1, but can be more for bulk purchases)")
 
 
 class ProductUpdate(BaseModel):
