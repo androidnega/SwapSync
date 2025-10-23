@@ -1166,8 +1166,8 @@ const Products: React.FC = () => {
                     />
                   </div>
 
-                  {/* Available for Swap - Show for all products */}
-                  {(userRole === 'manager' || userRole === 'ceo') && (
+                  {/* Available for Swap - Show only for phone categories */}
+                  {(userRole === 'manager' || userRole === 'ceo') && isPhoneCategory(formData.category_id) && (
                     <div className="col-span-2 border-t border-gray-200 pt-4">
                       <label className="flex items-start gap-3">
                         <input
@@ -1180,7 +1180,7 @@ const Products: React.FC = () => {
                         <div>
                           <span className="text-sm font-medium text-gray-700">Available for Swap</span>
                           <p className="text-xs text-gray-500 mt-1">
-                            Make this product available for swap on sales screens. Swaps follow swapping hub lifecycle (pending, accepted, completed).
+                            Make this phone available for swap on sales screens. Swaps follow swapping hub lifecycle (pending, accepted, completed).
                           </p>
                         </div>
                       </label>

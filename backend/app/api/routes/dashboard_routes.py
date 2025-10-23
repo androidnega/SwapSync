@@ -13,6 +13,7 @@ from app.models.user import User, UserRole
 from app.models.swap import Swap, ResaleStatus
 from app.models.sale import Sale
 from app.models.repair import Repair
+from app.models.repair_sale import RepairSale
 from app.models.customer import Customer
 from app.models.phone import Phone, PhoneStatus
 from app.models.pending_resale import PendingResale, PhoneSaleStatus
@@ -447,21 +448,7 @@ def get_dashboard_cards(
             })
         
         # Available Phones - Exclude trade-ins waiting for resale (filtered by company)
-        available_phones_query = db.query(Phone).filter(
-            Phone.is_available == True,
-            Phone.status != PhoneStatus.SWAPPED  # Exclude trade-ins
-        )
-        if company_user_ids is not None:
-            available_phones_query = available_phones_query.filter(Phone.created_by_user_id.in_(company_user_ids))
-        
-        cards.append({
-            "id": "available_phones",
-            "title": "Available Phones",
-            "value": available_phones_query.count(),
-            "icon": "faMobileAlt",
-            "color": "indigo",
-            "visible_to": ["shop_keeper", "ceo", "manager"]
-        })
+        # REMOVED: Available Phones card as requested
         
         # Available Products - Products with stock > 0 (filtered by company)
         available_products_query = db.query(Product).filter(
@@ -657,14 +644,7 @@ def get_dashboard_cards(
             PendingResale.incoming_phone_status == PhoneSaleStatus.AVAILABLE
         ).count()
         
-        cards.append({
-            "id": "swapped_phones_pending",
-            "title": "Pending Resale Phones",
-            "value": str(swapped_phones),
-            "icon": "faExchangeAlt",
-            "color": "yellow",
-            "visible_to": ["ceo", "manager"]
-        })
+        # REMOVED: Pending Resale Phones card as requested
         
         # Sold swapped phones
         sold_swapped_phones = db.query(PendingResale).filter(
@@ -680,6 +660,36 @@ def get_dashboard_cards(
             "color": "teal",
             "visible_to": ["ceo", "manager"]
         })
+        
+        # Repairer Sold Items (Manager only)
+        if current_user.role == UserRole.MANAGER:
+            # Get repairer sales data
+            repairer_sales_query = db.query(RepairSale).join(Repair).filter(
+                Repair.staff_id.in_(company_user_ids)
+            )
+            
+            total_repairer_items_sold = repairer_sales_query.count()
+            total_repairer_profit = repairer_sales_query.with_entities(
+                func.sum(RepairSale.profit)
+            ).scalar() or 0.0
+            
+            cards.append({
+                "id": "repairer_sold_items",
+                "title": "Repairer Sold Items",
+                "value": str(total_repairer_items_sold),
+                "icon": "faTools",
+                "color": "blue",
+                "visible_to": ["manager"]
+            })
+            
+            cards.append({
+                "id": "repairer_profit",
+                "title": "Repairer Profit",
+                "value": f"₵{total_repairer_profit:.2f}",
+                "icon": "faDollarSign",
+                "color": "green",
+                "visible_to": ["manager"]
+            })
         
         # ✅ CLEAN DASHBOARD - Only Essential Cards
     

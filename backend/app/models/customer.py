@@ -33,7 +33,7 @@ class Customer(Base):
     def generate_unique_id(self, db_session):
         """Generate unique customer ID in format CUST-0001"""
         from sqlalchemy import func
-        max_id = db_session.query(func.count(Customer.id)).scalar() or 0
+        max_id = db_session.query(func.max(Customer.id)).scalar() or 0
         self.unique_id = f"CUST-{str(max_id + 1).zfill(4)}"
         return self.unique_id
 
