@@ -242,14 +242,27 @@ def list_repairs(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get all repairs with optional status filtering (Repairer, CEO, Admin only)"""
+    """
+    Get all repairs with optional status filtering (Repairer, CEO, Admin only)
+    ✅ SECURITY FIX: Now filters by company for data isolation
+    """
     if not can_manage_repairs(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view repairs"
         )
+    
+    # 🔒 CRITICAL: Filter by company for data isolation
+    from app.core.company_filter import get_company_user_ids
+    company_user_ids = get_company_user_ids(db, current_user)
+    
     query = db.query(Repair)
     
+    # Apply company filtering
+    if company_user_ids is not None:
+        query = query.filter(Repair.created_by_user_id.in_(company_user_ids))
+    
+    # Apply status filter
     if status_filter:
         query = query.filter(Repair.status == status_filter)
     

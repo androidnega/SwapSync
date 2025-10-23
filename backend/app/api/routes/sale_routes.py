@@ -178,13 +178,27 @@ def list_sales(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get all sales with pagination (Shop Keeper, CEO, Admin only)"""
+    """
+    Get all sales with pagination (Shop Keeper, CEO, Admin only)
+    ✅ SECURITY FIX: Now filters by company for data isolation
+    """
     if not can_manage_swaps(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view sales"
         )
-    sales = db.query(Sale).order_by(Sale.created_at.desc()).offset(skip).limit(limit).all()
+    
+    # 🔒 CRITICAL: Filter by company for data isolation
+    from app.core.company_filter import get_company_user_ids
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    query = db.query(Sale)
+    
+    # Apply company filtering
+    if company_user_ids is not None:
+        query = query.filter(Sale.created_by_user_id.in_(company_user_ids))
+    
+    sales = query.order_by(Sale.created_at.desc()).offset(skip).limit(limit).all()
     return sales
 
 
