@@ -279,8 +279,9 @@ const Products: React.FC = () => {
           setLoading(false);
           return;
         }
-        if (!formData.phone_specs.cpu || !formData.phone_specs.ram || !formData.phone_specs.storage || !formData.phone_specs.color) {
-          setMessage('❌ Please fill in all required phone specifications (CPU, RAM, Storage, Color)');
+        // Only validate essential specs: RAM, Storage, Color (CPU is optional now)
+        if (!formData.phone_specs.ram || !formData.phone_specs.storage || !formData.phone_specs.color) {
+          setMessage('❌ Please fill in: RAM, Storage, and Color');
           setLoading(false);
           return;
         }
@@ -966,6 +967,12 @@ const Products: React.FC = () => {
                   <p className="text-sm text-blue-800">👁️ View-only mode - Contact your manager to make changes</p>
                 </div>
               )}
+              {/* Validation Error Message - Inside Modal */}
+              {message && message.startsWith('❌') && (
+                <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 animate-pulse">
+                  <p className="text-sm text-red-800 font-medium">{message}</p>
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Product Name */}
@@ -1215,7 +1222,9 @@ const Products: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {/* CPU/Processor - Brand-specific suggestions */}
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">CPU/Processor *</label>
+                            <label className="block text-xs text-gray-600 mb-1">
+                              CPU/Processor <span className="text-gray-400">(optional)</span>
+                            </label>
                             <input
                               type="text"
                               list="processor-options"
@@ -1281,7 +1290,9 @@ const Products: React.FC = () => {
                           
                           {/* Battery */}
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">Battery</label>
+                            <label className="block text-xs text-gray-600 mb-1">
+                              Battery <span className="text-gray-400">(optional)</span>
+                            </label>
                             <input
                               type="text"
                               value={formData.phone_specs.battery}
