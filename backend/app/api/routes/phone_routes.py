@@ -259,6 +259,7 @@ def delete_phone(
     from app.models.swap import Swap
     from app.models.pending_resale import PendingResale
     from app.models.repair import Repair
+    from app.models.phone_ownership_history import PhoneOwnershipHistory
     
     # Count related records for logging
     sales_count = db.query(Sale).filter(Sale.phone_id == phone_id).count()
@@ -268,6 +269,7 @@ def delete_phone(
         (PendingResale.incoming_phone_id == phone_id)
     ).count()
     repairs_count = db.query(Repair).filter(Repair.phone_id == phone_id).count()
+    ownership_history_count = db.query(PhoneOwnershipHistory).filter(PhoneOwnershipHistory.phone_id == phone_id).count()
     phones_from_swaps = db.query(Phone).filter(Phone.swapped_from_id == phone_id).count()
     
     # Log what will be deleted
@@ -280,6 +282,8 @@ def delete_phone(
         deleted_records.append(f"{pending_resales_count} pending resale(s)")
     if repairs_count > 0:
         deleted_records.append(f"{repairs_count} repair(s)")
+    if ownership_history_count > 0:
+        deleted_records.append(f"{ownership_history_count} ownership history record(s)")
     if phones_from_swaps > 0:
         deleted_records.append(f"{phones_from_swaps} phone(s) created from swaps")
     
@@ -303,10 +307,13 @@ def delete_phone(
         # 4. Delete repairs
         db.query(Repair).filter(Repair.phone_id == phone_id).delete()
         
-        # 5. Delete swaps (now safe - no phones reference them)
+        # 5. Delete phone ownership history
+        db.query(PhoneOwnershipHistory).filter(PhoneOwnershipHistory.phone_id == phone_id).delete()
+        
+        # 6. Delete swaps (now safe - no phones reference them)
         db.query(Swap).filter(Swap.new_phone_id == phone_id).delete()
         
-        # 6. Finally delete the phone
+        # 7. Finally delete the phone
         db.query(Phone).filter(Phone.id == phone_id).delete()
         
         db.commit()
