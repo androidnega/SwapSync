@@ -286,7 +286,10 @@ def delete_phone(
     # Delete related records in proper order (respecting foreign key constraints)
     try:
         # 1. Clear swapped_from_id references in other phones FIRST
-        db.query(Phone).filter(Phone.swapped_from_id == phone_id).update({"swapped_from_id": None})
+        # Find all swaps that involve this phone and clear references to those swaps
+        swaps_involving_phone = db.query(Swap).filter(Swap.new_phone_id == phone_id).all()
+        for swap in swaps_involving_phone:
+            db.query(Phone).filter(Phone.swapped_from_id == swap.id).update({"swapped_from_id": None})
         
         # 2. Delete sales
         db.query(Sale).filter(Sale.phone_id == phone_id).delete()
