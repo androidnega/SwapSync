@@ -687,7 +687,7 @@ def get_dashboard_cards(
         # Swapped phones (pending resale)
         swapped_phones = db.query(PendingResale).filter(
             PendingResale.attending_staff_id.in_(company_user_ids),
-            PendingResale.incoming_phone_status == PhoneSaleStatus.PENDING
+            PendingResale.incoming_phone_status == PhoneSaleStatus.AVAILABLE
         ).count()
         
         cards.append({
