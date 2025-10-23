@@ -1,7 +1,10 @@
 Railway Deployment Trigger
-Timestamp: 2025-10-23T19:45:00Z
-Trigger: Force Railway redeploy - Fix dashboard error (products.is_phone)
-Commits: 2a80641, eeefbfb
-Changes: Added phone fields migration, all columns verified in database
-Migration Status: All phone fields exist, forcing service restart
+Timestamp: 2025-10-23T21:30:00Z
+Trigger: CRITICAL - Multi-tenant category isolation + CORS fixes
+Commits: 1fbe270, 46f278f, b78d01f
+Changes: 
+- Fixed category multi-tenant isolation (removed global unique constraint)
+- Enhanced CORS for better Railway compatibility
+- Smart product form with brand-aware specifications
+Migration Required: /api/migrations/remove-category-unique-constraint
 
