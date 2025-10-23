@@ -316,7 +316,8 @@ def get_dashboard_cards(
     CEO: Business metrics only
     Shop Keeper/Repairer: Limited metrics
     """
-    cards = []
+    try:
+        cards = []
     
     # SYSTEM ADMIN - System-level cards ONLY
     if current_user.role in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
@@ -650,9 +651,13 @@ def get_dashboard_cards(
         })
         
         # ✅ PRODUCT SALES - Total product sales count
-        product_sales_count = db.query(ProductSale).join(Product).filter(
-            Product.created_by_user_id.in_(company_user_ids)
-        ).count()
+        try:
+            product_sales_count = db.query(ProductSale).join(Product).filter(
+                Product.created_by_user_id.in_(company_user_ids)
+            ).count()
+        except Exception as e:
+            print(f"Error in product_sales_count query: {e}")
+            product_sales_count = 0
         
         cards.append({
             "id": "product_sales",
@@ -664,11 +669,15 @@ def get_dashboard_cards(
         })
         
         # ✅ PRODUCT PROFIT - Total profit from product sales
-        product_sales = db.query(ProductSale).join(Product).filter(
-            Product.created_by_user_id.in_(company_user_ids)
-        ).all()
-        
-        product_profit = sum(sale.profit for sale in product_sales if sale.profit is not None)
+        try:
+            product_sales = db.query(ProductSale).join(Product).filter(
+                Product.created_by_user_id.in_(company_user_ids)
+            ).all()
+            
+            product_profit = sum(sale.profit for sale in product_sales if sale.profit is not None)
+        except Exception as e:
+            print(f"Error in product_profit query: {e}")
+            product_profit = 0.0
         
         cards.append({
             "id": "product_profit",
@@ -703,17 +712,23 @@ def get_dashboard_cards(
         })
         
         # ✅ TOTAL REVENUE - Combined revenue from all sources
-        combined_revenue = (
-            db.query(func.sum(ProductSale.total_amount)).join(Product).filter(
+        try:
+            product_revenue = db.query(func.sum(ProductSale.total_amount)).join(Product).filter(
                 Product.created_by_user_id.in_(company_user_ids)
-            ).scalar() or 0.0 +
-            db.query(func.sum(Repair.cost)).filter(
+            ).scalar() or 0.0
+            
+            repair_revenue = db.query(func.sum(Repair.cost)).filter(
                 Repair.created_by_user_id.in_(company_user_ids)
-            ).scalar() or 0.0 +
-            db.query(func.sum(Swap.amount_paid)).filter(
+            ).scalar() or 0.0
+            
+            swap_revenue = db.query(func.sum(Swap.amount_paid)).filter(
                 Swap.created_by_user_id.in_(company_user_ids)
             ).scalar() or 0.0
-        )
+            
+            combined_revenue = product_revenue + repair_revenue + swap_revenue
+        except Exception as e:
+            print(f"Error in combined_revenue query: {e}")
+            combined_revenue = 0.0
         
         cards.append({
             "id": "combined_revenue",
@@ -726,9 +741,13 @@ def get_dashboard_cards(
         
         # ✅ HUB PROFIT & REVENUE CARDS - Detailed breakdown by hub
         # Product Hub Revenue
-        product_hub_revenue = db.query(func.sum(ProductSale.total_amount)).join(Product).filter(
-            Product.created_by_user_id.in_(company_user_ids)
-        ).scalar() or 0.0
+        try:
+            product_hub_revenue = db.query(func.sum(ProductSale.total_amount)).join(Product).filter(
+                Product.created_by_user_id.in_(company_user_ids)
+            ).scalar() or 0.0
+        except Exception as e:
+            print(f"Error in product_hub_revenue query: {e}")
+            product_hub_revenue = 0.0
         
         cards.append({
             "id": "product_hub_revenue",
@@ -788,9 +807,13 @@ def get_dashboard_cards(
         })
         
         # Repairer Hub Profit (from repair sales)
-        repairer_hub_profit = db.query(func.sum(RepairSale.profit)).join(Repair).filter(
-            Repair.created_by_user_id.in_(company_user_ids)
-        ).scalar() or 0.0
+        try:
+            repairer_hub_profit = db.query(func.sum(RepairSale.profit)).join(Repair).filter(
+                Repair.created_by_user_id.in_(company_user_ids)
+            ).scalar() or 0.0
+        except Exception as e:
+            print(f"Error in repairer_hub_profit query: {e}")
+            repairer_hub_profit = 0.0
         
         cards.append({
             "id": "repairer_hub_profit",
@@ -803,15 +826,20 @@ def get_dashboard_cards(
         
         # Repairer Sold Items (Manager only)
         if current_user.role == UserRole.MANAGER:
-            # Get repairer sales data
-            repairer_sales_query = db.query(RepairSale).join(Repair).filter(
-                Repair.staff_id.in_(company_user_ids)
-            )
-            
-            total_repairer_items_sold = repairer_sales_query.count()
-            total_repairer_profit = repairer_sales_query.with_entities(
-                func.sum(RepairSale.profit)
-            ).scalar() or 0.0
+            try:
+                # Get repairer sales data
+                repairer_sales_query = db.query(RepairSale).join(Repair).filter(
+                    Repair.staff_id.in_(company_user_ids)
+                )
+
+                total_repairer_items_sold = repairer_sales_query.count()
+                total_repairer_profit = repairer_sales_query.with_entities(
+                    func.sum(RepairSale.profit)
+                ).scalar() or 0.0
+            except Exception as e:
+                print(f"Error in repairer sales query: {e}")
+                total_repairer_items_sold = 0
+                total_repairer_profit = 0.0
             
             cards.append({
                 "id": "repairer_sold_items",
@@ -833,11 +861,29 @@ def get_dashboard_cards(
         
         # ✅ CLEAN DASHBOARD - Only Essential Cards
     
-    return {
-        "cards": cards,
-        "user_role": current_user.role.value,
-        "total_cards": len(cards)
-    }
+        return {
+            "cards": cards,
+            "user_role": current_user.role.value,
+            "total_cards": len(cards)
+        }
+    except Exception as e:
+        print(f"Error in get_dashboard_cards: {e}")
+        # Return minimal cards on error
+        return {
+            "cards": [
+                {
+                    "id": "error",
+                    "title": "Dashboard Error",
+                    "value": "Unable to load data",
+                    "icon": "faExclamationTriangle",
+                    "color": "red",
+                    "visible_to": [current_user.role.value]
+                }
+            ],
+            "user_role": current_user.role.value,
+            "total_cards": 1,
+            "error": str(e)
+        }
 
 
 @router.get("/stats/summary")
