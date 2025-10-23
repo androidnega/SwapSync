@@ -237,7 +237,7 @@ def get_profit_summary_report(
     if not can_view_analytics(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view profit reports"
+            detail="You do not have permission to view financial reports"
         )
     
     # Calculate date range

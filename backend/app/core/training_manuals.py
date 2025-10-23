@@ -602,7 +602,7 @@ def generate_manager_manual() -> BytesIO:
         "<b>Staff Management:</b> Create shop keepers and repairers, manage their access",
         "<b>Inventory Control:</b> Add products, manage stock, set pricing strategies",
         "<b>Sales Monitoring:</b> Track all POS transactions and staff performance",
-        "<b>Financial Oversight:</b> Review profit reports and revenue analytics",
+        "<b>Financial Oversight:</b> Review revenue analytics and business metrics",
         "<b>Customer Relations:</b> Oversee customer database and satisfaction",
         "<b>System Security:</b> Use audit codes for sensitive operations",
         "<b>Business Growth:</b> Make data-driven decisions using analytics"
@@ -719,44 +719,9 @@ def generate_manager_manual() -> BytesIO:
         body_style
     ))
     
-    # Section 5: Profit Reports
+    # Section 5: System Administration
     story.append(PageBreak())
-    story.append(Paragraph("5. Profit & Financial Reports", heading_style))
-    
-    story.append(Paragraph("Accessing Profit Reports:", subheading_style))
-    story.append(Paragraph(
-        "Go to <b>'Profit Reports'</b> page to see detailed financial breakdown:",
-        body_style
-    ))
-    story.append(Spacer(1, 0.1*inch))
-    
-    profit_metrics = [
-        "<b>Total Revenue:</b> All sales income",
-        "<b>Total Costs:</b> Sum of all cost prices",
-        "<b>Gross Profit:</b> Revenue minus costs",
-        "<b>Profit Margin %:</b> How much profit per sale",
-        "<b>Per Product:</b> See profit on each product type",
-        "<b>Per Staff:</b> Compare staff sales performance",
-        "<b>Date Ranges:</b> Today, This Week, This Month, Custom dates"
-    ]
-    for metric in profit_metrics:
-        story.append(Paragraph(f"• {metric}", body_style))
-    story.append(Spacer(1, 0.2*inch))
-    
-    story.append(Paragraph("Using Profit Data for Decisions:", subheading_style))
-    decision_tips = [
-        "Identify which products make the most profit - stock more of these",
-        "Find low-profit items - consider discontinuing or repricing",
-        "Compare staff performance - recognize top sellers",
-        "Spot trends - which days/times are busiest",
-        "Plan inventory - buy more of fast-moving profitable items"
-    ]
-    for tip in decision_tips:
-        story.append(Paragraph(f"→ {tip}", body_style))
-    
-    # Section 6: System Administration
-    story.append(PageBreak())
-    story.append(Paragraph("6. System Administration", heading_style))
+    story.append(Paragraph("5. System Administration", heading_style))
     
     story.append(Paragraph("Audit Codes - Enhanced Security:", subheading_style))
     story.append(Paragraph(
@@ -898,7 +863,6 @@ def generate_manager_manual() -> BytesIO:
         ['<b>Feature</b>', '<b>Location</b>', '<b>What It Does</b>'],
         ['Staff Management', 'Staff Management page', 'Create, edit, delete shop keepers and repairers'],
         ['POS Monitor', 'POS Monitor page', 'See all sales from all staff in real-time'],
-        ['Profit Reports', 'Profit Reports page', 'Detailed financial analysis and profit margins'],
         ['Products Hub', 'Products page', 'Manage inventory, pricing, stock levels'],
         ['Swapping Hub', 'Swapping Hub page', 'Manage phone swaps and inventory'],
         ['Analytics', 'Reports page', 'Business intelligence and trends'],

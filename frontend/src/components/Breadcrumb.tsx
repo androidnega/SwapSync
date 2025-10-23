@@ -68,7 +68,6 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ customItems }) => {
     'staff-management': 'Staff Management',
     'activity-logs': 'Activity Logs',
     'reports': 'Reports',
-    'profit-reports': 'Profit Reports',
     'settings': 'Settings',
     'brands': 'Phone Brands',
     'categories': 'Product Categories',
