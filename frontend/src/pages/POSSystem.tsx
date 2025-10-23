@@ -46,6 +46,14 @@ interface CartItem {
   quantity: number;
   unit_price: number;
   discount_amount: number;
+  isSwap?: boolean;  // Is this item part of a swap?
+  swapData?: {
+    givenPhoneDescription: string;
+    givenPhoneValue: number;
+    givenPhoneIMEI: string;
+    givenPhoneCondition: string;
+    balancePaid: number;
+  };
 }
 
 interface Customer {
@@ -105,6 +113,17 @@ const POSSystem: React.FC = () => {
   // UI state
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [message, setMessage] = useState('');
+  
+  // Swap modal state
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [swapProduct, setSwapProduct] = useState<Product | null>(null);
+  const [swapFormData, setSwapFormData] = useState({
+    givenPhoneDescription: '',
+    givenPhoneValue: '',
+    givenPhoneIMEI: '',
+    givenPhoneCondition: 'Used',
+    balancePaid: ''
+  });
   
   // Stats for dashboard
   const [todayStats, setTodayStats] = useState({
@@ -177,7 +196,16 @@ const POSSystem: React.FC = () => {
 
   // Cart Operations
   const addToCart = (product: Product) => {
-    const existingItem = cart.find(item => item.product.id === product.id);
+    // Check if product is swappable
+    if (product.is_swappable && product.is_phone) {
+      // Show swap option modal
+      setSwapProduct(product);
+      setShowSwapModal(true);
+      return;
+    }
+    
+    // Regular add to cart
+    const existingItem = cart.find(item => item.product.id === product.id && !item.isSwap);
     
     if (existingItem) {
       // Increase quantity if already in cart
@@ -188,10 +216,81 @@ const POSSystem: React.FC = () => {
         product,
         quantity: 1,
         unit_price: product.discount_price || product.selling_price,
-        discount_amount: 0
+        discount_amount: 0,
+        isSwap: false
       };
       setCart([...cart, newItem]);
     }
+  };
+  
+  // Add as normal sale (from swap modal)
+  const addAsNormalSale = () => {
+    if (!swapProduct) return;
+    
+    const existingItem = cart.find(item => item.product.id === swapProduct.id && !item.isSwap);
+    if (existingItem) {
+      updateCartItemQuantity(swapProduct.id, existingItem.quantity + 1);
+    } else {
+      const newItem: CartItem = {
+        product: swapProduct,
+        quantity: 1,
+        unit_price: swapProduct.discount_price || swapProduct.selling_price,
+        discount_amount: 0,
+        isSwap: false
+      };
+      setCart([...cart, newItem]);
+    }
+    setMessage(`✅ ${swapProduct.name} added to cart (normal sale)`);
+    setShowSwapModal(false);
+    setSwapProduct(null);
+  };
+  
+  // Add as swap (from swap modal)
+  const addAsSwap = () => {
+    if (!swapProduct) return;
+    
+    // Validate swap form
+    if (!swapFormData.givenPhoneDescription || !swapFormData.givenPhoneValue || !swapFormData.balancePaid) {
+      setMessage('❌ Please fill all required swap details');
+      return;
+    }
+    
+    const givenValue = parseFloat(swapFormData.givenPhoneValue);
+    const balance = parseFloat(swapFormData.balancePaid);
+    const newPhonePrice = swapProduct.discount_price || swapProduct.selling_price;
+    
+    // Validate balance
+    if (balance < 0) {
+      setMessage('❌ Balance paid cannot be negative');
+      return;
+    }
+    
+    const newItem: CartItem = {
+      product: swapProduct,
+      quantity: 1,
+      unit_price: newPhonePrice,
+      discount_amount: 0,
+      isSwap: true,
+      swapData: {
+        givenPhoneDescription: swapFormData.givenPhoneDescription,
+        givenPhoneValue: givenValue,
+        givenPhoneIMEI: swapFormData.givenPhoneIMEI,
+        givenPhoneCondition: swapFormData.givenPhoneCondition,
+        balancePaid: balance
+      }
+    };
+    
+    setCart([...cart, newItem]);
+    setMessage(`✅ ${swapProduct.name} added as SWAP`);
+    setShowSwapModal(false);
+    setSwapProduct(null);
+    setSwapFormData({
+      givenPhoneDescription: '',
+      givenPhoneValue: '',
+      givenPhoneIMEI: '',
+      givenPhoneCondition: 'Used',
+      balancePaid: ''
+    });
   };
 
   // Get available stock for a product (considering items in cart)
@@ -838,9 +937,26 @@ const POSSystem: React.FC = () => {
                         {item.product.brand && (
                           <p className="text-xs text-gray-500">{item.product.brand}</p>
                         )}
+                        
+                        {/* Swap Badge */}
+                        {item.isSwap && (
+                          <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded">
+                            <div className="flex items-center gap-1 mb-1">
+                              <span className="text-purple-700 font-bold text-xs">🔄 SWAP TRANSACTION</span>
+                            </div>
+                            {item.swapData && (
+                              <div className="text-xs text-purple-600 space-y-0.5">
+                                <div>Incoming: {item.swapData.givenPhoneDescription}</div>
+                                <div>Value: ₵{item.swapData.givenPhoneValue.toFixed(2)}</div>
+                                <div>Balance Paid: ₵{item.swapData.balancePaid.toFixed(2)}</div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
                         {/* Phone-specific info in cart */}
-                        {item.product.is_phone && (
-                          <div className="mt-1 flex items-center gap-2">
+                        {item.product.is_phone && !item.isSwap && (
+                          <div className="mt-1 flex items-center gap-2 flex-wrap">
                             <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
                               📱 Phone
                             </span>
@@ -852,6 +968,11 @@ const POSSystem: React.FC = () => {
                             {item.product.phone_condition && (
                               <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
                                 {item.product.phone_condition}
+                              </span>
+                            )}
+                            {item.product.is_swappable && (
+                              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                🔄 Swappable
                               </span>
                             )}
                           </div>
@@ -1109,6 +1230,160 @@ const POSSystem: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Swap Modal */}
+      {showSwapModal && swapProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowSwapModal(false)}>
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">🔄 Swap Option</h2>
+                <button onClick={() => setShowSwapModal(false)} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+              </div>
+              
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-900 font-medium">📱 {swapProduct.name}</p>
+                <p className="text-xs text-blue-700 mt-1">This product is available for swap. Choose how to proceed:</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <button
+                  onClick={addAsNormalSale}
+                  className="p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
+                >
+                  <div className="text-4xl mb-2">💳</div>
+                  <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600">Sell Normally</h3>
+                  <p className="text-sm text-gray-600 mt-1">Direct sale without swap</p>
+                  <p className="text-lg font-bold text-green-600 mt-2">₵{(swapProduct.discount_price || swapProduct.selling_price).toFixed(2)}</p>
+                </button>
+                
+                <button
+                  onClick={() => {/* Keep modal open for swap form */}}
+                  className="p-6 border-2 border-purple-300 bg-purple-50 rounded-lg hover:border-purple-500 transition-all group"
+                >
+                  <div className="text-4xl mb-2">🔄</div>
+                  <h3 className="font-bold text-lg text-purple-900 group-hover:text-purple-600">Swap Transaction</h3>
+                  <p className="text-sm text-purple-700 mt-1">Trade-in + cash difference</p>
+                  <p className="text-xs text-purple-600 mt-2">Fill details below ↓</p>
+                </button>
+              </div>
+              
+              <div className="border-t pt-6">
+                <h3 className="font-bold text-lg text-gray-900 mb-4">📝 Swap Details</h3>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Incoming Device Description *</label>
+                      <input
+                        type="text"
+                        value={swapFormData.givenPhoneDescription}
+                        onChange={(e) => setSwapFormData({...swapFormData, givenPhoneDescription: e.target.value})}
+                        placeholder="e.g., iPhone 11 Pro, Good condition"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Incoming Device Value (₵) *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={swapFormData.givenPhoneValue}
+                        onChange={(e) => {
+                          const givenVal = parseFloat(e.target.value) || 0;
+                          const newPhonePrice = swapProduct.discount_price || swapProduct.selling_price;
+                          const balance = Math.max(0, newPhonePrice - givenVal);
+                          setSwapFormData({
+                            ...swapFormData,
+                            givenPhoneValue: e.target.value,
+                            balancePaid: balance.toFixed(2)
+                          });
+                        }}
+                        placeholder="0.00"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">IMEI Number (Optional)</label>
+                      <input
+                        type="text"
+                        value={swapFormData.givenPhoneIMEI}
+                        onChange={(e) => setSwapFormData({...swapFormData, givenPhoneIMEI: e.target.value})}
+                        placeholder="15-digit IMEI"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Condition *</label>
+                      <select
+                        value={swapFormData.givenPhoneCondition}
+                        onChange={(e) => setSwapFormData({...swapFormData, givenPhoneCondition: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="New">New</option>
+                        <option value="Used">Used - Good</option>
+                        <option value="Used - Fair">Used - Fair</option>
+                        <option value="Refurbished">Refurbished</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-purple-900 mb-2">💰 Swap Summary</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-700">Outgoing Device Price:</span>
+                        <span className="font-medium">₵{(swapProduct.discount_price || swapProduct.selling_price).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-700">Incoming Device Value:</span>
+                        <span className="font-medium text-green-600">-₵{(parseFloat(swapFormData.givenPhoneValue) || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-purple-300 pt-2 mt-2">
+                        <span className="font-bold text-purple-900">Balance to Pay:</span>
+                        <span className="font-bold text-purple-900">₵{(parseFloat(swapFormData.balancePaid) || 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cash Balance Paid (₵) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={swapFormData.balancePaid}
+                      onChange={(e) => setSwapFormData({...swapFormData, balancePaid: e.target.value})}
+                      placeholder="0.00"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Amount customer actually paid after trade-in value</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setShowSwapModal(false)}
+                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={addAsSwap}
+                    className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold"
+                  >
+                    🔄 Add as Swap
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Receipt Modal */}
       {showReceipt && lastSale && (

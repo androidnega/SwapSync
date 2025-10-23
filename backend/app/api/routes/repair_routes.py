@@ -615,3 +615,261 @@ def delete_repair(
     
     return None
 
+
+# ============================================================================
+# REPAIR SALES (Product Items Used in Repairs)
+# ============================================================================
+
+@router.post("/{repair_id}/items", status_code=status.HTTP_201_CREATED)
+def add_repair_item(
+    repair_id: int,
+    item_data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Add a product item to a repair
+    - Deducts stock from product inventory
+    - Records sale attributed to repairer
+    - Calculates profit
+    """
+    from app.core.permissions import can_book_repairs
+    from app.models.product import Product
+    from app.models.repair_sale import RepairSale
+    
+    # Only repairers and shopkeepers can add items
+    if not can_book_repairs(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Only repairers and shopkeepers can add repair items. Your role: {current_user.role.value}"
+        )
+    
+    # Verify repair exists
+    repair = db.query(Repair).filter(Repair.id == repair_id).first()
+    if not repair:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Repair not found"
+        )
+    
+    # Extract data
+    product_id = item_data.get("product_id")
+    quantity = item_data.get("quantity", 1)
+    unit_price = item_data.get("unit_price")  # Optional, will use product's selling_price if not provided
+    notes = item_data.get("notes", "")
+    
+    if not product_id or quantity <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="product_id is required and quantity must be greater than 0"
+        )
+    
+    # Get product
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with ID {product_id} not found"
+        )
+    
+    # Check stock availability
+    if product.quantity < quantity:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Insufficient stock for {product.name}. Available: {product.quantity}, Requested: {quantity}"
+        )
+    
+    # Use product's selling_price if unit_price not provided
+    if unit_price is None:
+        unit_price = product.selling_price
+    
+    # Calculate profit
+    cost_price = product.cost_price
+    profit = (unit_price - cost_price) * quantity
+    
+    try:
+        # Begin transaction
+        # 1. Deduct stock
+        product.quantity -= quantity
+        
+        # 2. Create repair_sale record
+        repair_sale = RepairSale(
+            repair_id=repair_id,
+            product_id=product_id,
+            repairer_id=current_user.id,
+            quantity=quantity,
+            unit_price=unit_price,
+            cost_price=cost_price,
+            profit=profit,
+            notes=notes
+        )
+        db.add(repair_sale)
+        
+        # 3. Update repair items_cost
+        repair.items_cost += (unit_price * quantity)
+        repair.cost = repair.service_cost + repair.items_cost
+        
+        db.commit()
+        db.refresh(repair_sale)
+        db.refresh(product)
+        db.refresh(repair)
+        
+        # Log activity
+        log_activity(
+            db=db,
+            user=current_user,
+            action=f"added {quantity}x {product.name} to repair #{repair_id}",
+            module="repairs",
+            target_id=repair_id,
+            details=f"Product: {product.name}, Qty: {quantity}, Price: {unit_price}, Profit: {profit}"
+        )
+        
+        return {
+            "success": True,
+            "message": f"Added {quantity}x {product.name} to repair",
+            "repair_sale": {
+                "id": repair_sale.id,
+                "product_id": product_id,
+                "product_name": product.name,
+                "quantity": quantity,
+                "unit_price": unit_price,
+                "cost_price": cost_price,
+                "profit": profit,
+                "total_price": repair_sale.total_price,
+                "total_cost": repair_sale.total_cost
+            },
+            "updated_stock": product.quantity,
+            "updated_repair_cost": repair.cost
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add item to repair: {str(e)}"
+        )
+
+
+@router.get("/{repair_id}/items")
+def get_repair_items(
+    repair_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all items used in a repair"""
+    from app.models.repair_sale import RepairSale
+    from app.models.product import Product
+    
+    # Verify repair exists
+    repair = db.query(Repair).filter(Repair.id == repair_id).first()
+    if not repair:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Repair not found"
+        )
+    
+    # Get all repair sales for this repair
+    repair_sales = db.query(RepairSale).filter(RepairSale.repair_id == repair_id).all()
+    
+    items = []
+    for rs in repair_sales:
+        product = db.query(Product).filter(Product.id == rs.product_id).first()
+        repairer = db.query(User).filter(User.id == rs.repairer_id).first()
+        
+        items.append({
+            "id": rs.id,
+            "product_id": rs.product_id,
+            "product_name": product.name if product else "Unknown",
+            "product_sku": product.sku if product else None,
+            "quantity": rs.quantity,
+            "unit_price": rs.unit_price,
+            "cost_price": rs.cost_price,
+            "total_price": rs.total_price,
+            "total_cost": rs.total_cost,
+            "profit": rs.profit,
+            "repairer_id": rs.repairer_id,
+            "repairer_name": repairer.username if repairer else "Unknown",
+            "notes": rs.notes,
+            "created_at": rs.created_at
+        })
+    
+    return {
+        "repair_id": repair_id,
+        "items": items,
+        "total_items": len(items),
+        "total_value": sum(item["total_price"] for item in items),
+        "total_profit": sum(item["profit"] for item in items)
+    }
+
+
+@router.delete("/{repair_id}/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_repair_item(
+    repair_id: int,
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Remove an item from a repair
+    - Restores stock to product inventory
+    - Removes repair_sale record
+    - Adjusts repair cost
+    """
+    from app.core.permissions import can_manage_repairs
+    from app.models.repair_sale import RepairSale
+    from app.models.product import Product
+    
+    if not can_manage_repairs(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to remove repair items"
+        )
+    
+    # Get repair_sale record
+    repair_sale = db.query(RepairSale).filter(
+        RepairSale.id == item_id,
+        RepairSale.repair_id == repair_id
+    ).first()
+    
+    if not repair_sale:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Repair item not found"
+        )
+    
+    # Get repair and product
+    repair = db.query(Repair).filter(Repair.id == repair_id).first()
+    product = db.query(Product).filter(Product.id == repair_sale.product_id).first()
+    
+    try:
+        # Restore stock
+        if product:
+            product.quantity += repair_sale.quantity
+        
+        # Update repair cost
+        if repair:
+            repair.items_cost -= (repair_sale.unit_price * repair_sale.quantity)
+            repair.cost = repair.service_cost + repair.items_cost
+        
+        # Delete repair_sale
+        db.delete(repair_sale)
+        db.commit()
+        
+        # Log activity
+        log_activity(
+            db=db,
+            user=current_user,
+            action=f"removed item from repair #{repair_id}",
+            module="repairs",
+            target_id=repair_id,
+            details=f"Product ID: {repair_sale.product_id}, Qty: {repair_sale.quantity}"
+        )
+        
+        return None
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to remove item: {str(e)}"
+        )

@@ -9,6 +9,7 @@ from app.models.sale import Sale
 from app.models.repair import Repair
 from app.models.repair_item import RepairItem
 from app.models.repair_item_usage import RepairItemUsage
+from app.models.repair_sale import RepairSale
 from app.models.user import User, UserRole
 from app.models.activity_log import ActivityLog
 from app.models.invoice import Invoice
@@ -26,7 +27,7 @@ from app.models.pending_resale import PendingResale, TransactionType, PhoneSaleS
 
 __all__ = [
     "Customer", "Phone", "PhoneStatus", "Swap", "Sale", "Repair", 
-    "RepairItem", "RepairItemUsage",
+    "RepairItem", "RepairItemUsage", "RepairSale",
     "ResaleStatus", "User", "UserRole", "ActivityLog", "Invoice", 
     "SMSLog", "Category", "Brand", "Product", "StockMovement", "ProductSale",
     "POSSale", "POSSaleItem",

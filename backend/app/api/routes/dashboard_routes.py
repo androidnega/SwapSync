@@ -22,6 +22,277 @@ from app.models.product import Product
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
+@router.get("/repairer-sales")
+def get_repairer_sales_stats(
+    start_date: str = None,
+    end_date: str = None,
+    repairer_id: int = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get sales statistics for repairers
+    Shows items sold by each repairer with amount, quantity, and profit
+    Managers can see all repairers in their company
+    """
+    from app.models.repair_sale import RepairSale
+    from app.core.permissions import can_view_analytics
+    
+    # Only managers and admins can view this
+    if not can_view_analytics(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managers and admins can view repairer sales statistics"
+        )
+    
+    # Get company user IDs for filtering
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    # Build query
+    query = db.query(
+        RepairSale.repairer_id,
+        User.username.label('repairer_name'),
+        User.full_name.label('repairer_full_name'),
+        func.count(RepairSale.id).label('items_sold_count'),
+        func.sum(RepairSale.quantity).label('total_quantity'),
+        func.sum(RepairSale.unit_price * RepairSale.quantity).label('gross_sales'),
+        func.sum(RepairSale.cost_price * RepairSale.quantity).label('total_cost'),
+        func.sum(RepairSale.profit).label('profit')
+    ).join(User, RepairSale.repairer_id == User.id)
+    
+    # Apply company filtering
+    if company_user_ids is not None:
+        query = query.filter(RepairSale.repairer_id.in_(company_user_ids))
+    
+    # Apply date filters
+    if start_date:
+        try:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            query = query.filter(RepairSale.created_at >= start_dt)
+        except ValueError:
+            pass
+    
+    if end_date:
+        try:
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            query = query.filter(RepairSale.created_at <= end_dt)
+        except ValueError:
+            pass
+    
+    # Apply repairer filter
+    if repairer_id:
+        query = query.filter(RepairSale.repairer_id == repairer_id)
+    
+    # Group by repairer
+    query = query.group_by(
+        RepairSale.repairer_id,
+        User.username,
+        User.full_name
+    )
+    
+    results = query.all()
+    
+    # Format results
+    repairer_stats = []
+    total_items = 0
+    total_qty = 0
+    total_sales = 0.0
+    total_costs = 0.0
+    total_profit = 0.0
+    
+    for row in results:
+        items_sold = row.items_sold_count or 0
+        qty = int(row.total_quantity or 0)
+        gross = float(row.gross_sales or 0.0)
+        cost = float(row.total_cost or 0.0)
+        profit = float(row.profit or 0.0)
+        
+        repairer_stats.append({
+            "repairer_id": row.repairer_id,
+            "repairer_name": row.repairer_name,
+            "repairer_full_name": row.repairer_full_name,
+            "items_sold_count": items_sold,
+            "total_quantity": qty,
+            "gross_sales": round(gross, 2),
+            "total_cost": round(cost, 2),
+            "profit": round(profit, 2),
+            "profit_margin": round((profit / gross * 100) if gross > 0 else 0, 2)
+        })
+        
+        total_items += items_sold
+        total_qty += qty
+        total_sales += gross
+        total_costs += cost
+        total_profit += profit
+    
+    return {
+        "repairers": repairer_stats,
+        "summary": {
+            "total_repairers": len(repairer_stats),
+            "total_items_sold": total_items,
+            "total_quantity": total_qty,
+            "total_sales": round(total_sales, 2),
+            "total_cost": round(total_costs, 2),
+            "total_profit": round(total_profit, 2),
+            "overall_margin": round((total_profit / total_sales * 100) if total_sales > 0 else 0, 2)
+        },
+        "filters_applied": {
+            "start_date": start_date,
+            "end_date": end_date,
+            "repairer_id": repairer_id
+        }
+    }
+
+
+@router.get("/repairer-sales/{repairer_id}/details")
+def get_repairer_sales_details(
+    repairer_id: int,
+    start_date: str = None,
+    end_date: str = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get detailed breakdown of items sold by a specific repairer
+    Shows per-product statistics
+    """
+    from app.models.repair_sale import RepairSale
+    from app.core.permissions import can_view_analytics
+    
+    if not can_view_analytics(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managers and admins can view repairer sales details"
+        )
+    
+    # Verify repairer exists
+    repairer = db.query(User).filter(User.id == repairer_id).first()
+    if not repairer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Repairer not found"
+        )
+    
+    # Get company user IDs for filtering
+    company_user_ids = get_company_user_ids(db, current_user)
+    
+    # Check if repairer belongs to same company
+    if company_user_ids is not None and repairer_id not in company_user_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only view repairers from your company"
+        )
+    
+    # Build query for product-level breakdown
+    query = db.query(
+        RepairSale.product_id,
+        Product.name.label('product_name'),
+        Product.sku.label('product_sku'),
+        func.count(RepairSale.id).label('sales_count'),
+        func.sum(RepairSale.quantity).label('total_quantity'),
+        func.sum(RepairSale.unit_price * RepairSale.quantity).label('gross_sales'),
+        func.sum(RepairSale.cost_price * RepairSale.quantity).label('total_cost'),
+        func.sum(RepairSale.profit).label('profit')
+    ).join(Product, RepairSale.product_id == Product.id
+    ).filter(RepairSale.repairer_id == repairer_id)
+    
+    # Apply date filters
+    if start_date:
+        try:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            query = query.filter(RepairSale.created_at >= start_dt)
+        except ValueError:
+            pass
+    
+    if end_date:
+        try:
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            query = query.filter(RepairSale.created_at <= end_dt)
+        except ValueError:
+            pass
+    
+    # Group by product
+    query = query.group_by(
+        RepairSale.product_id,
+        Product.name,
+        Product.sku
+    ).order_by(func.sum(RepairSale.profit).desc())
+    
+    results = query.all()
+    
+    # Format results
+    products = []
+    for row in results:
+        gross = float(row.gross_sales or 0.0)
+        cost = float(row.total_cost or 0.0)
+        profit = float(row.profit or 0.0)
+        
+        products.append({
+            "product_id": row.product_id,
+            "product_name": row.product_name,
+            "product_sku": row.product_sku,
+            "sales_count": row.sales_count,
+            "total_quantity": int(row.total_quantity or 0),
+            "gross_sales": round(gross, 2),
+            "total_cost": round(cost, 2),
+            "profit": round(profit, 2),
+            "profit_margin": round((profit / gross * 100) if gross > 0 else 0, 2)
+        })
+    
+    # Get repair list for this repairer
+    repair_sales_query = db.query(RepairSale).filter(RepairSale.repairer_id == repairer_id)
+    
+    if start_date:
+        try:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            repair_sales_query = repair_sales_query.filter(RepairSale.created_at >= start_dt)
+        except ValueError:
+            pass
+    
+    if end_date:
+        try:
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            repair_sales_query = repair_sales_query.filter(RepairSale.created_at <= end_dt)
+        except ValueError:
+            pass
+    
+    recent_sales = repair_sales_query.order_by(RepairSale.created_at.desc()).limit(20).all()
+    
+    recent_items = []
+    for rs in recent_sales:
+        product = db.query(Product).filter(Product.id == rs.product_id).first()
+        repair = db.query(Repair).filter(Repair.id == rs.repair_id).first()
+        
+        recent_items.append({
+            "id": rs.id,
+            "repair_id": rs.repair_id,
+            "repair_description": repair.phone_description if repair else "Unknown",
+            "product_id": rs.product_id,
+            "product_name": product.name if product else "Unknown",
+            "quantity": rs.quantity,
+            "unit_price": rs.unit_price,
+            "total_price": rs.total_price,
+            "profit": rs.profit,
+            "created_at": rs.created_at.isoformat()
+        })
+    
+    return {
+        "repairer": {
+            "id": repairer.id,
+            "username": repairer.username,
+            "full_name": repairer.full_name,
+            "role": repairer.role.value
+        },
+        "products": products,
+        "recent_sales": recent_items,
+        "summary": {
+            "unique_products": len(products),
+            "total_sales": sum(p["gross_sales"] for p in products),
+            "total_profit": sum(p["profit"] for p in products)
+        }
+    }
+
+
 @router.get("/test")
 def test_dashboard(current_user: User = Depends(get_current_user)):
     """Test endpoint to verify dashboard access"""

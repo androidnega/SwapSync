@@ -254,23 +254,73 @@ def delete_phone(
             detail="Phone not found"
         )
     
+    # Check for dependent records before deletion
+    from app.models.sale import Sale
+    from app.models.swap import Swap
+    from app.models.pending_resale import PendingResale
+    from app.models.repair import Repair
+    
+    dependent_checks = []
+    
+    # Check sales
+    sales_count = db.query(Sale).filter(Sale.phone_id == phone_id).count()
+    if sales_count > 0:
+        dependent_checks.append(f"{sales_count} sale(s)")
+    
+    # Check swaps (phone given to customer)
+    swaps_count = db.query(Swap).filter(Swap.new_phone_id == phone_id).count()
+    if swaps_count > 0:
+        dependent_checks.append(f"{swaps_count} swap(s)")
+    
+    # Check pending resales
+    pending_resales_count = db.query(PendingResale).filter(
+        (PendingResale.sold_phone_id == phone_id) | 
+        (PendingResale.incoming_phone_id == phone_id)
+    ).count()
+    if pending_resales_count > 0:
+        dependent_checks.append(f"{pending_resales_count} pending resale(s)")
+    
+    # Check repairs
+    repairs_count = db.query(Repair).filter(Repair.phone_id == phone_id).count()
+    if repairs_count > 0:
+        dependent_checks.append(f"{repairs_count} repair(s)")
+    
+    # Check if any phones reference this via swapped_from_id
+    phones_from_swaps = db.query(Phone).filter(Phone.swapped_from_id == phone_id).count()
+    if phones_from_swaps > 0:
+        dependent_checks.append(f"{phones_from_swaps} phone(s) created from swaps")
+    
+    # If dependent records exist, return 409 Conflict
+    if dependent_checks:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot delete phone because it has related records: {', '.join(dependent_checks)}. Archive this phone instead or remove dependent records first."
+        )
+    
     # Store details before deletion
     phone_details = f"{phone.brand} {phone.model} - IMEI: {phone.imei}"
     
-    db.delete(phone)
-    db.commit()
-    
-    # Log activity
-    log_activity(
-        db=db,
-        user=current_user,
-        action=f"deleted phone from inventory",
-        module="phones",
-        target_id=phone_id,
-        details=phone_details
-    )
-    
-    return None
+    try:
+        db.delete(phone)
+        db.commit()
+        
+        # Log activity
+        log_activity(
+            db=db,
+            user=current_user,
+            action=f"deleted phone from inventory",
+            module="phones",
+            target_id=phone_id,
+            details=phone_details
+        )
+        
+        return None
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete phone: {str(e)}"
+        )
 
 
 class BulkDeleteRequest(BaseModel):
@@ -309,12 +359,37 @@ def bulk_delete_phones(
         )
     
     try:
+        from app.models.sale import Sale
+        from app.models.swap import Swap
+        from app.models.pending_resale import PendingResale
+        from app.models.repair import Repair
+        
         deleted_phones = []
+        skipped_phones = []
         
         for phone_id in request.phone_ids:
             # Get the phone
             phone = db.query(Phone).filter(Phone.id == phone_id).first()
             if not phone:
+                skipped_phones.append({"id": phone_id, "reason": "Phone not found"})
+                continue
+            
+            # Check for dependent records
+            has_sales = db.query(Sale).filter(Sale.phone_id == phone_id).count() > 0
+            has_swaps = db.query(Swap).filter(Swap.new_phone_id == phone_id).count() > 0
+            has_resales = db.query(PendingResale).filter(
+                (PendingResale.sold_phone_id == phone_id) | 
+                (PendingResale.incoming_phone_id == phone_id)
+            ).count() > 0
+            has_repairs = db.query(Repair).filter(Repair.phone_id == phone_id).count() > 0
+            
+            if has_sales or has_swaps or has_resales or has_repairs:
+                skipped_phones.append({
+                    "id": phone_id,
+                    "brand": phone.brand,
+                    "model": phone.model,
+                    "reason": "Has related records (sales, swaps, repairs, or resales)"
+                })
                 continue
                 
             phone_details = f"{phone.brand} {phone.model} - IMEI: {phone.imei}"
@@ -344,7 +419,13 @@ def bulk_delete_phones(
         
         return {
             "message": f"Successfully deleted {len(deleted_phones)} phones",
-            "deleted_phones": deleted_phones
+            "deleted_phones": deleted_phones,
+            "skipped_phones": skipped_phones,
+            "summary": {
+                "total_requested": len(request.phone_ids),
+                "deleted": len(deleted_phones),
+                "skipped": len(skipped_phones)
+            }
         }
         
     except Exception as e:

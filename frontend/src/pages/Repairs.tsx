@@ -31,6 +31,22 @@ interface RepairItem {
   min_stock_level: number;
 }
 
+interface Product {
+  id: number;
+  name: string;
+  sku?: string;
+  barcode?: string;
+  category_id: number;
+  brand?: string;
+  cost_price: number;
+  selling_price: number;
+  quantity: number;
+  min_stock_level: number;
+  description?: string;
+  is_active: boolean;
+  is_available: boolean;
+}
+
 interface Category {
   id: number;
   name: string;
@@ -59,6 +75,7 @@ const Repairs: React.FC = () => {
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [repairItems, setRepairItems] = useState<RepairItem[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [hubStats, setHubStats] = useState<HubStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,7 +94,7 @@ const Repairs: React.FC = () => {
     service_cost: '',
     due_date: '',
   });
-  const [selectedItems, setSelectedItems] = useState<{item_id: number, quantity: number, name: string, price: number}[]>([]);
+  const [selectedItems, setSelectedItems] = useState<{item_id: number, quantity: number, name: string, price: number, sku?: string, stock: number}[]>([]);
   const [itemFormData, setItemFormData] = useState({
     name: '',
     description: '',
@@ -108,6 +125,7 @@ const Repairs: React.FC = () => {
     fetchUserRole();
     fetchCustomers();
     fetchRepairItems(); // Fetch for all roles (repairers need to select items too)
+    fetchProducts(); // Fetch products from inventory for repair items
     fetchCategories(); // Fetch categories for repair item modal
     fetchHubStats(); // Fetch comprehensive hub statistics
   }, []);
@@ -165,6 +183,20 @@ const Repairs: React.FC = () => {
       setRepairItems(response.data);
     } catch (error) {
       console.error('Failed to fetch repair items:', error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await api.get('/products/', {
+        params: {
+          in_stock_only: true,  // Only show products with stock
+          limit: 1000  // Get all products
+        }
+      });
+      setProducts(response.data.products || response.data);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
     }
   };
 
@@ -1646,35 +1678,41 @@ const Repairs: React.FC = () => {
                   />
                 </div>
 
-                {/* Repair Items Selection */}
+                {/* Repair Items Selection - Unified Inventory */}
                 <div className="border-t border-gray-200 pt-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Repair Items (Optional)
+                    🔧 Add Items Used (Optional)
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">Select parts/components needed for this repair</p>
+                  <p className="text-xs text-gray-500 mb-2">Search inventory for spare parts, batteries, screens, etc.</p>
                   
                   {/* Selected Items */}
                   {selectedItems.length > 0 && (
                     <div className="mb-2 space-y-1.5">
                       {selectedItems.map(item => (
-                        <div key={item.item_id} className="flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
-                          <span className="flex-1 text-sm font-medium text-gray-900">{item.name}</span>
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => handleItemQuantityChange(item.item_id, parseInt(e.target.value))}
-                            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center"
-                          />
-                          <span className="text-sm text-gray-600">×</span>
-                          <span className="w-20 text-sm font-medium text-green-600">₵{item.price.toFixed(2)}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item.item_id)}
-                            className="text-red-600 hover:text-red-800 text-sm"
-                          >
-                            ✕
-                          </button>
+                        <div key={item.item_id} className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">{item.name}</div>
+                            {item.sku && <div className="text-xs text-gray-500">SKU: {item.sku}</div>}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="1"
+                              max={item.stock}
+                              value={item.quantity}
+                              onChange={(e) => handleItemQuantityChange(item.item_id, parseInt(e.target.value))}
+                              className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                            />
+                            <span className="text-xs text-gray-600">×</span>
+                            <span className="w-16 text-sm font-medium text-green-600 text-right">₵{item.price.toFixed(2)}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItem(item.item_id)}
+                              className="text-red-600 hover:text-red-800 text-sm ml-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1684,7 +1722,7 @@ const Repairs: React.FC = () => {
                   <div className="mb-2">
                     <input
                       type="text"
-                      placeholder="🔍 Click to search repair items by name or category..."
+                      placeholder="🔍 Search by product name, SKU, or brand..."
                       value={itemSearchTerm}
                       onChange={(e) => setItemSearchTerm(e.target.value)}
                       onFocus={() => setShowItemsDropdown(true)}
@@ -1693,58 +1731,87 @@ const Repairs: React.FC = () => {
                     />
                   </div>
 
-                  {/* Available Items Dropdown */}
+                  {/* Available Products Dropdown */}
                   {showItemsDropdown && (
-                    <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg bg-white">
-                    {repairItems.filter(item => item.stock_quantity > 0).length === 0 ? (
-                      <div className="p-3 text-sm text-gray-500 text-center">
-                        No repair items in stock
-                      </div>
-                    ) : (
-                      repairItems
-                        .filter(item => 
-                          item.stock_quantity > 0 && 
-                          !selectedItems.find(si => si.item_id === item.id) &&
-                          (itemSearchTerm === '' || 
-                           item.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||
-                           (item.category && item.category.toLowerCase().includes(itemSearchTerm.toLowerCase())))
-                        )
-                        .map(item => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => {
-                              handleAddItem(item);
-                              setItemSearchTerm(''); // Clear search after selection
-                              setShowItemsDropdown(false);
-                            }}
-                            className="w-full flex items-center justify-between p-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 text-left transition-colors"
-                          >
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                              {item.category && (
-                                <div className="text-xs text-gray-500 mt-0.5">{item.category}</div>
-                              )}
+                    <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-lg">
+                      {products.filter(p => p.quantity > 0 && p.is_active).length === 0 ? (
+                        <div className="p-4 text-sm text-gray-500 text-center">
+                          <div className="mb-2">📦</div>
+                          No products available in inventory
+                        </div>
+                      ) : (
+                        <>
+                          {products
+                            .filter(product => 
+                              product.quantity > 0 && 
+                              product.is_active &&
+                              !selectedItems.find(si => si.item_id === product.id) &&
+                              (itemSearchTerm === '' || 
+                               product.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||
+                               (product.sku && product.sku.toLowerCase().includes(itemSearchTerm.toLowerCase())) ||
+                               (product.brand && product.brand.toLowerCase().includes(itemSearchTerm.toLowerCase())))
+                            )
+                            .slice(0, 20) // Show max 20 results
+                            .map(product => (
+                              <button
+                                key={`product-${product.id}`}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedItems([...selectedItems, {
+                                    item_id: product.id,
+                                    quantity: 1,
+                                    name: product.name,
+                                    price: product.selling_price,
+                                    sku: product.sku,
+                                    stock: product.quantity
+                                  }]);
+                                  setItemSearchTerm('');
+                                  setShowItemsDropdown(false);
+                                }}
+                                className="w-full flex items-start gap-3 p-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 text-left transition-colors"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                    {product.brand && (
+                                      <span className="text-xs text-gray-600">{product.brand}</span>
+                                    )}
+                                    {product.sku && (
+                                      <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">SKU: {product.sku}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3 flex-shrink-0">
+                                  <div className="text-right">
+                                    <div className={`text-xs font-medium px-2 py-0.5 rounded ${
+                                      product.quantity <= product.min_stock_level 
+                                        ? 'bg-yellow-100 text-yellow-700' 
+                                        : 'bg-green-100 text-green-700'
+                                    }`}>
+                                      {product.quantity} in stock
+                                    </div>
+                                  </div>
+                                  <div className="text-sm font-medium text-green-600">₵{product.selling_price.toFixed(2)}</div>
+                                  <div className="text-blue-600 text-xl font-bold">+</div>
+                                </div>
+                              </button>
+                            ))}
+                          {products.filter(product => 
+                            product.quantity > 0 && 
+                            product.is_active &&
+                            !selectedItems.find(si => si.item_id === product.id) &&
+                            (itemSearchTerm === '' || 
+                             product.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||
+                             (product.sku && product.sku.toLowerCase().includes(itemSearchTerm.toLowerCase())) ||
+                             (product.brand && product.brand.toLowerCase().includes(itemSearchTerm.toLowerCase())))
+                          ).length === 0 && itemSearchTerm !== '' && (
+                            <div className="p-4 text-sm text-gray-500 text-center">
+                              <div className="mb-1">🔍</div>
+                              No products match "{itemSearchTerm}"
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{item.stock_quantity} in stock</span>
-                              <span className="text-sm font-medium text-green-600">₵{item.selling_price.toFixed(2)}</span>
-                              <span className="text-blue-600 text-lg">+</span>
-                            </div>
-                          </button>
-                        ))
-                    )}
-                    {repairItems.filter(item => 
-                      item.stock_quantity > 0 && 
-                      !selectedItems.find(si => si.item_id === item.id) &&
-                      (itemSearchTerm === '' || 
-                       item.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||
-                       (item.category && item.category.toLowerCase().includes(itemSearchTerm.toLowerCase())))
-                    ).length === 0 && itemSearchTerm !== '' && (
-                      <div className="p-3 text-sm text-gray-500 text-center">
-                        No items match "{itemSearchTerm}"
-                      </div>
-                    )}
+                          )}
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

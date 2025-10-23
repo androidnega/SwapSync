@@ -1084,6 +1084,27 @@ const Products: React.FC = () => {
                       disabled={userRole === 'shop_keeper'}
                     />
                   </div>
+
+                  {/* Available for Swap - Show for all products */}
+                  {(userRole === 'manager' || userRole === 'ceo') && (
+                    <div className="col-span-2 border-t border-gray-200 pt-4">
+                      <label className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_swappable}
+                          onChange={(e) => setFormData({ ...formData, is_swappable: e.target.checked })}
+                          className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          disabled={userRole === 'shop_keeper'}
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">Available for Swap</span>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Make this product available for swap on sales screens. Swaps follow swapping hub lifecycle (pending, accepted, completed).
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
                 </div>
 
                 {/* Phone-specific fields - only show when phone category is selected */}
@@ -1124,19 +1145,7 @@ const Products: React.FC = () => {
                         </select>
                       </div>
 
-                      {/* Is Swappable */}
-                      <div className="col-span-2">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={formData.is_swappable}
-                            onChange={(e) => setFormData({ ...formData, is_swappable: e.target.checked })}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            disabled={userRole === 'shop_keeper'}
-                          />
-                          <span className="text-sm font-medium text-gray-700">Available for Phone Swaps</span>
-                        </label>
-                      </div>
+                      {/* Is Swappable - Already shown above for all products, no need to duplicate for phones */}
 
                       {/* Phone Specifications - Dynamic based on brand */}
                       <div className="col-span-2">
