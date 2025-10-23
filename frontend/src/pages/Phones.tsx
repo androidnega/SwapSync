@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api, { phoneAPI, brandAPI, categoryAPI, authAPI, bulkUploadAPI } from '../services/api';
+import api, { phoneAPI, brandAPI, categoryAPI, authAPI, bulkUploadAPI, productAPI } from '../services/api';
 import axios from 'axios';
 import { getToken } from '../services/authService';
 
@@ -87,10 +87,39 @@ const Phones: React.FC<PhonesProps> = ({ onUpdate }) => {
 
   const fetchPhones = async () => {
     try {
-      const response = await phoneAPI.getAll(filterAvailable === 'available');
-      setPhones(response.data);
-    } catch (error) {
-      console.error('Failed to fetch phones:', error);
+      setLoading(true);
+      // Fetch swappable phone products from unified product system
+      const response = await productAPI.getAll({ 
+        in_stock_only: false, 
+        limit: 500,
+        is_phone: true,
+        is_swappable: true
+      });
+      
+      // Transform product data to phone format for compatibility
+      const swappablePhones = response.data.map((product: any) => ({
+        id: product.id,
+        unique_id: product.unique_id,
+        brand: product.brand,
+        model: product.name,
+        condition: product.phone_condition || product.condition,
+        value: product.selling_price,
+        cost_price: product.cost_price,
+        is_available: product.is_available && product.quantity > 0,
+        is_swappable: product.is_swappable,
+        status: product.phone_status || 'AVAILABLE',
+        imei: product.imei,
+        specs: product.phone_specs || product.specs,
+        category_id: product.category_id,
+        added_at: product.created_at,
+        created_at: product.created_at,
+        swapped_from_id: null
+      }));
+      
+      setPhones(swappablePhones);
+    } catch (error: any) {
+      console.error('Failed to fetch swappable phones:', error);
+      setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
     } finally {
       setLoading(false);
     }

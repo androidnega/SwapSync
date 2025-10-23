@@ -23,25 +23,31 @@ const SwappingHub: React.FC = () => {
   const fetchCounts = async () => {
     try {
       const token = getToken();
-      const [pendingResponse, phonesResponse] = await Promise.all([
+      const [pendingResponse, swappablePhonesResponse] = await Promise.all([
         axios.get(`${API_URL}/pending-resales/`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { status_filter: 'pending' }
         }),
-        axios.get(`${API_URL}/phones/`, {
-          headers: { Authorization: `Bearer ${token}` }
+        axios.get(`${API_URL}/products/`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { 
+            is_phone: true,
+            is_swappable: true,
+            in_stock_only: true,
+            limit: 1000
+          }
         }),
       ]);
       
       setPendingCount(pendingResponse.data.length);
-      setPhoneCount(phonesResponse.data.length);
+      setPhoneCount(swappablePhonesResponse.data.length);
     } catch (error) {
       console.error('Failed to fetch counts:', error);
     }
   };
 
   const tabs = [
-    { id: 'phones' as TabType, label: 'Phone Inventory', icon: '📱', count: phoneCount },
+    { id: 'phones' as TabType, label: 'Swappable Phones', icon: '📱', count: phoneCount },
     { id: 'swaps' as TabType, label: 'Phone Swaps', icon: '🔄', count: null },
     { id: 'pending-resales' as TabType, label: 'Pending Resales', icon: '⏳', count: pendingCount },
     { id: 'sold-phones' as TabType, label: 'Sold Phones', icon: '✅', count: null },

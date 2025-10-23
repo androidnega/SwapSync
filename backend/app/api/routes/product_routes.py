@@ -278,6 +278,8 @@ def list_products(
     category_id: Optional[int] = Query(None, description="Filter by category"),
     brand: Optional[str] = Query(None, description="Filter by brand"),
     in_stock_only: bool = Query(True, description="Show only in-stock products"),
+    is_phone: Optional[bool] = Query(None, description="Filter by phone products"),
+    is_swappable: Optional[bool] = Query(None, description="Filter by swappable products"),
     search: Optional[str] = Query(None, description="Search by name, SKU, or brand"),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=1000),  # ✅ Increased max limit to 1000 for large requests
@@ -320,6 +322,12 @@ def list_products(
     
     if in_stock_only:
         query = query.filter(Product.quantity > 0)
+    
+    if is_phone is not None:
+        query = query.filter(Product.is_phone == is_phone)
+    
+    if is_swappable is not None:
+        query = query.filter(Product.is_swappable == is_swappable)
     
     if search:
         search_pattern = f"%{search}%"
