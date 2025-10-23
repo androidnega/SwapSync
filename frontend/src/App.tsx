@@ -16,7 +16,6 @@ import PendingResales from './pages/PendingResales';
 import StaffManagement from './pages/StaffManagement';
 import ActivityLogs from './pages/ActivityLogs';
 import Reports from './pages/Reports';
-import ProfitReports from './pages/ProfitReports';
 import Login from './pages/Login';
 import NotAuthorized from './pages/NotAuthorized';
 import Maintenance from './pages/Maintenance';
@@ -242,11 +241,6 @@ function AppContent() {
           <Route path="/reports" element={
             <ProtectedRoute allowedRoles={['manager', 'ceo']} userRole={user.role}>
               <Reports />
-            </ProtectedRoute>
-          } />
-          <Route path="/profit-reports" element={
-            <ProtectedRoute allowedRoles={['manager', 'ceo']} userRole={user.role}>
-              <ProfitReports />
             </ProtectedRoute>
           } />
           <Route path="/audit-code" element={

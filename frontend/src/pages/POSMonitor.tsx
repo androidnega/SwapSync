@@ -10,7 +10,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEye, faMoneyBillWave, faShoppingCart, faTachometerAlt,
   faUsers, faCalendar, faReceipt, faChartLine, faCreditCard,
-  faMobileAlt, faMoneyBill, faArrowUp, faArrowDown, faTrash
+  faMobileAlt, faMoneyBill, faArrowUp, faArrowDown, faTrash,
+  faWarehouse, faBox, faTools, faExchangeAlt, faStore
 } from '@fortawesome/free-solid-svg-icons';
 import POSThermalReceipt from '../components/POSThermalReceipt';
 
@@ -50,14 +51,51 @@ interface POSSummary {
   top_selling_products: Array<{ product: string; quantity: number }>;
 }
 
+interface ManagerMetrics {
+  // POS Metrics
+  pos_metrics: {
+    today_revenue: number;
+    today_transactions: number;
+    today_profit: number;
+    total_pos_revenue: number;
+    total_pos_profit: number;
+  };
+  
+  // System Metrics
+  system_metrics: {
+    total_customers: number;
+    total_inventory_value: number;
+    total_system_profit: number;
+    inventory_status: {
+      total_items: number;
+      low_stock_items: number;
+    };
+  };
+  
+  // Hub Metrics
+  hub_metrics: {
+    product_hub_profit: number;
+    repairer_hub_profit: number;
+    swapping_hub_profit: number;
+  };
+  
+  // Staff Performance
+  staff_metrics: {
+    shopkeeper_sales: number;
+    repairer_repairs: number;
+  };
+}
+
 const POSMonitor: React.FC = () => {
   const [sales, setSales] = useState<POSSale[]>([]);
   const [summary, setSummary] = useState<POSSummary | null>(null);
+  const [managerMetrics, setManagerMetrics] = useState<ManagerMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedSale, setSelectedSale] = useState<POSSale | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [companyName, setCompanyName] = useState('Your Shop');
   const [message, setMessage] = useState('');
+  const [userRole, setUserRole] = useState<string>('');
   
   const [filterPayment, setFilterPayment] = useState<string>('all');
   const [filterDate, setFilterDate] = useState<string>('all'); // all, today, week, month
@@ -77,14 +115,121 @@ const POSMonitor: React.FC = () => {
       const summaryRes = await posSaleAPI.getSummary();
       setSummary(summaryRes.data);
       
-      // Get company name using authAPI service
+      // Get company name and user role using authAPI service
       const userRes = await authAPI.me();
       setCompanyName(userRes.data.company_name || userRes.data.display_name || 'Your Shop');
+      setUserRole(userRes.data.role || '');
+      
+      // Load manager metrics if user is manager or CEO
+      if (userRes.data.role === 'manager' || userRes.data.role === 'ceo') {
+        await loadManagerMetrics();
+      }
     } catch (error: any) {
       console.error('Failed to load POS data:', error);
       setMessage('❌ Failed to load POS data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadManagerMetrics = async () => {
+    try {
+      // Fetch dashboard cards which contain all manager metrics
+      const response = await axios.get(`${API_URL}/dashboard/cards`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      
+      const cards = response.data;
+      
+      // Extract metrics from dashboard cards
+      const metrics: ManagerMetrics = {
+        pos_metrics: {
+          today_revenue: 0,
+          today_transactions: 0,
+          today_profit: 0,
+          total_pos_revenue: 0,
+          total_pos_profit: 0
+        },
+        system_metrics: {
+          total_customers: 0,
+          total_inventory_value: 0,
+          total_system_profit: 0,
+          inventory_status: {
+            total_items: 0,
+            low_stock_items: 0
+          }
+        },
+        hub_metrics: {
+          product_hub_profit: 0,
+          repairer_hub_profit: 0,
+          swapping_hub_profit: 0
+        },
+        staff_metrics: {
+          shopkeeper_sales: 0,
+          repairer_repairs: 0
+        }
+      };
+      
+      // Parse dashboard cards to extract metrics
+      cards.forEach((card: any) => {
+        switch (card.id) {
+          case 'today_revenue':
+            metrics.pos_metrics.today_revenue = parseFloat(card.value.replace('₵', '').replace(',', ''));
+            break;
+          case 'total_customers':
+            metrics.system_metrics.total_customers = parseInt(card.value);
+            break;
+          case 'inventory_status':
+            const inventoryMatch = card.value.match(/(\d+) items/);
+            if (inventoryMatch) {
+              metrics.system_metrics.inventory_status.total_items = parseInt(inventoryMatch[1]);
+            }
+            const lowStockMatch = card.subtitle?.match(/(\d+) low stock/);
+            if (lowStockMatch) {
+              metrics.system_metrics.inventory_status.low_stock_items = parseInt(lowStockMatch[1]);
+            }
+            break;
+          case 'product_hub_profit':
+            metrics.hub_metrics.product_hub_profit = parseFloat(card.value.replace('₵', '').replace(',', ''));
+            break;
+          case 'repairer_hub_profit':
+            metrics.hub_metrics.repairer_hub_profit = parseFloat(card.value.replace('₵', '').replace(',', ''));
+            break;
+          case 'swapping_hub_profit':
+            metrics.hub_metrics.swapping_hub_profit = parseFloat(card.value.replace('₵', '').replace(',', ''));
+            break;
+          case 'total_system_profit':
+            metrics.system_metrics.total_system_profit = parseFloat(card.value.replace('₵', '').replace(',', ''));
+            break;
+          case 'total_inventory_value':
+            metrics.system_metrics.total_inventory_value = parseFloat(card.value.replace('₵', '').replace(',', ''));
+            break;
+          case 'shopkeeper_performance':
+            const shopkeeperMatch = card.value.match(/(\d+) sales/);
+            if (shopkeeperMatch) {
+              metrics.staff_metrics.shopkeeper_sales = parseInt(shopkeeperMatch[1]);
+            }
+            break;
+          case 'repairer_performance':
+            const repairerMatch = card.value.match(/(\d+) repairs/);
+            if (repairerMatch) {
+              metrics.staff_metrics.repairer_repairs = parseInt(repairerMatch[1]);
+            }
+            break;
+        }
+      });
+      
+      // Calculate POS metrics from summary
+      if (summary) {
+        metrics.pos_metrics.total_pos_revenue = summary.total_revenue;
+        metrics.pos_metrics.total_pos_profit = summary.total_profit;
+        metrics.pos_metrics.today_transactions = summary.total_transactions;
+        metrics.pos_metrics.today_profit = summary.total_profit;
+      }
+      
+      setManagerMetrics(metrics);
+    } catch (error: any) {
+      console.error('Failed to load manager metrics:', error);
     }
   };
 
@@ -216,6 +361,108 @@ const POSMonitor: React.FC = () => {
             <div className="text-3xl font-bold text-orange-800">{formatCurrency(summary.average_transaction_value)}</div>
             <div className="text-sm text-orange-600 mt-2">
               Per sale
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manager Metrics - Only for Managers and CEOs */}
+      {managerMetrics && (userRole === 'manager' || userRole === 'ceo') && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <FontAwesomeIcon icon={faTachometerAlt} className="text-blue-600" />
+            Manager Dashboard
+          </h2>
+          
+          {/* System Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-2">
+                <FontAwesomeIcon icon={faUsers} className="text-3xl text-blue-600" />
+                <span className="text-sm text-blue-600">Total Customers</span>
+              </div>
+              <div className="text-3xl font-bold text-blue-800">{managerMetrics.system_metrics.total_customers}</div>
+              <div className="text-sm text-blue-600 mt-2">Customer base</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-2">
+                <FontAwesomeIcon icon={faChartLine} className="text-3xl text-green-600" />
+                <span className="text-sm text-green-600">System Profit</span>
+              </div>
+              <div className="text-3xl font-bold text-green-800">{formatCurrency(managerMetrics.system_metrics.total_system_profit)}</div>
+              <div className="text-sm text-green-600 mt-2">All hubs combined</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-2">
+                <FontAwesomeIcon icon={faWarehouse} className="text-3xl text-purple-600" />
+                <span className="text-sm text-purple-600">Inventory Value</span>
+              </div>
+              <div className="text-3xl font-bold text-purple-800">{formatCurrency(managerMetrics.system_metrics.total_inventory_value)}</div>
+              <div className="text-sm text-purple-600 mt-2">Current stock worth</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-2">
+                <FontAwesomeIcon icon={faBox} className="text-3xl text-orange-600" />
+                <span className="text-sm text-orange-600">Inventory Status</span>
+              </div>
+              <div className="text-3xl font-bold text-orange-800">{managerMetrics.system_metrics.inventory_status.total_items}</div>
+              <div className="text-sm text-orange-600 mt-2">
+                {managerMetrics.system_metrics.inventory_status.low_stock_items} low stock
+              </div>
+            </div>
+          </div>
+
+          {/* Hub Performance */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-2">
+                <FontAwesomeIcon icon={faShoppingCart} className="text-3xl text-emerald-600" />
+                <span className="text-sm text-emerald-600">Product Hub</span>
+              </div>
+              <div className="text-3xl font-bold text-emerald-800">{formatCurrency(managerMetrics.hub_metrics.product_hub_profit)}</div>
+              <div className="text-sm text-emerald-600 mt-2">Sales profit</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-teal-50 to-teal-100 border border-teal-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-2">
+                <FontAwesomeIcon icon={faTools} className="text-3xl text-teal-600" />
+                <span className="text-sm text-teal-600">Repairer Hub</span>
+              </div>
+              <div className="text-3xl font-bold text-teal-800">{formatCurrency(managerMetrics.hub_metrics.repairer_hub_profit)}</div>
+              <div className="text-sm text-teal-600 mt-2">Service + items profit</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 border border-cyan-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-2">
+                <FontAwesomeIcon icon={faExchangeAlt} className="text-3xl text-cyan-600" />
+                <span className="text-sm text-cyan-600">Swapping Hub</span>
+              </div>
+              <div className="text-3xl font-bold text-cyan-800">{formatCurrency(managerMetrics.hub_metrics.swapping_hub_profit)}</div>
+              <div className="text-sm text-cyan-600 mt-2">Phone swap profit</div>
+            </div>
+          </div>
+
+          {/* Staff Performance */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-2">
+                <FontAwesomeIcon icon={faStore} className="text-3xl text-indigo-600" />
+                <span className="text-sm text-indigo-600">Shopkeeper Performance</span>
+              </div>
+              <div className="text-3xl font-bold text-indigo-800">{managerMetrics.staff_metrics.shopkeeper_sales}</div>
+              <div className="text-sm text-indigo-600 mt-2">Total sales made</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-2">
+                <FontAwesomeIcon icon={faTools} className="text-3xl text-amber-600" />
+                <span className="text-sm text-amber-600">Repairer Performance</span>
+              </div>
+              <div className="text-3xl font-bold text-amber-800">{managerMetrics.staff_metrics.repairer_repairs}</div>
+              <div className="text-sm text-amber-600 mt-2">Total repairs completed</div>
             </div>
           </div>
         </div>

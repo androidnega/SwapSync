@@ -10,7 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.database import init_db
 from app.api.routes import ping
-from app.api.routes import customer_routes, phone_routes, sale_routes, swap_routes, repair_routes, repair_item_routes, analytics_routes, maintenance_routes, auth_routes, staff_routes, dashboard_routes, invoice_routes, reports_routes, audit_routes, category_routes, brand_routes, websocket_routes, expiring_audit_routes, product_routes, product_sale_routes, pos_sale_routes, profit_report_routes, sms_config_routes, profile_routes, bulk_upload_routes, system_cleanup_routes, sms_broadcast_routes, pending_resale_routes, greetings, today_stats, otp_routes, admin_routes, training_routes, migration_routes, admin_reset_routes
+from app.api.routes import customer_routes, phone_routes, sale_routes, swap_routes, repair_routes, repair_item_routes, analytics_routes, maintenance_routes, auth_routes, staff_routes, dashboard_routes, invoice_routes, reports_routes, audit_routes, category_routes, brand_routes, websocket_routes, expiring_audit_routes, product_routes, product_sale_routes, pos_sale_routes, sms_config_routes, profile_routes, bulk_upload_routes, system_cleanup_routes, sms_broadcast_routes, pending_resale_routes, greetings, today_stats, otp_routes, admin_routes, training_routes, migration_routes, admin_reset_routes
 import migrate_repair_items_endpoint
 from app.api.routes import cleanup_routes
 from app.core.auth import create_default_admin
@@ -231,7 +231,6 @@ app.include_router(brand_routes.router, prefix="/api")
 app.include_router(product_routes.router, prefix="/api")
 app.include_router(product_sale_routes.router, prefix="/api")
 app.include_router(pos_sale_routes.router, prefix="/api")
-app.include_router(profit_report_routes.router, prefix="/api")
 app.include_router(expiring_audit_routes.router, prefix="/api")
 app.include_router(sms_config_routes.router, prefix="/api")
 app.include_router(sms_broadcast_routes.router, prefix="/api")
