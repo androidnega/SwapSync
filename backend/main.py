@@ -280,6 +280,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors"""
+    # Log validation errors for debugging
+    logger.error(f"❌ Validation Error on {request.method} {request.url.path}")
+    logger.error(f"📋 Validation errors: {exc.errors()}")
+    logger.error(f"📦 Request body: {await request.body()}")
+    
     # Get origin and determine allowed origin for CORS
     origin = request.headers.get("origin", "https://swapsync.digitstec.store")
     allowed_origin = origin if origin in all_origins else "https://swapsync.digitstec.store"
