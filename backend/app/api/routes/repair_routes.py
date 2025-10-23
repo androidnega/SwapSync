@@ -583,11 +583,12 @@ def delete_repair(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Delete a repair record (Repairer, CEO, Admin only)"""
-    if not can_manage_repairs(current_user):
+    """Delete a repair record (Manager, Repairer, CEO, Admin only)"""
+    from app.models.user import UserRole
+    if current_user.role not in [UserRole.MANAGER, UserRole.REPAIRER, UserRole.CEO, UserRole.ADMIN, UserRole.SUPER_ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to manage repairs"
+            detail="Only managers, repairers, and above can delete repairs"
         )
     repair = db.query(Repair).filter(Repair.id == repair_id).first()
     if not repair:

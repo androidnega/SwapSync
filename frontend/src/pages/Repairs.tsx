@@ -113,6 +113,7 @@ const Repairs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [selectedRepairs, setSelectedRepairs] = useState<number[]>([]);
   
   // Repair items filtering and pagination
   const [itemCategoryFilter, setItemCategoryFilter] = useState('');
@@ -475,6 +476,45 @@ const Repairs: React.FC = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedRepairs.length === 0) {
+      setMessage('❌ Please select repairs to delete');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedRepairs.length} repair(s)?`)) return;
+
+    try {
+      // Delete each repair individually
+      for (const repairId of selectedRepairs) {
+        await api.delete(`/repairs/${repairId}`);
+      }
+      setMessage(`✅ ${selectedRepairs.length} repair(s) deleted successfully!`);
+      setSelectedRepairs([]);
+      fetchRepairs();
+      fetchHubStats(); // Refresh stats after deletion
+    } catch (error: any) {
+      setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleSelectAll = () => {
+    const nonDeliveredRepairs = paginatedRepairs.filter(repair => repair.status.toLowerCase() !== 'delivered');
+    if (selectedRepairs.length === nonDeliveredRepairs.length) {
+      setSelectedRepairs([]);
+    } else {
+      setSelectedRepairs(nonDeliveredRepairs.map(repair => repair.id));
+    }
+  };
+
+  const handleSelectRepair = (repairId: number) => {
+    if (selectedRepairs.includes(repairId)) {
+      setSelectedRepairs(selectedRepairs.filter(id => id !== repairId));
+    } else {
+      setSelectedRepairs([...selectedRepairs, repairId]);
+    }
+  };
+
   const openNewModal = () => {
     setFormData({ 
       customer_id: '',
@@ -787,9 +827,34 @@ const Repairs: React.FC = () => {
 
       {/* Desktop Table - Hidden on Mobile */}
       <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden">
+        {/* Bulk Actions */}
+        {selectedRepairs.length > 0 && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-red-800 font-medium">
+                {selectedRepairs.length} repair(s) selected
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+              >
+                🗑️ Delete Selected
+              </button>
+            </div>
+          </div>
+        )}
+
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <input
+                  type="checkbox"
+                  checked={selectedRepairs.length > 0 && selectedRepairs.length === paginatedRepairs.filter(repair => repair.status.toLowerCase() !== 'delivered').length}
+                  onChange={handleSelectAll}
+                  className="rounded border-gray-300"
+                />
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Phone
               </th>
@@ -813,7 +878,7 @@ const Repairs: React.FC = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedRepairs.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center text-gray-500">
                     <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -834,6 +899,16 @@ const Repairs: React.FC = () => {
             ) : (
               paginatedRepairs.map((repair) => (
                 <tr key={repair.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {repair.status.toLowerCase() !== 'delivered' && (
+                      <input
+                        type="checkbox"
+                        checked={selectedRepairs.includes(repair.id)}
+                        onChange={() => handleSelectRepair(repair.id)}
+                        className="rounded border-gray-300"
+                      />
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
                     {repair.phone_description}
                   </td>

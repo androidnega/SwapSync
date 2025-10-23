@@ -3,7 +3,7 @@ Database Models Package
 All SQLAlchemy models for SwapSync
 """
 from app.models.customer import Customer
-from app.models.phone import Phone, PhoneStatus
+from app.models.phone import Phone, PhoneStatus, PhoneOwnershipHistory
 from app.models.swap import Swap, ResaleStatus
 from app.models.sale import Sale
 from app.models.repair import Repair
@@ -26,7 +26,7 @@ from app.models.sms_config import SMSConfig
 from app.models.pending_resale import PendingResale, TransactionType, PhoneSaleStatus, ProfitStatus
 
 __all__ = [
-    "Customer", "Phone", "PhoneStatus", "Swap", "Sale", "Repair", 
+    "Customer", "Phone", "PhoneStatus", "PhoneOwnershipHistory", "Swap", "Sale", "Repair", 
     "RepairItem", "RepairItemUsage", "RepairSale",
     "ResaleStatus", "User", "UserRole", "ActivityLog", "Invoice", 
     "SMSLog", "Category", "Brand", "Product", "StockMovement", "ProductSale",
